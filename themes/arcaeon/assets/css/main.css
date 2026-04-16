@@ -333,9 +333,118 @@ a:hover {
 }
 
 /* ============================================
-   LAYOUT — stub (Plan 03 populates)
+   LAYOUT — Section Spacing + Responsive Foundation (THEME-05)
+   Mobile-first: 375px base, scales up
    ============================================ */
 
+.section {
+  padding: 3rem 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-content {
+  max-width: 40rem;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Gradient transition between sections (D-11) */
+.section + .section::before {
+  content: '';
+  position: absolute;
+  top: -2rem;
+  left: 0;
+  right: 0;
+  height: 4rem;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--color-bg-transition) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Tablet breakpoint — 768px */
+@media (min-width: 48rem) {
+  .section {
+    padding: 4rem 2rem;
+  }
+
+  .section-content {
+    max-width: 48rem;
+  }
+}
+
+/* Desktop breakpoint — 1024px */
+@media (min-width: 64rem) {
+  .section {
+    padding: 5rem 2rem;
+  }
+
+  .section-content {
+    max-width: 56rem;
+  }
+}
+
 /* ============================================
-   COMPONENTS — stub (Plan 03 populates)
+   COMPONENTS — Sigil Grammar (THEME-06, D-12)
+   CSS-only broken geometric circles and arc fragments
+   No SVG files — border-radius + partial borders + rotation
+   Placed at section boundaries, low opacity (~0.3)
    ============================================ */
+
+.sigil-arc {
+  position: relative;
+}
+
+.sigil-arc::after {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid var(--arcaeon-electric-violet);
+  border-top-color: transparent;
+  border-right-color: transparent;
+  opacity: 0.3;
+  transform: rotate(-45deg);
+  pointer-events: none;
+}
+
+.sigil-arc-sm::before {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--arcaeon-neon-magenta);
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  opacity: 0.2;
+  transform: rotate(30deg);
+  pointer-events: none;
+}
+
+/* Void-to-glow gradient decorative element */
+.sigil-gradient {
+  position: relative;
+}
+
+.sigil-gradient::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--arcaeon-electric-violet) 50%,
+    transparent 100%
+  );
+  opacity: 0.4;
+  pointer-events: none;
+}
