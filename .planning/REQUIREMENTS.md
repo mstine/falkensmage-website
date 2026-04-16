@@ -9,13 +9,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Theme & Design System
 
-- [ ] **THEME-01**: ARCÆON palette implemented as CSS custom properties (design tokens) with all color tiers — Primary Identity, Focal Energy, Cosmic Depth, Energy Accents
+- [x] **THEME-01**: ARCÆON palette implemented as CSS custom properties (design tokens) with all color tiers — Primary Identity, Focal Energy, Cosmic Depth, Energy Accents
 - [ ] **THEME-02**: Typographic hierarchy with self-hosted variable fonts (Cinzel for display/headings, Space Grotesk for body/UI) — validated against ARCÆON palette before locking
 - [ ] **THEME-03**: Glow treatment system — reusable CSS for CTA buttons, hover states, hero image pulse using GPU-composited `::before` pseudo-element + `opacity` pattern (not `box-shadow`)
-- [ ] **THEME-04**: Dark graphic novel aesthetic — deep backgrounds (Deep Indigo/Void Purple), directional light via gradients, painted shadow shapes
+- [x] **THEME-04**: Dark graphic novel aesthetic — deep backgrounds (Deep Indigo/Void Purple), directional light via gradients, painted shadow shapes
 - [ ] **THEME-05**: Mobile-first responsive foundation — 375px viewport first, scales up via breakpoints baked into every partial
 - [ ] **THEME-06**: Sigil grammar decorative elements — broken geometric circles, void-to-glow gradients as subtle visual DNA from Feral Architecture vocabulary
-- [ ] **THEME-07**: Portable Hugo theme architecture (`themes/arcaeon/`) — built as reusable theme for future Digital Intuition properties, not root-level layouts
+- [x] **THEME-07**: Portable Hugo theme architecture (`themes/arcaeon/`) — built as reusable theme for future Digital Intuition properties, not root-level layouts
 
 ### Hero Section
 
@@ -56,8 +56,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Hugo project initialized with custom `arcaeon` theme under `themes/arcaeon/`
-- [ ] **INFRA-02**: `hugo.toml` configured with `baseURL = "https://falkensmage.com/"`, ARCÆON palette values, and Hugo cache settings for RSS
+- [x] **INFRA-01**: Hugo project initialized with custom `arcaeon` theme under `themes/arcaeon/`
+- [x] **INFRA-02**: `hugo.toml` configured with `baseURL = "https://falkensmage.com/"`, ARCÆON palette values, and Hugo cache settings for RSS
 - [ ] **INFRA-03**: GitHub Actions workflow — Hugo Extended 0.160.1 pinned, `npm ci` for fonts, `hugo --minify`, deploy to GitHub Pages
 - [ ] **INFRA-04**: `static/CNAME` file with `falkensmage.com` to persist custom domain across deploys
 - [ ] **INFRA-05**: Lemniscate sigil favicon (`.ico` + `.svg`)
@@ -117,15 +117,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| THEME-01 | Phase 1 | Pending |
+| THEME-01 | Phase 1 | Complete |
 | THEME-02 | Phase 1 | Pending |
 | THEME-03 | Phase 1 | Pending |
-| THEME-04 | Phase 1 | Pending |
+| THEME-04 | Phase 1 | Complete |
 | THEME-05 | Phase 1 | Pending |
 | THEME-06 | Phase 1 | Pending |
-| THEME-07 | Phase 1 | Pending |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| THEME-07 | Phase 1 | Complete |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
 | HERO-01 | Phase 2 | Pending |
 | HERO-02 | Phase 2 | Pending |
 | HERO-03 | Phase 2 | Pending |

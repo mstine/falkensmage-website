@@ -25,7 +25,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
   5. The `themes/arcaeon/` directory is structured as a portable Hugo theme (not root-level layouts)
 **Plans**: 3 plans
 Plans:
-- [ ] 01-01-PLAN.md — Hugo project init + ARCAEON CSS token system
+- [x] 01-01-PLAN.md — Hugo project init + ARCAEON CSS token system
 - [ ] 01-02-PLAN.md — Typography + Glow treatment system
 - [ ] 01-03-PLAN.md — Dark aesthetic, sigils, kitchen sink demo + visual checkpoint
 **UI hint**: yes
@@ -71,7 +71,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Theme Foundation | 0/3 | Not started | - |
+| 1. Theme Foundation | 1/3 | In Progress|  |
 | 2. Static Content | 0/TBD | Not started | - |
 | 3. Dynamic Layer + Quality | 0/TBD | Not started | - |
 | 4. Production Deploy | 0/TBD | Not started | - |
