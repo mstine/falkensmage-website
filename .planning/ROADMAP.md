@@ -43,7 +43,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 02-01-PLAN.md — Content data + Hero section + Identity+CTA section
-- [ ] 02-02-PLAN.md — Social links (SVG icons + grid) + Footer + index.html wiring
+- [x] 02-02-PLAN.md — Social links (SVG icons + grid) + Footer + index.html wiring
 - [ ] 02-03-PLAN.md — Validation script + visual checkpoint
 **UI hint**: yes
 

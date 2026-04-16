@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-static-content-01-PLAN.md
-last_updated: "2026-04-16T17:44:07.363Z"
+stopped_at: Completed 02-static-content-02-PLAN.md
+last_updated: "2026-04-16T17:48:45.496Z"
 last_activity: 2026-04-16
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 02 (Static Content) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-16
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-theme-foundation P03 | 2m 11s | 2 tasks | 3 files |
 | Phase 01-theme-foundation P03 | 3min | 3 tasks | 3 files |
 | Phase 02-static-content P01 | 8min | 2 tasks | 5 files |
+| Phase 02-static-content P02 | 8min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 02-static-content]: Hugo .Process webp used (not .Format webp) — .Format errors in Hugo 0.160.1, .Process is correct API for format conversion
 - [Phase 02-static-content]: Front matter as content data layer: all copy sourced from _index.md params, zero hardcoded strings in partials
 - [Phase 02-static-content]: No target=_blank on mailto link — native OS protocol handler per threat model T-02-02 accept disposition
+- [Phase 02-static-content]: Icon partials use currentColor — no hardcoded fills, CSS hover color changes propagate automatically
+- [Phase 02-static-content]: social-card__icon and __label get z-index: 1 to stay above glow-interactive::before layer — must_have truth for social card content visibility
+- [Phase 02-static-content]: Footer lemniscate as Unicode &#x221E; with aria-hidden=true — decorative, not semantic
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-16T17:44:07.360Z
-Stopped at: Completed 02-static-content-01-PLAN.md
+Last session: 2026-04-16T17:48:45.494Z
+Stopped at: Completed 02-static-content-02-PLAN.md
 Resume file: None

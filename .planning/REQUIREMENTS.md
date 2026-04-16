@@ -31,11 +31,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Social Links
 
-- [ ] **SOCIAL-01**: Social links section with icon + label for each platform, styled as Linktree-style grid or vertical stack
-- [ ] **SOCIAL-02**: Hover animation on each social link — subtle, consistent with ARCÆON glow aesthetic
-- [ ] **SOCIAL-03**: Minimum 44px touch targets on all social links
-- [ ] **SOCIAL-04**: 8 platforms included: Feral Architecture (Substack), LinkedIn, X, Instagram, Threads, Bluesky, Spotify (album link), TarotPulse
-- [ ] **SOCIAL-05**: Aria-labels on all social links for accessibility
+- [x] **SOCIAL-01**: Social links section with icon + label for each platform, styled as Linktree-style grid or vertical stack
+- [x] **SOCIAL-02**: Hover animation on each social link — subtle, consistent with ARCÆON glow aesthetic
+- [x] **SOCIAL-03**: Minimum 44px touch targets on all social links
+- [x] **SOCIAL-04**: 8 platforms included: Feral Architecture (Substack), LinkedIn, X, Instagram, Threads, Bluesky, Spotify (album link), TarotPulse
+- [x] **SOCIAL-05**: Aria-labels on all social links for accessibility
 
 ### Work With Me
 
@@ -50,9 +50,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Footer
 
-- [ ] **FOOT-01**: "Stay feral, folks." signature closing
-- [ ] **FOOT-02**: Copyright: Digital Intuition LLC with current year
-- [ ] **FOOT-03**: Subtle lemniscate/sigil mark as decorative element
+- [x] **FOOT-01**: "Stay feral, folks." signature closing
+- [x] **FOOT-02**: Copyright: Digital Intuition LLC with current year
+- [x] **FOOT-03**: Subtle lemniscate/sigil mark as decorative element
 
 ### Infrastructure
 
@@ -132,16 +132,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HERO-04 | Phase 2 | Complete |
 | IDENT-01 | Phase 2 | Complete |
 | IDENT-02 | Phase 2 | Complete |
-| SOCIAL-01 | Phase 2 | Pending |
-| SOCIAL-02 | Phase 2 | Pending |
-| SOCIAL-03 | Phase 2 | Pending |
-| SOCIAL-04 | Phase 2 | Pending |
-| SOCIAL-05 | Phase 2 | Pending |
+| SOCIAL-01 | Phase 2 | Complete |
+| SOCIAL-02 | Phase 2 | Complete |
+| SOCIAL-03 | Phase 2 | Complete |
+| SOCIAL-04 | Phase 2 | Complete |
+| SOCIAL-05 | Phase 2 | Complete |
 | CTA-01 | Phase 2 | Complete |
 | CTA-02 | Phase 2 | Complete |
-| FOOT-01 | Phase 2 | Pending |
-| FOOT-02 | Phase 2 | Pending |
-| FOOT-03 | Phase 2 | Pending |
+| FOOT-01 | Phase 2 | Complete |
+| FOOT-02 | Phase 2 | Complete |
+| FOOT-03 | Phase 2 | Complete |
 | CURR-01 | Phase 3 | Pending |
 | CURR-02 | Phase 3 | Pending |
 | CURR-03 | Phase 3 | Pending |
