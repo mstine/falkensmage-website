@@ -19,15 +19,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hero Section
 
-- [ ] **HERO-01**: Magus image displayed full-width or near-full-width with responsive art direction (portrait crop for mobile 375px, original aspect on desktop)
-- [ ] **HERO-02**: "Falken's Mage" display treatment — large typographic presence using Cinzel display weight
-- [ ] **HERO-03**: Tagline placeholder slot — styled typography treatment with dummy text, easily swappable when Matt writes the real line
-- [ ] **HERO-04**: Ambient glow pulse animation on hero image — CSS-only, GPU-composited (`transform`/`opacity`), honors `prefers-reduced-motion`
+- [x] **HERO-01**: Magus image displayed full-width or near-full-width with responsive art direction (portrait crop for mobile 375px, original aspect on desktop)
+- [x] **HERO-02**: "Falken's Mage" display treatment — large typographic presence using Cinzel display weight
+- [x] **HERO-03**: Tagline placeholder slot — styled typography treatment with dummy text, easily swappable when Matt writes the real line
+- [x] **HERO-04**: Ambient glow pulse animation on hero image — CSS-only, GPU-composited (`transform`/`opacity`), honors `prefers-reduced-motion`
 
 ### Identity Statement
 
-- [ ] **IDENT-01**: 2-3 sentence identity statement in Matt's voice — first-person, "technomagickal motherfucker" energy, not a third-person bio
-- [ ] **IDENT-02**: Placeholder text scaffolded in Matt's voice style, easily replaceable with final copy
+- [x] **IDENT-01**: 2-3 sentence identity statement in Matt's voice — first-person, "technomagickal motherfucker" energy, not a third-person bio
+- [x] **IDENT-02**: Placeholder text scaffolded in Matt's voice style, easily replaceable with final copy
 
 ### Social Links
 
@@ -39,8 +39,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Work With Me
 
-- [ ] **CTA-01**: Brief description (1-2 sentences) — coaching, speaking, collaboration
-- [ ] **CTA-02**: Single mailto CTA button (`falkensmage@falkenslabyrinth.com`) with Radiant Core glow treatment (Fusion Gold → Ignition Orange gradient)
+- [x] **CTA-01**: Brief description (1-2 sentences) — coaching, speaking, collaboration
+- [x] **CTA-02**: Single mailto CTA button (`falkensmage@falkenslabyrinth.com`) with Radiant Core glow treatment (Fusion Gold → Ignition Orange gradient)
 
 ### Currently Section
 
@@ -126,19 +126,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THEME-07 | Phase 1 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
-| HERO-01 | Phase 2 | Pending |
-| HERO-02 | Phase 2 | Pending |
-| HERO-03 | Phase 2 | Pending |
-| HERO-04 | Phase 2 | Pending |
-| IDENT-01 | Phase 2 | Pending |
-| IDENT-02 | Phase 2 | Pending |
+| HERO-01 | Phase 2 | Complete |
+| HERO-02 | Phase 2 | Complete |
+| HERO-03 | Phase 2 | Complete |
+| HERO-04 | Phase 2 | Complete |
+| IDENT-01 | Phase 2 | Complete |
+| IDENT-02 | Phase 2 | Complete |
 | SOCIAL-01 | Phase 2 | Pending |
 | SOCIAL-02 | Phase 2 | Pending |
 | SOCIAL-03 | Phase 2 | Pending |
 | SOCIAL-04 | Phase 2 | Pending |
 | SOCIAL-05 | Phase 2 | Pending |
-| CTA-01 | Phase 2 | Pending |
-| CTA-02 | Phase 2 | Pending |
+| CTA-01 | Phase 2 | Complete |
+| CTA-02 | Phase 2 | Complete |
 | FOOT-01 | Phase 2 | Pending |
 | FOOT-02 | Phase 2 | Pending |
 | FOOT-03 | Phase 2 | Pending |

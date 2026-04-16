@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 2 context gathered
-last_updated: "2026-04-16T16:57:58.935Z"
+status: executing
+stopped_at: Completed 02-static-content-01-PLAN.md
+last_updated: "2026-04-16T17:44:07.363Z"
 last_activity: 2026-04-16
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 6
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** A stranger landing from social media instantly understands who this person is and can reach everything that matters — in under ten seconds, on a phone.
-**Current focus:** Phase 01 — Theme Foundation
+**Current focus:** Phase 02 — Static Content
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 02 (Static Content) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-16
 
 Progress: [░░░░░░░░░░] 0%
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-theme-foundation P02 | 82 | 2 tasks | 1 files |
 | Phase 01-theme-foundation P03 | 2m 11s | 2 tasks | 3 files |
 | Phase 01-theme-foundation P03 | 3min | 3 tasks | 3 files |
+| Phase 02-static-content P01 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase 01-theme-foundation]: Sigil positioning deferred to Phase 2 partials -- shape defined in CSS classes, placement by section partial
 - [Phase 01-theme-foundation]: sigil-arc-sm uses ::before to honor ::before=glow, ::after=sigil pseudo-element convention
 - [Phase 01-theme-foundation]: Kitchen sink as draft-only correctness gate -- excluded from production via draft: true, type: kitchen-sink
+- [Phase 02-static-content]: Hugo .Process webp used (not .Format webp) — .Format errors in Hugo 0.160.1, .Process is correct API for format conversion
+- [Phase 02-static-content]: Front matter as content data layer: all copy sourced from _index.md params, zero hardcoded strings in partials
+- [Phase 02-static-content]: No target=_blank on mailto link — native OS protocol handler per threat model T-02-02 accept disposition
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-16T16:57:58.932Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-static-content/02-CONTEXT.md
+Last session: 2026-04-16T17:44:07.360Z
+Stopped at: Completed 02-static-content-01-PLAN.md
+Resume file: None

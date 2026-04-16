@@ -42,7 +42,7 @@ Plans:
   5. Footer reads "Stay feral, folks." with Digital Intuition LLC copyright and lemniscate decorative mark
 **Plans**: 3 plans
 Plans:
-- [ ] 02-01-PLAN.md — Content data + Hero section + Identity+CTA section
+- [x] 02-01-PLAN.md — Content data + Hero section + Identity+CTA section
 - [ ] 02-02-PLAN.md — Social links (SVG icons + grid) + Footer + index.html wiring
 - [ ] 02-03-PLAN.md — Validation script + visual checkpoint
 **UI hint**: yes
@@ -76,6 +76,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Theme Foundation | 3/3 | Complete   | 2026-04-16 |
-| 2. Static Content | 0/3 | Planned | - |
+| 2. Static Content | 1/3 | In Progress|  |
 | 3. Dynamic Layer + Quality | 0/TBD | Not started | - |
 | 4. Production Deploy | 0/TBD | Not started | - |
