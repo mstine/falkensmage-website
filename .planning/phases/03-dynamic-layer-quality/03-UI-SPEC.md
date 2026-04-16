@@ -42,7 +42,9 @@ Source: Established in Phase 1. The existing `.section` and `.section-content` c
 | 2xl | 48px | Section vertical padding on mobile (`.section`: `3rem`) |
 | 3xl | 64px | Section vertical padding on desktop (`.section`: `5rem`) |
 
-**Currently card padding:** `1rem` (16px) horizontal, `1.25rem` (20px) vertical — consistent with `.social-card` padding pattern.
+**Currently card padding:** `1rem` (16px) horizontal, `1rem` (16px) vertical — aligns with the `md` token. Matches `.social-card` padding convention.
+
+**Currently card separator gap (between post link and focus blurb):** `1rem` (16px) — `md` token, consistent with default element spacing.
 
 **Exceptions:** Font preload links, OG meta tags, semantic landmark restructure, and image srcset are structural/head changes — no spacing tokens apply.
 
@@ -50,25 +52,35 @@ Source: Established in Phase 1. The existing `.section` and `.section-content` c
 
 ## Typography
 
-Source: Established in Phase 1 (Minor Third scale, 1.2 ratio from 1rem base). No new type sizes introduced in Phase 3.
+### Phase 3 Normative Contract
+
+The following sizes and weights are directly used by Phase 3 components (the Currently section). This is the normative contract for this phase.
 
 | Role | Size | Weight | Line Height | Font |
 |------|------|--------|-------------|------|
-| Body / paragraph | 1rem (16px) | 400 | 1.6 | Space Grotesk Variable |
-| Label / caption | 0.875rem (14px) | 400 | 1.5 | Space Grotesk Variable |
-| Social card label | 1rem (16px) | 600 | n/a | Space Grotesk Variable |
-| Section heading (h3) | 1.44rem (23px) | 500 | 1.2 | Cinzel Variable |
-| Section heading (h2) | 1.728rem (28px) | 600 | 1.2 | Cinzel Variable |
-| Page heading (h1) | 2.074rem (33px) | 700 | 1.2 | Cinzel Variable |
-| Display / logotype | clamp(2.5rem, 8vw, 4rem) | 800 | 1.1 | Cinzel Variable |
+| Label / caption | 14px (0.875rem) | 400 | 1.5 | Space Grotesk Variable |
+| Body / link text | 16px (1rem) | 400 or 600 | 1.6 | Space Grotesk Variable |
+| Section heading (h3) | 23px (1.44rem) — `var(--text-h3)` | 500 | 1.2 | Cinzel Variable |
+
+**Phase 3 weight set:** 400 (regular) and 500/600 (semibold range). Weight 500 is used only for the "CURRENTLY" section heading in Cinzel, matching the established h3 pattern. Weight 600 is used only for the post title link and fallback link in Space Grotesk.
 
 **Currently section typography specifics:**
-- Section header label ("CURRENTLY"): `var(--text-h3)` at weight 500, Cinzel Variable — matches existing section heading pattern
-- "Latest from Feral Architecture:" sub-label: `0.875rem` (14px), weight 400, Space Grotesk, opacity 0.7
-- Post title link: `var(--text-base)` (16px), weight 600, Space Grotesk, color `var(--color-text-accent)` (Ion Glow `#5be7ff`)
+- Section header label ("CURRENTLY"): `var(--text-h3)` (23px) at weight 500, Cinzel Variable — matches existing section heading pattern
+- "Latest from Feral Architecture:" sub-label: 14px, weight 400, Space Grotesk, opacity 0.7
+- Post title link: 16px, weight 600, Space Grotesk, color `var(--color-text-accent)` (Ion Glow `#5be7ff`)
 - Guillemets treatment: `«` and `»` rendered as Unicode characters flanking the post title — same font/size as post title
-- Current focus blurb: `var(--text-base)` (16px), weight 400, Space Grotesk, opacity 0.85
-- Fallback link ("Read Feral Architecture →"): `var(--text-base)`, weight 600, color `var(--color-text-accent)`
+- Current focus blurb: 16px, weight 400, Space Grotesk, opacity 0.85
+- Fallback link ("Read Feral Architecture →"): 16px, weight 600, color `var(--color-text-accent)`
+
+### Phase 1 Inherited Reference (established — not new in Phase 3)
+
+The following sizes exist in the codebase from Phase 1. They are documented here for completeness only. The Phase 3 contract does not introduce or extend these.
+
+| Role | Size | Weight | Font |
+|------|------|--------|------|
+| Section heading (h2) | 28px (1.728rem) | 600 | Cinzel Variable |
+| Page heading (h1) | 33px (2.074rem) | 700 | Cinzel Variable |
+| Display / logotype | clamp(2.5rem, 8vw, 4rem) | 800 | Cinzel Variable |
 
 **Meta description character target:** 150–160 characters (fits Google snippet window without truncation)
 
@@ -120,14 +132,14 @@ Source: D-01 through D-05 (locked decisions from CONTEXT.md), specifics section.
 - Border on hover: `1px solid #7a2cff`
 - Border radius: `8px` (matches social card)
 - Background: none (ghost — section background shows through)
-- Padding: `1.25rem 1rem` (20px vertical, 16px horizontal)
+- Padding: `1rem 1rem` (16px vertical, 16px horizontal) — `md` token on all sides
 - No `.glow-interactive` on the card wrapper itself — glow is reserved for the post title link inside it
 
 **Content layout (top to bottom inside card):**
-1. Section label: "CURRENTLY" — Cinzel h3, weight 500, `var(--color-text)`, margin-bottom `0.5rem`
-2. Sub-label: "Latest from Feral Architecture:" — Space Grotesk 14px, weight 400, opacity 0.7, margin-bottom `0.25rem`
+1. Section label: "CURRENTLY" — Cinzel h3, weight 500, `var(--color-text)`, margin-bottom `0.5rem` (8px)
+2. Sub-label: "Latest from Feral Architecture:" — Space Grotesk 14px, weight 400, opacity 0.7, margin-bottom `0.25rem` (4px)
 3. Post title: `« {title} »` — Space Grotesk 16px, weight 600, color Ion Glow, `.glow-interactive` on the `<a>` tag, opens in new tab
-4. Separator: `0.75rem` gap (12px)
+4. Separator: `1rem` (16px) gap — `md` token
 5. Current focus blurb: Space Grotesk 16px, weight 400, opacity 0.85, sourced from `_index.md` front matter `currently_focus` param
 
 **Fallback state (RSS unreachable):**
