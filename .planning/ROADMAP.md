@@ -23,7 +23,11 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
   3. Cinzel (display) and Space Grotesk (body) render from self-hosted files with no FOIT — `font-display: swap` confirmed in network tab
   4. A glow CTA button and ambient pulse can be rendered in isolation using the CSS component system — GPU-composited, no `box-shadow`
   5. The `themes/arcaeon/` directory is structured as a portable Hugo theme (not root-level layouts)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Hugo project init + ARCAEON CSS token system
+- [ ] 01-02-PLAN.md — Typography + Glow treatment system
+- [ ] 01-03-PLAN.md — Dark aesthetic, sigils, kitchen sink demo + visual checkpoint
 **UI hint**: yes
 
 ### Phase 2: Static Content
@@ -67,7 +71,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Theme Foundation | 0/TBD | Not started | - |
+| 1. Theme Foundation | 0/3 | Not started | - |
 | 2. Static Content | 0/TBD | Not started | - |
 | 3. Dynamic Layer + Quality | 0/TBD | Not started | - |
 | 4. Production Deploy | 0/TBD | Not started | - |
