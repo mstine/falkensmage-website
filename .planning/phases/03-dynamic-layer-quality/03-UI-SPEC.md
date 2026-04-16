@@ -60,12 +60,12 @@ The following sizes and weights are directly used by Phase 3 components (the Cur
 |------|------|--------|-------------|------|
 | Label / caption | 14px (0.875rem) | 400 | 1.5 | Space Grotesk Variable |
 | Body / link text | 16px (1rem) | 400 or 600 | 1.6 | Space Grotesk Variable |
-| Section heading (h3) | 23px (1.44rem) — `var(--text-h3)` | 500 | 1.2 | Cinzel Variable |
+| Section heading (h3) | 23px (1.44rem) — `var(--text-h3)` | 600 | 1.2 | Cinzel Variable |
 
-**Phase 3 weight set:** 400 (regular) and 500/600 (semibold range). Weight 500 is used only for the "CURRENTLY" section heading in Cinzel, matching the established h3 pattern. Weight 600 is used only for the post title link and fallback link in Space Grotesk.
+**Phase 3 weight set:** 400 (regular) and 600 (semibold). Weight 600 applies to both the "CURRENTLY" section heading in Cinzel and the post title link / fallback link in Space Grotesk. Both fonts are variable — 600 renders correctly in each.
 
 **Currently section typography specifics:**
-- Section header label ("CURRENTLY"): `var(--text-h3)` (23px) at weight 500, Cinzel Variable — matches existing section heading pattern
+- Section header label ("CURRENTLY"): `var(--text-h3)` (23px) at weight 600, Cinzel Variable — matches established h3 semibold pattern
 - "Latest from Feral Architecture:" sub-label: 14px, weight 400, Space Grotesk, opacity 0.7
 - Post title link: 16px, weight 600, Space Grotesk, color `var(--color-text-accent)` (Ion Glow `#5be7ff`)
 - Guillemets treatment: `«` and `»` rendered as Unicode characters flanking the post title — same font/size as post title
@@ -136,7 +136,7 @@ Source: D-01 through D-05 (locked decisions from CONTEXT.md), specifics section.
 - No `.glow-interactive` on the card wrapper itself — glow is reserved for the post title link inside it
 
 **Content layout (top to bottom inside card):**
-1. Section label: "CURRENTLY" — Cinzel h3, weight 500, `var(--color-text)`, margin-bottom `0.5rem` (8px)
+1. Section label: "CURRENTLY" — Cinzel h3, weight 600, `var(--color-text)`, margin-bottom `0.5rem` (8px)
 2. Sub-label: "Latest from Feral Architecture:" — Space Grotesk 14px, weight 400, opacity 0.7, margin-bottom `0.25rem` (4px)
 3. Post title: `« {title} »` — Space Grotesk 16px, weight 600, color Ion Glow, `.glow-interactive` on the `<a>` tag, opens in new tab
 4. Separator: `1rem` (16px) gap — `md` token
