@@ -550,7 +550,7 @@ Source: 1424x752 (landscape, 1.89:1 ratio). [VERIFIED: Python PIL read of actual
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Hero tagline copy**
    - What we know: D-14 says full-voice placeholder, replaceable via front matter.
