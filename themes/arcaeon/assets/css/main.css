@@ -418,7 +418,7 @@ a:hover {
   pointer-events: none;
 }
 
-.sigil-arc-sm::before {
+.sigil-arc-sm::after {
   content: '';
   position: absolute;
   width: 40px;
