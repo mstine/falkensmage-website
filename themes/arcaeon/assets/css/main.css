@@ -451,3 +451,68 @@ a:hover {
   opacity: 0.4;
   pointer-events: none;
 }
+
+/* ============================================
+   HERO SECTION — Image + Logotype (Phase 2)
+   D-01: Image above, text below (stacked all viewports)
+   D-02: object-fit cover for mobile crop
+   D-03: .glow-ambient wraps image container
+   ============================================ */
+
+.hero-section {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.hero-image-wrapper {
+  width: 100%;
+  max-height: 290px;
+  overflow: hidden;
+}
+
+.hero-image {
+  width: 100%;
+  height: 290px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-text {
+  text-align: center;
+  padding-top: 2rem;
+}
+
+.hero-tagline {
+  font-family: var(--font-body);
+  font-size: var(--text-h2);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text);
+  margin-top: 0.75rem;
+  opacity: 0.85;
+}
+
+@media (min-width: 48rem) {
+  .hero-image-wrapper {
+    max-height: 450px;
+  }
+
+  .hero-image {
+    height: 450px;
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero-image-wrapper {
+    max-height: 580px;
+  }
+
+  .hero-image {
+    height: 580px;
+  }
+
+  .hero-text {
+    padding-top: 2.5rem;
+  }
+}

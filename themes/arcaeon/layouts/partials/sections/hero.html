@@ -1,0 +1,28 @@
+{{/* Hero Section — Magus image + logotype + tagline */}}
+{{ $img := resources.Get "images/magus-hero.jpg" }}
+{{ with $img }}
+  {{ $mobileFill := .Fill "750x580 Center" }}
+  {{ $mobileWebP := $mobileFill.Process "webp" }}
+  {{ $desktopResize := .Resize "1200x q85" }}
+  {{ $desktopWebP := $desktopResize.Process "webp" }}
+
+<section class="section section-void hero-section">
+  <div class="hero-image-wrapper glow-ambient">
+    <picture>
+      <source media="(min-width: 768px)" type="image/webp" srcset="{{ $desktopWebP.RelPermalink }}">
+      <source media="(min-width: 768px)" type="image/jpeg" srcset="{{ $desktopResize.RelPermalink }}">
+      <source type="image/webp" srcset="{{ $mobileWebP.RelPermalink }}">
+      <img src="{{ $mobileFill.RelPermalink }}"
+           alt="Matt Stine as the Magus — laptop open, wand raised, tarot cards in hand, raven on the shelf, lemniscate overhead"
+           width="{{ $mobileFill.Width }}"
+           height="{{ $mobileFill.Height }}"
+           loading="eager"
+           class="hero-image">
+    </picture>
+  </div>
+  <div class="section-content hero-text">
+    <h1 class="display-text">{{ $.Title | default "Falken's Mage" }}</h1>
+    {{ with $.Params.tagline }}<p class="hero-tagline">{{ . }}</p>{{ end }}
+  </div>
+</section>
+{{ end }}
