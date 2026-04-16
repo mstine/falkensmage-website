@@ -103,13 +103,14 @@ fi
 echo ""
 
 # ── IDENT-02 ──────────────────────────────────────────────────────────────────
-# identity_statement: key present in content/_index.md front matter
+# identity_blocks: key present in content/_index.md front matter
+# (Implementation evolved from single identity_statement string to identity_blocks array)
 
-echo "[ IDENT-02 ] Identity statement — identity_statement: key in front matter"
-if html_has_fixed "identity_statement:" "$CONTENT"; then
-  pass "IDENT-02: identity_statement: key present in content/_index.md"
+echo "[ IDENT-02 ] Identity statement — identity_blocks: key in front matter"
+if html_has_fixed "identity_blocks:" "$CONTENT"; then
+  pass "IDENT-02: identity_blocks: key present in content/_index.md"
 else
-  fail "IDENT-02: identity_statement: key MISSING from content/_index.md"
+  fail "IDENT-02: identity_blocks: key MISSING from content/_index.md"
 fi
 echo ""
 
