@@ -1,0 +1,19 @@
+{{/* Social Links Section — 2-col mobile grid, ghost cards, inline SVG icons */}}
+<section class="section section-void social-section sigil-arc sigil-boundary-tr">
+  <div class="section-content">
+    <div class="social-grid">
+      {{ range .Params.social_links }}
+      <a href="{{ .url }}"
+         class="social-card glow-interactive"
+         target="_blank"
+         rel="noopener noreferrer"
+         aria-label="{{ .name }}">
+        <span class="social-card__icon" aria-hidden="true">
+          {{ partial (printf "icons/%s.html" .icon) . }}
+        </span>
+        <span class="social-card__label">{{ .label }}</span>
+      </a>
+      {{ end }}
+    </div>
+  </div>
+</section>
