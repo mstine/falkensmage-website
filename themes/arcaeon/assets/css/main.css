@@ -1,1 +1,123 @@
-/* placeholder — Task 2 replaces this */
+/* ============================================
+   ARCAEON Design System — main.css
+   Single file per D-03: Tokens | Reset | Typography | Glow System | Layout | Components
+   ============================================ */
+
+/* ============================================
+   TOKENS — Palette Truth
+   Source: ARCAEON Color Palette System (SPEC.md)
+   WARNING: Electric Violet (#7a2cff) fails WCAG AA for body text
+   on both primary backgrounds. Decoration/glow only — NEVER body text.
+   ============================================ */
+
+:root {
+  /* Primary Identity */
+  --arcaeon-electric-violet: #7a2cff;
+  --arcaeon-neon-magenta: #ff3cac;
+  --arcaeon-plasma-pink: #ff5fd2;
+  --arcaeon-electric-blue: #2fd3ff;
+
+  /* Focal Energy (Radiant Core) */
+  --arcaeon-solar-white: #fff4e6;
+  --arcaeon-fusion-gold: #ffb347;
+  --arcaeon-ignition-orange: #ff7a18;
+
+  /* Cosmic Depth */
+  --arcaeon-deep-indigo: #0a0f3c;
+  --arcaeon-midnight-blue: #111a6b;
+  --arcaeon-void-purple: #1a0f2e;
+
+  /* Energy Accents */
+  --arcaeon-ion-glow: #5be7ff;
+}
+
+/* ============================================
+   TOKENS — Semantic Aliases
+   Usage-intent layer on top of palette truth (D-01)
+   ============================================ */
+
+:root {
+  --color-bg: var(--arcaeon-void-purple);
+  --color-bg-alt: var(--arcaeon-deep-indigo);
+  --color-bg-transition: var(--arcaeon-midnight-blue);
+  --color-text: var(--arcaeon-solar-white);
+  --color-text-accent: var(--arcaeon-ion-glow);
+  --color-accent: var(--arcaeon-electric-violet);
+  --color-accent-warm: var(--arcaeon-fusion-gold);
+  --color-hover: var(--arcaeon-neon-magenta);
+  --color-cta-start: var(--arcaeon-fusion-gold);
+  --color-cta-end: var(--arcaeon-ignition-orange);
+}
+
+/* ============================================
+   TOKENS — Triad Rule Section Overrides (D-02)
+   Each section gets scoped --section-purple, --section-blue, --section-warm
+   Convention: every section partial uses one of these classes
+   ============================================ */
+
+.section-void {
+  --section-purple: var(--arcaeon-void-purple);
+  --section-blue: var(--arcaeon-electric-blue);
+  --section-warm: var(--arcaeon-fusion-gold);
+  background: var(--section-purple);
+}
+
+.section-depth {
+  --section-purple: var(--arcaeon-deep-indigo);
+  --section-blue: var(--arcaeon-ion-glow);
+  --section-warm: var(--arcaeon-ignition-orange);
+  background: var(--section-purple);
+}
+
+/* ============================================
+   RESET
+   Minimal reset — box-sizing, margin, padding, smooth scroll
+   ============================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================
+   TYPOGRAPHY — stub (Plan 02 populates)
+   ============================================ */
+
+/* ============================================
+   GLOW SYSTEM — stub (Plan 02 populates)
+   ============================================ */
+
+/* ============================================
+   LAYOUT — stub (Plan 03 populates)
+   ============================================ */
+
+/* ============================================
+   COMPONENTS — stub (Plan 03 populates)
+   ============================================ */
