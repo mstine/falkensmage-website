@@ -13,8 +13,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **THEME-02**: Typographic hierarchy with self-hosted variable fonts (Cinzel for display/headings, Space Grotesk for body/UI) — validated against ARCÆON palette before locking
 - [x] **THEME-03**: Glow treatment system — reusable CSS for CTA buttons, hover states, hero image pulse using GPU-composited `::before` pseudo-element + `opacity` pattern (not `box-shadow`)
 - [x] **THEME-04**: Dark graphic novel aesthetic — deep backgrounds (Deep Indigo/Void Purple), directional light via gradients, painted shadow shapes
-- [ ] **THEME-05**: Mobile-first responsive foundation — 375px viewport first, scales up via breakpoints baked into every partial
-- [ ] **THEME-06**: Sigil grammar decorative elements — broken geometric circles, void-to-glow gradients as subtle visual DNA from Feral Architecture vocabulary
+- [x] **THEME-05**: Mobile-first responsive foundation — 375px viewport first, scales up via breakpoints baked into every partial
+- [x] **THEME-06**: Sigil grammar decorative elements — broken geometric circles, void-to-glow gradients as subtle visual DNA from Feral Architecture vocabulary
 - [x] **THEME-07**: Portable Hugo theme architecture (`themes/arcaeon/`) — built as reusable theme for future Digital Intuition properties, not root-level layouts
 
 ### Hero Section
@@ -121,8 +121,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THEME-02 | Phase 1 | Complete |
 | THEME-03 | Phase 1 | Complete |
 | THEME-04 | Phase 1 | Complete |
-| THEME-05 | Phase 1 | Pending |
-| THEME-06 | Phase 1 | Pending |
+| THEME-05 | Phase 1 | Complete |
+| THEME-06 | Phase 1 | Complete |
 | THEME-07 | Phase 1 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |

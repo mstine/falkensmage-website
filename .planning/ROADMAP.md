@@ -6,7 +6,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 
 ## Phases
 
-- [ ] **Phase 1: Theme Foundation** - ARCÆON design system + Hugo `arcaeon` theme scaffold
+- [x] **Phase 1: Theme Foundation** - ARCÆON design system + Hugo `arcaeon` theme scaffold (completed 2026-04-16)
 - [ ] **Phase 2: Static Content** - All visible sections: hero, identity, social links, CTA, footer
 - [ ] **Phase 3: Dynamic Layer + Quality** - "Currently" RSS section + performance, accessibility, SEO
 - [ ] **Phase 4: Production Deploy** - GitHub Actions pipeline, CNAME, favicon, live site
@@ -27,7 +27,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 Plans:
 - [x] 01-01-PLAN.md — Hugo project init + ARCAEON CSS token system
 - [x] 01-02-PLAN.md — Typography + Glow treatment system
-- [ ] 01-03-PLAN.md — Dark aesthetic, sigils, kitchen sink demo + visual checkpoint
+- [x] 01-03-PLAN.md — Dark aesthetic, sigils, kitchen sink demo + visual checkpoint
 **UI hint**: yes
 
 ### Phase 2: Static Content
@@ -71,7 +71,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Theme Foundation | 1/3 | In Progress|  |
+| 1. Theme Foundation | 3/3 | Complete   | 2026-04-16 |
 | 2. Static Content | 0/TBD | Not started | - |
 | 3. Dynamic Layer + Quality | 0/TBD | Not started | - |
 | 4. Production Deploy | 0/TBD | Not started | - |
