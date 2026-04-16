@@ -14,15 +14,15 @@ A stranger landing from social media instantly understands who this person is an
 
 - [x] Custom Hugo theme `arcaeon` — ARCAEON palette as CSS custom properties, typographic hierarchy, glow treatments, dark graphic novel aesthetic, responsive mobile-first foundation — *Validated in Phase 1: Theme Foundation*
 - [x] Typography — self-hosted Cinzel Variable (display/headings) and Space Grotesk Variable (body/UI) via @fontsource-variable — *Validated in Phase 1: Theme Foundation*
+- [x] Hero section with Magus image, "Falken's Mage" display treatment, placeholder tagline, subtle ambient animation — *Validated in Phase 2: Static Content*
+- [x] Identity statement — 2-3 sentences in Matt's voice, first-person, "technomagickal motherfucker" energy — *Validated in Phase 2: Static Content*
+- [x] Social links section — Linktree-style grid/stack with icons, labels, hover animations (Substack, LinkedIn, X, Instagram, Threads, Bluesky, Spotify, TarotPulse) — *Validated in Phase 2: Static Content*
+- [x] "Work With Me" section — coaching/speaking/collaboration CTA, mailto link, Radiant Core glow button — *Validated in Phase 2: Static Content*
+- [x] Footer — "Stay feral, folks." closing, Digital Intuition LLC copyright, subtle sigil/lemniscate mark — *Validated in Phase 2: Static Content*
 
 ### Active
 
-- [ ] Hero section with Magus image, "Falken's Mage" display treatment, placeholder tagline, subtle ambient animation
-- [ ] Identity statement — 2-3 sentences in Matt's voice, first-person, "technomagickal motherfucker" energy
-- [ ] Social links section — Linktree-style grid/stack with icons, labels, hover animations (Substack, LinkedIn, X, Instagram, Threads, Bluesky, Spotify, TarotPulse)
-- [ ] "Work With Me" section — coaching/speaking/collaboration CTA, mailto link, Radiant Core glow button
 - [ ] "Currently" section — auto-pulled latest Feral Architecture post via RSS + manually editable "current focus" blurb
-- [ ] Footer — "Stay feral, folks." closing, Digital Intuition LLC copyright, subtle sigil/lemniscate mark
 - [ ] Custom Hugo theme `arcaeon` — ARCÆON palette as CSS custom properties, typographic hierarchy, glow treatments, dark graphic novel aesthetic, component partials, responsive mobile-first foundation
 - [ ] Typography — self-hosted face(s) selected via research to match dark graphic novel aesthetic
 - [ ] Lemniscate sigil favicon
@@ -101,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after Phase 1: Theme Foundation complete*
+*Last updated: 2026-04-16 after Phase 2: Static Content complete*
