@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
 
-  {{/* Font preloads — prevent FOIT */}}
-  {{ $cinzel := resources.Get "fonts/cinzel-latin-wght-normal.woff2" | fingerprint }}
-  <link rel="preload" href="{{ $cinzel.RelPermalink }}" as="font" type="font/woff2" crossorigin>
-  {{ $spaceGrotesk := resources.Get "fonts/space-grotesk-latin-wght-normal.woff2" | fingerprint }}
-  <link rel="preload" href="{{ $spaceGrotesk.RelPermalink }}" as="font" type="font/woff2" crossorigin>
+  {{/* Font preloads — prevent FOIT. Files served from static/fonts/ at root-relative paths. */}}
+  <link rel="preload" href="/fonts/cinzel-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   {{/* CSS via Hugo css.Build pipeline */}}
   {{ $css := resources.Get "css/main.css" | css.Build | minify | fingerprint }}
