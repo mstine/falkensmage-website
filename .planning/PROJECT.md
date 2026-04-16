@@ -12,7 +12,8 @@ A stranger landing from social media instantly understands who this person is an
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Custom Hugo theme `arcaeon` — ARCAEON palette as CSS custom properties, typographic hierarchy, glow treatments, dark graphic novel aesthetic, responsive mobile-first foundation — *Validated in Phase 1: Theme Foundation*
+- [x] Typography — self-hosted Cinzel Variable (display/headings) and Space Grotesk Variable (body/UI) via @fontsource-variable — *Validated in Phase 1: Theme Foundation*
 
 ### Active
 
@@ -100,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after initialization*
+*Last updated: 2026-04-16 after Phase 1: Theme Foundation complete*
