@@ -39,19 +39,17 @@ All multiples of 4. Declared as px equivalents of the rem values in use across t
 
 | Token | Value | CSS Equivalent | Usage |
 |-------|-------|----------------|-------|
-| xs | 4px | 0.25rem | Icon-to-label gap internal padding |
+| xs | 4px | 0.25rem | Icon-to-label gap, internal padding |
 | sm | 8px | 0.5rem | Tight inline spacing, subtle gaps |
 | md | 16px | 1rem | Default element spacing, paragraph gaps |
-| lg | 20px | 1.25rem | Section horizontal padding (mobile) | 
-| xl | 24px | 1.5rem | Social card gap, section content gap |
+| xl | 24px | 1.5rem | Section horizontal padding (mobile), social card gap, section content gap |
 | 2xl | 32px | 2rem | Section horizontal padding (tablet+), major element breaks |
 | 3xl | 48px | 3rem | Section vertical padding (mobile) |
-| 4xl | 64px | 4rem | Section vertical padding (tablet) |
-| 5xl | 80px | 5rem | Section vertical padding (desktop) |
+| 4xl | 64px | 4rem | Section vertical padding (tablet and desktop) |
 
 **Exceptions:**
-- Social card padding: 14px vertical × 16px horizontal (`0.875rem 1rem`) — non-grid spacing, preserves 44px touch target with natural content height
-- CTA button padding: 14px vertical × 32px horizontal (`0.875rem 2rem`) — larger horizontal to give the Radiant Core gradient room to breathe
+- Social card padding: 12px vertical × 16px horizontal (`0.75rem 1rem`) — visual breathing room — touch target guaranteed by min-height rule
+- CTA button padding: 12px vertical × 32px horizontal (`0.75rem 2rem`) — larger horizontal to give the Radiant Core gradient room to breathe
 - Touch targets: 44px minimum height on all `.social-card` elements (WCAG 2.5.5 / SOCIAL-03)
 - Glow bleed: `inset: -20%` on `.glow-ambient::before` and `inset: -4px` on `.glow-interactive::before` — decorative, not spacing system
 - Section transition band: `height: 4rem` / `top: -2rem` on `.section + .section::before` — structural, not spacing system
@@ -62,19 +60,25 @@ All multiples of 4. Declared as px equivalents of the rem values in use across t
 
 ## Typography
 
-Four-tier system: Display > H1 > Body > Label. Two weights in active use for non-heading content (400 body, 600 CTA/label). Heading weights follow Cinzel progression defined in Phase 1.
+Four-tier system: Display > H1 > H2/Tagline > Body/Label. Phase 2 governs two weights in active use for non-heading content (400 body, 600 CTA/label). Display (800) and H1 (700) weights are Phase 1 inherited values — not new Phase 2 declarations.
 
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
-| Display | Cinzel Variable | `clamp(2.5rem, 8vw, 4rem)` | 800 | 1.1 | "Falken's Mage" hero logotype — `.display-text` class |
-| Heading 1 | Cinzel Variable | 2.074rem (33px) | 700 | 1.2 | Section headings (Identity+CTA, Social section header if used) |
-| Heading 2 | Cinzel Variable | 1.728rem (28px) | 600 | 1.2 | Sub-headings within sections |
-| Body | Space Grotesk Variable | 1rem (16px) | 400 | 1.6 | Identity statement, CTA description, footer text |
-| Label | Space Grotesk Variable | 1rem (16px) | 600 | 1.2 | Social card labels, CTA button text, nav labels |
-| Hero tagline | Space Grotesk Variable | 1.44rem (23px) | 400 | 1.4 | Tagline slot below "Falken's Mage" — `.hero-tagline` |
+| Display | Cinzel Variable | `clamp(2.5rem, 8vw, 4rem)` | 800 (Phase 1) | 1.1 | "Falken's Mage" hero logotype — `.display-text` class |
+| Heading 1 | Cinzel Variable | 2.074rem (33px) | 700 (Phase 1) | 1.2 | Section headings (Identity+CTA section header if used) |
+| H2 / Tagline | Cinzel Variable or Space Grotesk Variable | 1.728rem (28px) | 600 | 1.3 | Sub-headings within sections; also used for the hero tagline slot below "Falken's Mage" — `.hero-tagline` |
+| Body / Label | Space Grotesk Variable | 1rem (16px) | 400 (body) / 600 (label) | 1.6 (body) / 1.2 (label) | Identity statement, CTA description, footer text (400); social card labels, CTA button text, nav labels (600) |
+
+**Phase 2 weight declarations (2 weights):**
+- 400 — Body text (identity statement, CTA description, footer text)
+- 600 — Labels and sub-headings (social card labels, CTA button, H2/Tagline tier)
+
+**Phase 1 inherited weights (not re-declared in Phase 2):**
+- 700 — H1 heading (section headings, established in Phase 1 `h1` rule)
+- 800 — Display (logotype at scale, established in Phase 1 `.display-text` rule)
 
 **Notes:**
-- `--text-h3: 1.44rem` (23px) reused for hero tagline — adequate typographic separation from display, fits the slot
+- Hero tagline uses the H2/Tagline tier (1.728rem, weight 600) — sufficient typographic separation from the Display logotype above it, no separate `--text-h3` needed
 - Body line-height 1.6 (established in Phase 1 `body {}` rule — slightly above the recommended 1.5 for Space Grotesk readability on dark backgrounds)
 - Heading line-height 1.2 matches the Phase 1 `h1, h2, h3 {}` rule
 - Display line-height 1.1 is tighter than standard — appropriate for the single-line logotype at large scale
@@ -155,7 +159,7 @@ All components are native HTML elements styled with ARCÆON CSS classes. No exte
 | Image wrapper with glow | `<div>` | `.hero-image-wrapper .glow-ambient` | Electric Violet ambient pulse |
 | Responsive image | `<picture>` + `<img>` | — | Art direction: mobile fill 750×580, desktop resize 1200px |
 | Logotype | `<h1>` | `.display-text` | "Falken's Mage", Cinzel 800, clamp(2.5rem, 8vw, 4rem) |
-| Tagline | `<p>` | `.hero-tagline` | Space Grotesk 400, 1.44rem |
+| Tagline | `<p>` | `.hero-tagline` | Space Grotesk or Cinzel, weight 600, 1.728rem — H2/Tagline tier |
 
 **Mobile image container:** 375px wide × 290px tall. `object-fit: cover`, center anchor. Hugo `.Fill "750x580 Center"` handles the 2x retina crop.
 
