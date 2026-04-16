@@ -117,13 +117,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| THEME-01 | Phase 1 | Pending |
+| THEME-02 | Phase 1 | Pending |
+| THEME-03 | Phase 1 | Pending |
+| THEME-04 | Phase 1 | Pending |
+| THEME-05 | Phase 1 | Pending |
+| THEME-06 | Phase 1 | Pending |
+| THEME-07 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| HERO-01 | Phase 2 | Pending |
+| HERO-02 | Phase 2 | Pending |
+| HERO-03 | Phase 2 | Pending |
+| HERO-04 | Phase 2 | Pending |
+| IDENT-01 | Phase 2 | Pending |
+| IDENT-02 | Phase 2 | Pending |
+| SOCIAL-01 | Phase 2 | Pending |
+| SOCIAL-02 | Phase 2 | Pending |
+| SOCIAL-03 | Phase 2 | Pending |
+| SOCIAL-04 | Phase 2 | Pending |
+| SOCIAL-05 | Phase 2 | Pending |
+| CTA-01 | Phase 2 | Pending |
+| CTA-02 | Phase 2 | Pending |
+| FOOT-01 | Phase 2 | Pending |
+| FOOT-02 | Phase 2 | Pending |
+| FOOT-03 | Phase 2 | Pending |
+| CURR-01 | Phase 3 | Pending |
+| CURR-02 | Phase 3 | Pending |
+| CURR-03 | Phase 3 | Pending |
+| PERF-01 | Phase 3 | Pending |
+| PERF-02 | Phase 3 | Pending |
+| PERF-03 | Phase 3 | Pending |
+| PERF-04 | Phase 3 | Pending |
+| A11Y-01 | Phase 3 | Pending |
+| A11Y-02 | Phase 3 | Pending |
+| A11Y-03 | Phase 3 | Pending |
+| A11Y-04 | Phase 3 | Pending |
+| SEO-01 | Phase 3 | Pending |
+| SEO-02 | Phase 3 | Pending |
+| SEO-03 | Phase 3 | Pending |
+| INFRA-03 | Phase 4 | Pending |
+| INFRA-04 | Phase 4 | Pending |
+| INFRA-05 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33 (pending roadmap creation)
+- v1 requirements: 42 total (note: prior count of 33 was incorrect — 42 requirements exist across 11 categories)
+- Mapped to phases: 42
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-16*
-*Last updated: 2026-04-16 after initial definition*
+*Last updated: 2026-04-16 — traceability populated during roadmap creation*
