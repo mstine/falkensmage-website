@@ -10,8 +10,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Theme & Design System
 
 - [x] **THEME-01**: ARCÆON palette implemented as CSS custom properties (design tokens) with all color tiers — Primary Identity, Focal Energy, Cosmic Depth, Energy Accents
-- [ ] **THEME-02**: Typographic hierarchy with self-hosted variable fonts (Cinzel for display/headings, Space Grotesk for body/UI) — validated against ARCÆON palette before locking
-- [ ] **THEME-03**: Glow treatment system — reusable CSS for CTA buttons, hover states, hero image pulse using GPU-composited `::before` pseudo-element + `opacity` pattern (not `box-shadow`)
+- [x] **THEME-02**: Typographic hierarchy with self-hosted variable fonts (Cinzel for display/headings, Space Grotesk for body/UI) — validated against ARCÆON palette before locking
+- [x] **THEME-03**: Glow treatment system — reusable CSS for CTA buttons, hover states, hero image pulse using GPU-composited `::before` pseudo-element + `opacity` pattern (not `box-shadow`)
 - [x] **THEME-04**: Dark graphic novel aesthetic — deep backgrounds (Deep Indigo/Void Purple), directional light via gradients, painted shadow shapes
 - [ ] **THEME-05**: Mobile-first responsive foundation — 375px viewport first, scales up via breakpoints baked into every partial
 - [ ] **THEME-06**: Sigil grammar decorative elements — broken geometric circles, void-to-glow gradients as subtle visual DNA from Feral Architecture vocabulary
@@ -118,8 +118,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | THEME-01 | Phase 1 | Complete |
-| THEME-02 | Phase 1 | Pending |
-| THEME-03 | Phase 1 | Pending |
+| THEME-02 | Phase 1 | Complete |
+| THEME-03 | Phase 1 | Complete |
 | THEME-04 | Phase 1 | Complete |
 | THEME-05 | Phase 1 | Pending |
 | THEME-06 | Phase 1 | Pending |

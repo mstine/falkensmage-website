@@ -26,7 +26,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 **Plans**: 3 plans
 Plans:
 - [x] 01-01-PLAN.md — Hugo project init + ARCAEON CSS token system
-- [ ] 01-02-PLAN.md — Typography + Glow treatment system
+- [x] 01-02-PLAN.md — Typography + Glow treatment system
 - [ ] 01-03-PLAN.md — Dark aesthetic, sigils, kitchen sink demo + visual checkpoint
 **UI hint**: yes
 
