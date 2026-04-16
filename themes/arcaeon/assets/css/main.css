@@ -203,8 +203,134 @@ a:hover {
 }
 
 /* ============================================
-   GLOW SYSTEM — stub (Plan 02 populates)
+   GLOW SYSTEM — Ambient Pulse (D-07, D-09, D-10)
+   Slow breathing radial glow for hero image / decorative elements
+   Color: Electric Violet (#7a2cff) per D-09
+   Timing: 5s ease-in-out cycle per D-10 (4-6s range)
+   GPU-composited: ::before + opacity + will-change (D-08)
    ============================================ */
+
+.glow-ambient {
+  position: relative;
+}
+
+.glow-ambient::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle,
+    var(--arcaeon-electric-violet) 0%,
+    transparent 70%
+  );
+  opacity: 0.4;
+  animation: ambient-pulse 5s ease-in-out infinite;
+  pointer-events: none;
+  will-change: opacity;
+  z-index: -1;
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-ambient::before {
+    animation: none;
+    opacity: 0.3;
+  }
+}
+
+/* ============================================
+   GLOW SYSTEM — Interactive Glow (D-07)
+   Hover/focus state for links and social cards
+   Opacity transition on ::before pseudo-element
+   ============================================ */
+
+.glow-interactive {
+  position: relative;
+}
+
+.glow-interactive::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(
+    circle,
+    var(--arcaeon-electric-violet) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  will-change: opacity;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.glow-interactive:hover::before,
+.glow-interactive:focus-visible::before {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-interactive::before {
+    transition: none;
+  }
+}
+
+/* ============================================
+   GLOW SYSTEM — Radiant Core CTA (D-07)
+   Fusion Gold (#ffb347) to Ignition Orange (#ff7a18) gradient
+   Warm glow on hover via ::before + opacity
+   ============================================ */
+
+.glow-radiant-core {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    var(--arcaeon-fusion-gold) 0%,
+    var(--arcaeon-ignition-orange) 100%
+  );
+  color: var(--arcaeon-void-purple);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 0.875rem 2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.glow-radiant-core::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: radial-gradient(
+    circle,
+    var(--arcaeon-fusion-gold) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+  will-change: opacity;
+  z-index: -1;
+}
+
+.glow-radiant-core:hover::before,
+.glow-radiant-core:focus-visible::before {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-radiant-core::before {
+    transition: none;
+  }
+}
 
 /* ============================================
    LAYOUT — stub (Plan 03 populates)
