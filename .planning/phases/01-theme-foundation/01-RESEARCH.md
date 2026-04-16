@@ -660,7 +660,7 @@ Computed directly [VERIFIED: Python WCAG luminance formula]. Phase 1 must honor 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Cinzel Variable file naming pattern**
    - What we know: Fontsource packages store WOFF2 files under `files/` subdirectory; pattern varies by package
