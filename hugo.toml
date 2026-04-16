@@ -1,0 +1,26 @@
+baseURL = "https://falkensmage.com/"
+languageCode = "en-us"
+title = "Falken's Mage"
+theme = "arcaeon"
+
+[params]
+  author = "Matt Stine"
+  description = "Falken's Mage - Matt Stine"
+
+[params.colors]
+  electricViolet = "#7a2cff"
+  neonMagenta = "#ff3cac"
+  plasmaPink = "#ff5fd2"
+  electricBlue = "#2fd3ff"
+  solarWhite = "#fff4e6"
+  fusionGold = "#ffb347"
+  ignitionOrange = "#ff7a18"
+  deepIndigo = "#0a0f3c"
+  midnightBlue = "#111a6b"
+  voidPurple = "#1a0f2e"
+  ionGlow = "#5be7ff"
+
+[caches]
+  [caches.getresource]
+    dir = ":cacheDir/:project"
+    maxAge = "1h"
