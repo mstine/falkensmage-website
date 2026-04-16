@@ -495,23 +495,20 @@ a:hover {
 
 @media (min-width: 48rem) {
   .hero-image-wrapper {
-    max-height: 450px;
+    max-width: 800px;
+    max-height: none;
+    overflow: visible;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .hero-image {
-    height: 450px;
+    height: auto;
+    object-fit: contain;
   }
 }
 
 @media (min-width: 64rem) {
-  .hero-image-wrapper {
-    max-height: 580px;
-  }
-
-  .hero-image {
-    height: 580px;
-  }
-
   .hero-text {
     padding-top: 2.5rem;
   }

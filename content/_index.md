@@ -1,10 +1,16 @@
 ---
 title: "Falken's Mage"
-tagline: "Where enterprise architecture meets the technomagickal."
-identity_statement: "Enterprise architect. Tarot reader. Builder of systems that think. I hold paradox for a living — yours included."
-cta_description: "Coaching. Speaking. Collaboration."
+tagline: "He's one technomagickal motherfucker."
+identity_blocks:
+  - "Twenty years in the guts of enterprise systems. Distributed architectures where a bad design decision doesn't just fail — it fails at 2 AM on a Friday and takes someone's entire quarter with it. I'm good at that work."
+  - "I'm also an archetypal tarotist, astrologer, chaos witch, and the kind of person who will diagram your org's dysfunction on a whiteboard and then pull a card that names the thing nobody in the room was willing to say out loud."
+  - "Most people keep those worlds separate. I think that's a load of horseshit."
+  - "The analytical mind and the symbolic mind are not competing systems. They're complementary cognitive architectures — and if you're only running one of them, you're leaving half your intelligence on the table."
+  - "I write about this at Feral Architecture. I coach leaders who are tired of optimizing their way to burnout. I speak to rooms full of engineers about things they didn't know they needed to hear. And I build real software that treats the inner life as engineering-grade signal, not soft skills fluff you endure at an offsite."
+  - "If any of that made you flinch, we're probably not a fit. If it made something in you go <em>finally</em> — stick around."
+cta_description: "Coaching for leaders done performing. Speaking for rooms done pretending. If you're ready to stop splitting yourself in half to fit — let's fucking go."
 cta_email: "falkensmage@falkenslabyrinth.com"
-cta_button_text: "Work With Me"
+cta_button_text: "Get Feral With Me"
 footer_closing: "Stay feral, folks."
 social_links:
   - name: "Feral Architecture"
