@@ -8,13 +8,7 @@
   {{ else }}{{ with site.Params.description }}<meta name="description" content="{{ . }}">
   {{ end }}{{ end }}
 
-  {{/* Font preloads — prevent FOIT. crossorigin required even for same-origin to avoid double download. */}}
-  {{ $cinzel := resources.Get "fonts/cinzel-latin-wght-normal.woff2" | fingerprint }}
-  <link rel="preload" href="{{ $cinzel.RelPermalink }}" as="font" type="font/woff2" crossorigin>
-  {{ $spaceGrotesk := resources.Get "fonts/space-grotesk-latin-wght-normal.woff2" | fingerprint }}
-  <link rel="preload" href="{{ $spaceGrotesk.RelPermalink }}" as="font" type="font/woff2" crossorigin>
-
-  {{/* CSS via Hugo css.Build pipeline */}}
+  {{/* CSS via Hugo css.Build pipeline — font urls resolved by css.Build, no separate preload needed */}}
   {{ $css := resources.Get "css/main.css" | css.Build | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 </head>
