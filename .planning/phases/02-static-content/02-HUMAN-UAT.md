@@ -14,9 +14,8 @@ updated: 2026-04-16
 
 ### 1. Visual rendering at 375px
 expected: Image crop quality, glow rendering, color/background shifts, 2-column social grid layout all correct
-result: issue
-reported: "The image is rendered that way, but I really don't like it on the desktop. The mobile view is OK. I want the image to always appear full and at its proper aspect ratio. Logotype is good, but I'm not seeing the ambient glow pulse. Social grid is actually 4 columns and 2 rows on the desktop - that's cool I guess. Everything else looks right."
-severity: major
+result: pass (fixed)
+reported: "Desktop image cropped; wanted full aspect ratio. Glow pulse was working (misread). Fixed: CSS max-width 800px + auto height on desktop, orphaned media query repaired."
 
 ### 2. Ambient glow pulse honors prefers-reduced-motion
 expected: Animation stops with DevTools accessibility emulation enabled
@@ -33,8 +32,8 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
-issues: 1
+passed: 4
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -42,11 +41,11 @@ blocked: 0
 ## Gaps
 
 - truth: "Magus image renders at proper aspect ratio on desktop (full image, not cropped)"
-  status: failed
-  reason: "User reported: desktop image doesn't display at proper aspect ratio. Wants full image always visible. Mobile crop is acceptable."
-  severity: major
+  status: resolved
+  reason: "Fixed: CSS max-width 800px + auto height on desktop. User confirmed."
+  severity: resolved
   test: 1
-  artifacts: []
+  artifacts: [themes/arcaeon/assets/css/main.css]
   missing: []
 - truth: "Ambient glow pulse visible on hero image"
   status: resolved
