@@ -212,6 +212,7 @@ a:hover {
 
 .glow-ambient {
   position: relative;
+  isolation: isolate;
 }
 
 .glow-ambient::before {
@@ -227,7 +228,7 @@ a:hover {
   animation: ambient-pulse 5s ease-in-out infinite;
   pointer-events: none;
   will-change: opacity;
-  z-index: -1;
+  z-index: 0;
 }
 
 @keyframes ambient-pulse {
@@ -250,6 +251,7 @@ a:hover {
 
 .glow-interactive {
   position: relative;
+  isolation: isolate;
 }
 
 .glow-interactive::before {
@@ -265,7 +267,7 @@ a:hover {
   transition: opacity 0.25s ease;
   pointer-events: none;
   will-change: opacity;
-  z-index: -1;
+  z-index: 0;
   border-radius: inherit;
 }
 
@@ -288,6 +290,7 @@ a:hover {
 
 .glow-radiant-core {
   position: relative;
+  isolation: isolate;
   background: linear-gradient(
     135deg,
     var(--arcaeon-fusion-gold) 0%,
@@ -318,7 +321,7 @@ a:hover {
   pointer-events: none;
   border-radius: inherit;
   will-change: opacity;
-  z-index: -1;
+  z-index: 0;
 }
 
 .glow-radiant-core:hover::before,
