@@ -1,0 +1,18 @@
+{{/* Identity + CTA Section — verbal identity flowing into action */}}
+<section class="section section-depth identity-cta-section">
+  <div class="section-content identity-cta-content">
+    {{ with .Params.identity_statement }}
+    <p class="identity-statement">{{ . }}</p>
+    {{ end }}
+
+    {{ with .Params.cta_description }}
+    <p class="cta-description">{{ . }}</p>
+    {{ end }}
+
+    {{ with .Params.cta_email }}
+    <a href="mailto:{{ . }}" class="glow-radiant-core cta-button">
+      {{ $.Params.cta_button_text | default "Work With Me" }}
+    </a>
+    {{ end }}
+  </div>
+</section>

@@ -516,3 +516,37 @@ a:hover {
     padding-top: 2.5rem;
   }
 }
+
+/* ============================================
+   IDENTITY + CTA SECTION (Phase 2)
+   D-09: Identity statement flows into CTA
+   D-10: .section-depth (Deep Indigo) background
+   D-12: Identity lives in this section, not hero
+   ============================================ */
+
+.identity-cta-content {
+  text-align: center;
+}
+
+.identity-statement {
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-text);
+  max-width: 32rem;
+  margin: 0 auto 1.5rem;
+}
+
+.cta-description {
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-text);
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.cta-button {
+  font-size: var(--text-base);
+  text-align: center;
+}
