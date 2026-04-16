@@ -1,0 +1,116 @@
+{{ define "main" }}
+<main>
+
+  {{/* ===== COLOR TOKENS ===== */}}
+  <section class="section section-void">
+    <div class="section-content">
+      <h1>ARCAEON Design System</h1>
+      <p>Kitchen sink demo page — visual validation of all Phase 1 design tokens, typography, glow treatments, and decorative elements.</p>
+
+      <h2>Color Palette</h2>
+
+      <h3>Primary Identity</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+        <div style="background: var(--arcaeon-electric-violet); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Electric Violet</span></div>
+        <div style="background: var(--arcaeon-neon-magenta); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Neon Magenta</span></div>
+        <div style="background: var(--arcaeon-plasma-pink); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Plasma Pink</span></div>
+        <div style="background: var(--arcaeon-electric-blue); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #000;">Electric Blue</span></div>
+      </div>
+
+      <h3>Focal Energy</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+        <div style="background: var(--arcaeon-solar-white); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #000;">Solar White</span></div>
+        <div style="background: var(--arcaeon-fusion-gold); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #000;">Fusion Gold</span></div>
+        <div style="background: var(--arcaeon-ignition-orange); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #000;">Ignition Orange</span></div>
+      </div>
+
+      <h3>Cosmic Depth</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+        <div style="background: var(--arcaeon-deep-indigo); width: 80px; height: 80px; border-radius: 4px; border: 1px solid var(--arcaeon-electric-violet); display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Deep Indigo</span></div>
+        <div style="background: var(--arcaeon-midnight-blue); width: 80px; height: 80px; border-radius: 4px; border: 1px solid var(--arcaeon-electric-violet); display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Midnight Blue</span></div>
+        <div style="background: var(--arcaeon-void-purple); width: 80px; height: 80px; border-radius: 4px; border: 1px solid var(--arcaeon-electric-violet); display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #fff;">Void Purple</span></div>
+      </div>
+
+      <h3>Energy Accents</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem;">
+        <div style="background: var(--arcaeon-ion-glow); width: 80px; height: 80px; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px;"><span style="font-size: 0.625rem; color: #000;">Ion Glow</span></div>
+      </div>
+    </div>
+  </section>
+
+  {{/* ===== TYPOGRAPHY ===== */}}
+  <section class="section section-depth">
+    <div class="section-content">
+      <h2>Typography Scale</h2>
+
+      <div class="display-text" style="margin-bottom: 1rem;">Display — Cinzel 800 — clamp(2.5rem, 8vw, 4rem)</div>
+      <h1>Heading 1 — Cinzel 700 — 2.074rem</h1>
+      <h2 style="margin-top: 1rem;">Heading 2 — Cinzel 600 — 1.728rem</h2>
+      <h3 style="margin-top: 1rem;">Heading 3 — Cinzel 500 — 1.44rem</h3>
+      <p style="margin-top: 1rem;">Body text — Space Grotesk 400 — 1rem (16px). This is how body copy renders against the Deep Indigo background. Solar White text at full WCAG AA contrast ratio of 16.86:1. The quick brown fox jumps over the lazy dog.</p>
+      <p style="margin-top: 0.5rem;"><a href="#">Accent link text — Ion Glow (#5be7ff)</a> — hover to see Neon Magenta.</p>
+    </div>
+  </section>
+
+  {{/* ===== GLOW TREATMENTS ===== */}}
+  <section class="section section-void">
+    <div class="section-content">
+      <h2>Glow Treatments</h2>
+
+      <h3>Ambient Pulse</h3>
+      <div class="glow-ambient" style="width: 200px; height: 200px; background: var(--arcaeon-deep-indigo); border-radius: 8px; margin: 2rem auto; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 0.75rem; text-align: center;">Breathing glow<br>5s cycle</span>
+      </div>
+
+      <h3>Interactive Glow</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0;">
+        <a href="#" class="glow-interactive" style="display: inline-block; padding: 1rem 1.5rem; background: var(--arcaeon-deep-indigo); border-radius: 6px; color: var(--color-text);">Hover me — Interactive Glow</a>
+        <a href="#" class="glow-interactive" style="display: inline-block; padding: 1rem 1.5rem; background: var(--arcaeon-deep-indigo); border-radius: 6px; color: var(--color-text-accent);">Another link — Ion Glow text</a>
+      </div>
+
+      <h3>Radiant Core CTA</h3>
+      <div style="margin: 1.5rem 0;">
+        <a href="#" class="glow-radiant-core">Work With Me — Radiant Core</a>
+      </div>
+    </div>
+  </section>
+
+  {{/* ===== SIGIL GRAMMAR ===== */}}
+  <section class="section section-depth">
+    <div class="section-content">
+      <h2>Sigil Grammar</h2>
+      <p style="margin-bottom: 1rem;">CSS-only decorative elements — broken geometric circles and gradient lines.</p>
+
+      <div class="sigil-arc" style="height: 120px; position: relative; margin: 1rem 0;">
+        <span style="font-size: 0.75rem; position: absolute; bottom: 0;">sigil-arc (80px broken circle, Electric Violet, 0.3 opacity)</span>
+      </div>
+
+      <div class="sigil-arc-sm" style="height: 80px; position: relative; margin: 1rem 0;">
+        <span style="font-size: 0.75rem; position: absolute; bottom: 0;">sigil-arc-sm (40px small arc, Neon Magenta, 0.2 opacity)</span>
+      </div>
+
+      <div class="sigil-gradient" style="height: 40px; position: relative; margin: 1rem 0;">
+        <span style="font-size: 0.75rem; position: absolute; bottom: 0;">sigil-gradient (void-to-glow line, 0.4 opacity)</span>
+      </div>
+    </div>
+  </section>
+
+  {{/* ===== SECTION ALTERNATION DEMO ===== */}}
+  <section class="section section-void">
+    <div class="section-content">
+      <h2>Section Alternation (D-11)</h2>
+      <p>This section uses <code>.section-void</code> — Void Purple background (#1a0f2e).</p>
+      <p>Notice the Midnight Blue gradient transition at the boundary above.</p>
+    </div>
+  </section>
+
+  <section class="section section-depth">
+    <div class="section-content">
+      <h2>Alternate Section</h2>
+      <p>This section uses <code>.section-depth</code> — Deep Indigo background (#0a0f3c).</p>
+      <p>Sections alternate to create visual separation without hard borders.</p>
+    </div>
+  </section>
+
+</main>
+{{ end }}
