@@ -1,5 +1,5 @@
 {{/* Currently Section — RSS + current focus (CURR-01, CURR-02, CURR-03) */}}
-{{ $rssURL := "https://feralarchitecture.com/feed" }}
+{{ $rssURL := "https://feralarchitecture.substack.com/feed" }}
 {{ $latestPost := dict }}
 
 {{ with try (resources.GetRemote $rssURL) }}
