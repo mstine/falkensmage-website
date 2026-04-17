@@ -1,10 +1,12 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: Gap Closure
-status: completed
-stopped_at: Completed 05-03-PLAN.md — v1.0 milestone closed. Clean-rebuild regression green (46+18+39), PERF-01 Pending→Complete, zero Pending v1 requirements. ROADMAP Phase 5 ready to flip to Complete.
-last_updated: "2026-04-17T19:49:57.233Z"
+milestone_name: MVP
+status: shipped
+shipped_at: 2026-04-17
+tag: v1.0
+stopped_at: v1.0 MVP archived 2026-04-17 — live at https://falkensmage.com. All 42 v1 requirements Complete. Awaiting /gsd-new-milestone to scope v1.1.
+last_updated: "2026-04-17T23:00:00.000Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
@@ -18,19 +20,20 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-16)
+See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** A stranger landing from social media instantly understands who this person is and can reach everything that matters — in under ten seconds, on a phone.
-**Current focus:** Phase 5 — v1-gap-closure
+**Current focus:** v1.0 shipped — awaiting v1.1 scope via `/gsd-new-milestone`.
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
-Status: v1.0 milestone closed — 42/42 requirements Complete
+Milestone: v1.0 (shipped 2026-04-17)
+Phase: — (none active)
+Plan: — (none active)
+Status: v1.0 archived; 42/42 requirements Complete; live at https://falkensmage.com
 Last activity: 2026-04-17
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -139,9 +142,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- **Font pairing** (Phase 1): Cinzel + Space Grotesk needs visual validation against ARCÆON palette before type scale is locked — research flags MEDIUM confidence
-- **Magus image art direction** (Phase 2): 1200x628 horizontal source needs assessment for 375px portrait crop before hero implementation
-- **Copy dependencies** (Phase 2): Identity statement + tagline are human-written content; Phase 2 scaffolds placeholder slots, Matt writes the real lines
+*None at v1.0 close.*
+
+Carried forward to v1.1 scoping:
+
+- **Copy dependencies:** Placeholder tagline + identity statement still in place — real copy is human-written and deferred.
+- **Nyquist validation draft scaffolds:** Phases 3, 4, 5 have VALIDATION.md in draft state. Non-blocking; `/gsd-validate-phase 0{3,4,5}` can fill retroactively.
 
 ### Quick Tasks Completed
 
@@ -151,6 +157,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T19:39:52.000Z
-Stopped at: Completed 05-03-PLAN.md — v1.0 milestone closed. Clean-rebuild regression green (46+18+39), PERF-01 Pending→Complete, zero Pending v1 requirements. ROADMAP Phase 5 ready to flip to Complete.
+Last session: 2026-04-17T23:00:00.000Z
+Stopped at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
 Resume file: None
