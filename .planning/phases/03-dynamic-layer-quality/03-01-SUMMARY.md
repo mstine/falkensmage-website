@@ -26,6 +26,7 @@ decisions:
   - Font paths changed from relative ../fonts/ to absolute /fonts/ so @font-face and preload href match exactly
   - crossorigin attribute required on font preload links even for same-origin (avoids double-fetch cache key mismatch)
   - currently_focus field added to _index.md front matter for manually editable blurb independent of RSS status
+requirements-completed: [CURR-01, CURR-02, CURR-03, PERF-03, A11Y-01, A11Y-04]
 metrics:
   duration: ~8min
   completed: 2026-04-17
