@@ -15,7 +15,7 @@ currently_focus: "Mapping the territory between enterprise systems and inner one
 footer_closing: "Stay feral, folks."
 social_links:
   - name: "Feral Architecture"
-    url: "https://feralarchitecture.substack.com"
+    url: "https://feralarchitecture.com"
     label: "Substack"
     icon: "substack"
   - name: "LinkedIn"

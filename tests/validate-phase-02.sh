@@ -152,7 +152,7 @@ echo ""
 
 echo "[ SOCIAL-04 ] Social platforms — all 8 platform domains present"
 PLATFORMS=(
-  "feralarchitecture.substack.com"
+  "feralarchitecture.com"
   "linkedin.com"
   "x.com/falkensmage"
   "bsky.app"

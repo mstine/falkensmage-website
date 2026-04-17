@@ -60,7 +60,7 @@ echo ""
 echo "--- CURR-03: RSS fallback ---"
 check "try wrapping in partial" "$(grep -c 'try' "$CURRENTLY_PARTIAL")"
 check "warnf error logging" "$(grep -c 'warnf' "$CURRENTLY_PARTIAL")"
-check "fallback link to substack" "$(grep -c 'feralarchitecture.substack.com' "$CURRENTLY_PARTIAL")"
+check "fallback link to feral architecture" "$(grep -c 'feralarchitecture.com' "$CURRENTLY_PARTIAL")"
 echo ""
 
 # --- PERF-01: No external CDN calls ---

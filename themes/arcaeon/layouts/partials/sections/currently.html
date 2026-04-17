@@ -1,5 +1,5 @@
 {{/* Currently Section — RSS + current focus (CURR-01, CURR-02, CURR-03) */}}
-{{ $rssURL := "https://feralarchitecture.substack.com/feed" }}
+{{ $rssURL := "https://feralarchitecture.com/feed" }}
 {{ $latestPost := dict }}
 
 {{ with try (resources.GetRemote $rssURL) }}
@@ -30,7 +30,7 @@
           &laquo;&thinsp;{{ $latestPost.title }}&thinsp;&raquo;
         </a>
       {{ else }}
-        <a href="https://feralarchitecture.substack.com"
+        <a href="https://feralarchitecture.com"
            class="currently-post-link glow-interactive"
            target="_blank"
            rel="noopener noreferrer">
