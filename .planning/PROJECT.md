@@ -22,15 +22,17 @@ A stranger landing from social media instantly understands who this person is an
 
 ### Active
 
-- [ ] "Currently" section — auto-pulled latest Feral Architecture post via RSS + manually editable "current focus" blurb
-- [ ] Custom Hugo theme `arcaeon` — ARCÆON palette as CSS custom properties, typographic hierarchy, glow treatments, dark graphic novel aesthetic, component partials, responsive mobile-first foundation
-- [ ] Typography — self-hosted face(s) selected via research to match dark graphic novel aesthetic
-- [ ] Lemniscate sigil favicon
-- [ ] Hugo static site with GitHub Actions build/deploy pipeline to GitHub Pages
-- [ ] Performance — single page load under 1s on 3G, WebP with JPEG fallback, lazy-load below fold
-- [ ] Mobile-first — designed for 375px viewport, 44px touch targets, portrait hero, no horizontal scroll
-- [ ] Accessibility — semantic HTML5, WCAG AA contrast, meaningful alt text, aria-labels, prefers-reduced-motion
-- [ ] SEO/Meta — Open Graph tags with Magus image, Twitter card, proper title/description, canonical URL
+*No active requirements — all v1.0 milestone requirements validated.*
+
+### Recently Validated (Phase 3 + 4)
+
+- [x] "Currently" section — auto-pulled latest Feral Architecture post via RSS + manually editable "current focus" blurb — *Validated in Phase 3: Dynamic Layer + Quality*
+- [x] Performance — single page load under 1s on 3G, WebP with JPEG fallback, lazy-load below fold — *Validated in Phase 3: Dynamic Layer + Quality*
+- [x] Mobile-first — designed for 375px viewport, 44px touch targets, portrait hero, no horizontal scroll — *Validated in Phase 3: Dynamic Layer + Quality*
+- [x] Accessibility — semantic HTML5, WCAG AA contrast, meaningful alt text, aria-labels, prefers-reduced-motion — *Validated in Phase 3: Dynamic Layer + Quality*
+- [x] SEO/Meta — Open Graph tags with Magus image, Twitter card, proper title/description, canonical URL — *Validated in Phase 3: Dynamic Layer + Quality*
+- [x] Lemniscate sigil favicon — Electric Violet lemniscate with ARCAEON glow, SVG + ICO formats — *Validated in Phase 4: Production Deploy*
+- [x] Hugo static site with GitHub Actions build/deploy pipeline to GitHub Pages — *Validated in Phase 4: Production Deploy*
 
 ### Out of Scope
 
@@ -101,4 +103,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after Phase 2: Static Content complete*
+*Last updated: 2026-04-17 after Phase 4: Production Deploy complete — falkensmage.com is live*
