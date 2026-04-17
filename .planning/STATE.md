@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Gap Closure
-status: executing
-stopped_at: Completed 05-02-PLAN.md — SEO-03 regex + 5 Phase-5 checks + npm ci removal + 4 SUMMARY backfills
-last_updated: "2026-04-17T19:45:00.000Z"
+status: complete
+stopped_at: Completed 05-03-PLAN.md — final regression green (46+18+39 checks), PERF-01 flipped Complete, v1.0 milestone closed
+last_updated: "2026-04-17T19:39:52.000Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 13
-  completed_plans: 12
-  percent: 92
+  completed_plans: 13
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 5 (v1-gap-closure) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
+Phase: 5 (v1-gap-closure) — COMPLETE
+Plan: 3 of 3 (done)
+Status: v1.0 milestone closed — 42/42 requirements Complete
 Last activity: 2026-04-17
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [█████████░] 92%
 | Phase 04-production-deploy P02 | 30min | 2 tasks | 0 files |
 | Phase 05-v1-gap-closure P01 | 2min | 3 tasks | 2 files |
 | Phase 05-v1-gap-closure P02 | 3min | 6 tasks | 6 files |
+| Phase 05-v1-gap-closure P03 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 05-v1-gap-closure]: npm ci removed from deploy workflow — committed WOFF2 under themes/arcaeon/static/fonts/ is the trust root; package.json retained as version documentation
 - [Phase 05-v1-gap-closure]: requirements-completed inline YAML array (single line) — canonical frontmatter key, matches 01-01, 02-01, 02-02, 04-01, 04-02 convention
 - [Phase 05-v1-gap-closure]: all grep calls in new checks that can match zero items wrapped with || true — set -uo pipefail aborts otherwise
+- [Phase 05-v1-gap-closure]: clean-rebuild discipline (rm -rf public/ resources/_gen/) mandatory before verification — Hugo's asset cache and fingerprinted CSS accumulation can mask bugs under stale state
+- [Phase 05-v1-gap-closure]: test-path synchronization after source-of-truth moves — validate-phase-01.sh font paths updated from assets/fonts/ to static/fonts/ per Plan 05-01 architecture; hardcoded test paths must follow intentional file moves
 
 ### Pending Todos
 
@@ -135,6 +138,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T19:45:00.000Z
-Stopped at: Completed 05-02-PLAN.md — validate-phase-03.sh patched (39/39 checks), npm ci removed, 4 SUMMARY backfills
+Last session: 2026-04-17T19:39:52.000Z
+Stopped at: Completed 05-03-PLAN.md — v1.0 milestone closed. Clean-rebuild regression green (46+18+39), PERF-01 Pending→Complete, zero Pending v1 requirements. ROADMAP Phase 5 ready to flip to Complete.
 Resume file: None

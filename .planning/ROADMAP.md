@@ -10,7 +10,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 - [x] **Phase 2: Static Content** - All visible sections: hero, identity, social links, CTA, footer (completed 2026-04-16)
 - [x] **Phase 3: Dynamic Layer + Quality** - "Currently" RSS section + performance, accessibility, SEO (completed 2026-04-17)
 - [x] **Phase 4: Production Deploy** - GitHub Actions pipeline, CNAME, favicon, live site (completed 2026-04-17)
-- [ ] **Phase 5: v1.0 Gap Closure** - Phase 3 & 4 code fixes + Phase 1 & 3 documentation backfill
+- [x] **Phase 5: v1.0 Gap Closure** - Phase 3 & 4 code fixes + Phase 1 & 3 documentation backfill (completed 2026-04-17)
 
 ## Phase Details
 
@@ -94,7 +94,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Wave 1 code fixes: remove nested footer, add css.Build externals, delete duplicate assets/fonts/
 - [x] 05-02-PLAN.md — Wave 2 hygiene + backfill: patch validate-phase-03.sh, remove npm ci, add requirements-completed to 4 SUMMARYs
-- [ ] 05-03-PLAN.md — Wave 3 verification + traceability flip in REQUIREMENTS.md
+- [x] 05-03-PLAN.md — Wave 3 verification + traceability flip in REQUIREMENTS.md
 **UI hint**: no
 
 ## Progress
@@ -105,4 +105,4 @@ Plans:
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
 | 3. Dynamic Layer + Quality | 2/2 | Complete   | 2026-04-17 |
 | 4. Production Deploy | 2/2 | Complete   | 2026-04-17 |
-| 5. v1.0 Gap Closure | 2/3 | In Progress|  |
+| 5. v1.0 Gap Closure | 3/3 | Complete   | 2026-04-17 |
