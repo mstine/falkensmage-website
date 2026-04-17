@@ -64,23 +64,23 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Performance
 
-- [ ] **PERF-01**: Single page load under 1s on 3G connection
-- [ ] **PERF-02**: Hero image optimized — WebP with JPEG fallback via Hugo image pipeline, lazy-load for below-fold content
+- [x] **PERF-01**: Single page load under 1s on 3G connection
+- [x] **PERF-02**: Hero image optimized — WebP with JPEG fallback via Hugo image pipeline, lazy-load for below-fold content
 - [x] **PERF-03**: Self-hosted fonts with `font-display: swap` and `crossorigin` on preload links — no FOIT, no double-download
-- [ ] **PERF-04**: No external font CDNs, no analytics scripts, no external JS dependencies
+- [x] **PERF-04**: No external font CDNs, no analytics scripts, no external JS dependencies
 
 ### Accessibility
 
 - [x] **A11Y-01**: Semantic HTML5 structure — `<header>`, `<main>`, `<section>`, `<footer>`, `<nav>`
-- [ ] **A11Y-02**: Color contrast ratios meet WCAG AA against dark backgrounds — neon accents reserved for decoration only, Solar White/Ion Glow for body text
-- [ ] **A11Y-03**: All images have meaningful alt text (hero image describes the Magus scene)
+- [x] **A11Y-02**: Color contrast ratios meet WCAG AA against dark backgrounds — neon accents reserved for decoration only, Solar White/Ion Glow for body text
+- [x] **A11Y-03**: All images have meaningful alt text (hero image describes the Magus scene)
 - [x] **A11Y-04**: `prefers-reduced-motion` media query disables all ambient animations
 
 ### SEO & Meta
 
-- [ ] **SEO-01**: Open Graph tags with Magus image, proper title "Falken's Mage — Matt Stine", meta description encoding identity
-- [ ] **SEO-02**: Twitter Card meta tags
-- [ ] **SEO-03**: Canonical URL set to `https://falkensmage.com`
+- [x] **SEO-01**: Open Graph tags with Magus image, proper title "Falken's Mage — Matt Stine", meta description encoding identity
+- [x] **SEO-02**: Twitter Card meta tags
+- [x] **SEO-03**: Canonical URL set to `https://falkensmage.com`
 
 ## v2 Requirements
 
@@ -145,17 +145,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CURR-01 | Phase 3 | Complete |
 | CURR-02 | Phase 3 | Complete |
 | CURR-03 | Phase 3 | Complete |
-| PERF-01 | Phase 3 | Pending |
-| PERF-02 | Phase 3 | Pending |
+| PERF-01 | Phase 3 | Complete |
+| PERF-02 | Phase 3 | Complete |
 | PERF-03 | Phase 3 | Complete |
-| PERF-04 | Phase 3 | Pending |
+| PERF-04 | Phase 3 | Complete |
 | A11Y-01 | Phase 3 | Complete |
-| A11Y-02 | Phase 3 | Pending |
-| A11Y-03 | Phase 3 | Pending |
+| A11Y-02 | Phase 3 | Complete |
+| A11Y-03 | Phase 3 | Complete |
 | A11Y-04 | Phase 3 | Complete |
-| SEO-01 | Phase 3 | Pending |
-| SEO-02 | Phase 3 | Pending |
-| SEO-03 | Phase 3 | Pending |
+| SEO-01 | Phase 3 | Complete |
+| SEO-02 | Phase 3 | Complete |
+| SEO-03 | Phase 3 | Complete |
 | INFRA-03 | Phase 4 | Pending |
 | INFRA-04 | Phase 4 | Pending |
 | INFRA-05 | Phase 4 | Pending |
