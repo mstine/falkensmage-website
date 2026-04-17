@@ -101,19 +101,22 @@ echo ""
 
 echo "[ 01-02-02 ] THEME-02: Self-hosted fonts — WOFF2 files + font-display: swap + 2 @font-face"
 
-CINZEL_WOFF2="$PROJECT_ROOT/themes/arcaeon/assets/fonts/cinzel-latin-wght-normal.woff2"
-SPACE_WOFF2="$PROJECT_ROOT/themes/arcaeon/assets/fonts/space-grotesk-latin-wght-normal.woff2"
+# Font source of truth: themes/arcaeon/static/fonts/ (single-source per Plan 05-01 PERF-03 fix;
+# duplicate copies under assets/fonts/ were deleted so Hugo css.Build externals can preserve
+# /fonts/... url() byte-identical to preload href — no double-fetch)
+CINZEL_WOFF2="$PROJECT_ROOT/themes/arcaeon/static/fonts/cinzel-latin-wght-normal.woff2"
+SPACE_WOFF2="$PROJECT_ROOT/themes/arcaeon/static/fonts/space-grotesk-latin-wght-normal.woff2"
 
 if [ -f "$CINZEL_WOFF2" ]; then
-  pass "cinzel-latin-wght-normal.woff2 exists"
+  pass "cinzel-latin-wght-normal.woff2 exists in themes/arcaeon/static/fonts/"
 else
-  fail "cinzel-latin-wght-normal.woff2 MISSING from themes/arcaeon/assets/fonts/"
+  fail "cinzel-latin-wght-normal.woff2 MISSING from themes/arcaeon/static/fonts/"
 fi
 
 if [ -f "$SPACE_WOFF2" ]; then
-  pass "space-grotesk-latin-wght-normal.woff2 exists"
+  pass "space-grotesk-latin-wght-normal.woff2 exists in themes/arcaeon/static/fonts/"
 else
-  fail "space-grotesk-latin-wght-normal.woff2 MISSING from themes/arcaeon/assets/fonts/"
+  fail "space-grotesk-latin-wght-normal.woff2 MISSING from themes/arcaeon/static/fonts/"
 fi
 
 FONT_DISPLAY_COUNT=$(grep -cF -e "font-display: swap" "$CSS" || true)
@@ -199,17 +202,18 @@ echo ""
 
 echo "[ 01-04-01 ] THEME-07: Theme structure — required dirs and files under themes/arcaeon/"
 
+# Font files under static/fonts/ (single source of truth per Plan 05-01 PERF-03 fix)
 REQUIRED_PATHS=(
   "themes/arcaeon/assets/css/main.css"
-  "themes/arcaeon/assets/fonts/cinzel-latin-wght-normal.woff2"
-  "themes/arcaeon/assets/fonts/space-grotesk-latin-wght-normal.woff2"
+  "themes/arcaeon/static/fonts/cinzel-latin-wght-normal.woff2"
+  "themes/arcaeon/static/fonts/space-grotesk-latin-wght-normal.woff2"
   "themes/arcaeon/layouts/_default/baseof.html"
   "themes/arcaeon/layouts/index.html"
 )
 
 REQUIRED_DIRS=(
   "themes/arcaeon/assets/css"
-  "themes/arcaeon/assets/fonts"
+  "themes/arcaeon/static/fonts"
   "themes/arcaeon/layouts/_default"
   "themes/arcaeon/static"
 )
