@@ -22,6 +22,7 @@ key_files:
 decisions:
   - ".sigil-arc positioning (top/left/right/bottom) deferred to Phase 2 section partials -- these classes define shape, not placement"
   - "sigil-arc-sm uses ::before pseudo-element to avoid conflict with glow system ::before convention (::before = glow, ::after = sigil)"
+requirements-completed: [THEME-04, THEME-05, THEME-06]
 metrics:
   duration: "2m 11s"
   completed: "2026-04-16T15:51:00Z"
