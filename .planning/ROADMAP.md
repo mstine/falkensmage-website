@@ -90,7 +90,11 @@ Plans:
   3. `validate-phase-03.sh` reports 33/33 with no false failures on SEO-03 canonical check
   4. CI workflow is internally consistent — either `npm ci` wires fontsource → assets/fonts during build, or `npm ci` is removed and committed WOFF2 files are the intentional source of truth
   5. Every v1.0 REQ-ID appears in `requirements_completed` frontmatter of at least one SUMMARY.md across Phases 1–4
-**Plans**: TBD (to be created via `/gsd-plan-phase 5`)
+**Plans**: 3 plans
+Plans:
+- [ ] 05-01-PLAN.md — Wave 1 code fixes: remove nested footer, add css.Build externals, delete duplicate assets/fonts/
+- [ ] 05-02-PLAN.md — Wave 2 hygiene + backfill: patch validate-phase-03.sh, remove npm ci, add requirements-completed to 4 SUMMARYs
+- [ ] 05-03-PLAN.md — Wave 3 verification + traceability flip in REQUIREMENTS.md
 **UI hint**: no
 
 ## Progress
@@ -101,4 +105,4 @@ Plans:
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
 | 3. Dynamic Layer + Quality | 2/2 | Complete   | 2026-04-17 |
 | 4. Production Deploy | 2/2 | Complete   | 2026-04-17 |
-| 5. v1.0 Gap Closure | 0/? | Planned    | — |
+| 5. v1.0 Gap Closure | 0/3 | Planned    | — |
