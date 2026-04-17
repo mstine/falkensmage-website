@@ -12,7 +12,12 @@
   <link rel="preload" href="/fonts/space-grotesk-latin-wght-normal.woff2"
         as="font" type="font/woff2" crossorigin>
 
-  {{ $css := resources.Get "css/main.css" | css.Build | minify | fingerprint }}
+  {{/* externals: exact font paths preserved as-is so preload href matches @font-face src (PERF-03) */}}
+  {{ $cssOpts := dict "externals" (slice
+    "/fonts/cinzel-latin-wght-normal.woff2"
+    "/fonts/space-grotesk-latin-wght-normal.woff2"
+  ) }}
+  {{ $css := resources.Get "css/main.css" | css.Build $cssOpts | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 
   {{/* Open Graph (SEO-01, D-15, D-16) */}}
