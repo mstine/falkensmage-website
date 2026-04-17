@@ -685,6 +685,8 @@ a:hover {
 }
 
 .currently-card {
+  max-width: 32rem;
+  margin-inline: auto;
   border: 1px solid rgba(122, 44, 255, 0.35);
   border-radius: 8px;
   padding: 1rem;
