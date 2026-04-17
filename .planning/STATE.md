@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-production-deploy/04-01-PLAN.md
-last_updated: "2026-04-17T13:14:13.395Z"
+stopped_at: "CHECKPOINT: Task 2 DNS configuration — 04-02-PLAN.md"
+last_updated: "2026-04-17T13:19:21.337Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
-  percent: 90
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-dynamic-layer-quality P01 | 8min | 2 tasks | 7 files |
 | Phase 03 P02 | 6min | 3 tasks | 2 files |
 | Phase 04-production-deploy P01 | 2min | 2 tasks | 6 files |
+| Phase 04-production-deploy P02 | 8min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 04-production-deploy]: ICO committed as static artifact (local rsvg-convert) — eliminates CI apt dependency, only regenerate if favicon design changes
 - [Phase 04-production-deploy]: configure-pages@v6 + deploy-pages@v5 used over D-06 v4 references — current official versions per research (v6 released 2026-03-25)
 - [Phase 04-production-deploy]: CNAME in static/ is defense-in-depth; repo Settings > Pages > Custom domain is authoritative for Actions-based deployments
+- [Phase 04-production-deploy]: Hero image committed as tracked git asset — was untracked, missing from deployed artifact; Rule 1 auto-fix
+- [Phase 04-production-deploy]: Custom domain set in Settings before first deploy — base_url resolves to https://falkensmage.com/ in CI, ensuring correct asset paths
 
 ### Pending Todos
 
@@ -119,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:14:13.393Z
-Stopped at: Completed 04-production-deploy/04-01-PLAN.md
+Last session: 2026-04-17T13:19:12.762Z
+Stopped at: CHECKPOINT: Task 2 DNS configuration — 04-02-PLAN.md
 Resume file: None
