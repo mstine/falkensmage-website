@@ -45,14 +45,14 @@ completed: 2026-04-17
 
 # Phase 4 Plan 2: Production Deploy Summary
 
-**Public GitHub repo created, GitHub Actions pipeline deployed successfully, custom domain falkensmage.com set — awaiting DNS configuration at Namecheap to go live**
+**falkensmage.com live at HTTPS with GitHub Pages CDN, custom domain persisting across deploys, four GitHub Pages IPs in DNS — the site is shipped**
 
 ## Performance
 
-- **Duration:** ~8 min
+- **Duration:** ~8 min automated + ~30 min DNS propagation/cert provisioning wait
 - **Started:** 2026-04-17T13:15:00Z
-- **Completed:** 2026-04-17T13:18:30Z (Task 1 only; Task 2 is human checkpoint)
-- **Tasks:** 1 of 2 automated tasks complete; Task 2 is DNS checkpoint
+- **Completed:** 2026-04-17T13:33:00Z
+- **Tasks:** 2 of 2 complete
 - **Files modified:** 1 (hero image added to git tracking)
 
 ## Accomplishments
@@ -62,6 +62,11 @@ completed: 2026-04-17
 - First workflow run: build 35s + deploy 9s = successful
 - Hero image committed and second workflow run triggered — build 27s + deploy 10s = successful
 - Custom domain persists after second push (confirmed by Pages API returning `cname: falkensmage.com`)
+- DNS A records configured at Namecheap: all four GitHub Pages IPs (185.199.108-111.153) resolve for falkensmage.com
+- www CNAME pointing to mstine.github.io configured
+- HTTPS certificate provisioned; `https_enforced: true` confirmed via GitHub Pages API
+- Three consecutive successful workflow runs on main confirmed
+- **falkensmage.com is live**
 
 ## Task Commits
 
@@ -99,41 +104,45 @@ completed: 2026-04-17
 
 ## User Setup Required
 
-**DNS configuration required to complete this plan.** See Task 2 checkpoint details:
+Matt completed DNS configuration at Namecheap:
 
-1. Namecheap > Domain List > falkensmage.com > Manage > Advanced DNS
-2. DELETE existing `@` CNAME pointing to `target.substack-custom-domains.com`
-3. ADD four A records (Host: `@`, TTL: Automatic):
-   - `185.199.108.153`
-   - `185.199.109.153`
-   - `185.199.110.153`
-   - `185.199.111.153`
-4. ADD CNAME: Host: `www`, Value: `mstine.github.io`, TTL: Automatic
-5. Wait ~30 minutes, then verify DNS and HTTPS
-6. Enable "Enforce HTTPS" in GitHub Settings > Pages after cert provisions
+1. Deleted existing `@` CNAME pointing to `target.substack-custom-domains.com` (confirmed unused Substack placeholder — Feral Architecture newsletter runs on feralarchitecture.com, unaffected)
+2. Added four A records (Host: `@`): 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
+3. Added CNAME: Host: `www`, Value: `mstine.github.io`
+4. Enabled "Enforce HTTPS" in GitHub Settings > Pages after cert provisioned
 
-Verification commands after DNS propagation:
-```bash
+**Verified live:**
+```
 dig falkensmage.com A +short
-# Expected: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
+185.199.111.153
+185.199.108.153
+185.199.109.153
+185.199.110.153
 
-dig www.falkensmage.com +short
-# Expected: mstine.github.io
-
-curl -I https://falkensmage.com
-# Expected: HTTP/2 200
+gh api repos/mstine/falkensmage-website/pages --jq '{cname,https_enforced,build_type}'
+{"build_type":"workflow","cname":"falkensmage.com","https_enforced":true}
 ```
 
 ## Next Phase Readiness
-- All automated deployment infrastructure is complete and verified
-- Two successful CI/CD runs confirmed
-- Custom domain persistence confirmed across pushes
-- Blocked on DNS propagation (Namecheap config) before HTTPS is live
-- Once DNS is configured and HTTPS provisions, the site is fully live — no additional code changes needed
+
+**The project is complete. All four phases and ten plans delivered.**
+
+falkensmage.com is live. Full delivery:
+- ARCÆON theme with Electric Violet / Neon Magenta palette
+- Two-tier CSS custom property system (palette truths + semantic aliases)
+- Cinzel + Space Grotesk variable fonts, self-hosted
+- Lemniscate sigil system
+- Hero section with Magus image
+- Social card grid (Substack, Instagram, TikTok, Bluesky, LinkedIn)
+- Build-time Feral Architecture RSS integration
+- OG / Twitter card meta tags
+- Lemniscate favicon (SVG + ICO)
+- Sub-1s load on 3G, WCAG AA accessibility
+- Automatic deploys from main via GitHub Actions
 
 ---
 *Phase: 04-production-deploy*
-*Completed: 2026-04-17 (Task 1 of 2; awaiting DNS checkpoint)*
+*Completed: 2026-04-17*
 
 ## Self-Check: PASSED
 - File exists: `.planning/phases/04-production-deploy/04-02-SUMMARY.md` ✓
@@ -141,4 +150,7 @@ curl -I https://falkensmage.com
 - GitHub repo `mstine/falkensmage-website` exists and is PUBLIC ✓
 - Pages build_type: `workflow` ✓
 - Pages cname: `falkensmage.com` ✓
-- Two successful workflow runs confirmed ✓
+- Pages https_enforced: `true` ✓
+- DNS A records: all four GitHub Pages IPs confirmed ✓
+- Three consecutive successful workflow runs confirmed ✓
+- User confirmed site live with HTTPS in browser ✓
