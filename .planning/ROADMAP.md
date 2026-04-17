@@ -57,7 +57,10 @@ Plans:
   3. Hero image serves WebP with JPEG fallback; below-fold images lazy-load; no external font CDNs or analytics scripts in network tab
   4. WCAG AA contrast passes for all text/background pairs (neon accents decoration-only, body text in Solar White/Ion Glow)
   5. Sharing the URL on social surfaces the Magus image, "Falken's Mage — Matt Stine" title, and identity meta description via Open Graph and Twitter Card
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Currently section partial + landmarks + font preload infrastructure
+- [ ] 03-02-PLAN.md — SEO/OG meta tags + validation script + visual checkpoint
 **UI hint**: yes
 
 ### Phase 4: Production Deploy
@@ -77,5 +80,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Theme Foundation | 3/3 | Complete   | 2026-04-16 |
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
-| 3. Dynamic Layer + Quality | 0/TBD | Not started | - |
+| 3. Dynamic Layer + Quality | 0/2 | Planning complete | - |
 | 4. Production Deploy | 0/TBD | Not started | - |
