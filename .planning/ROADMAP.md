@@ -93,7 +93,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 05-01-PLAN.md — Wave 1 code fixes: remove nested footer, add css.Build externals, delete duplicate assets/fonts/
-- [ ] 05-02-PLAN.md — Wave 2 hygiene + backfill: patch validate-phase-03.sh, remove npm ci, add requirements-completed to 4 SUMMARYs
+- [x] 05-02-PLAN.md — Wave 2 hygiene + backfill: patch validate-phase-03.sh, remove npm ci, add requirements-completed to 4 SUMMARYs
 - [ ] 05-03-PLAN.md — Wave 3 verification + traceability flip in REQUIREMENTS.md
 **UI hint**: no
 
@@ -105,4 +105,4 @@ Plans:
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
 | 3. Dynamic Layer + Quality | 2/2 | Complete   | 2026-04-17 |
 | 4. Production Deploy | 2/2 | Complete   | 2026-04-17 |
-| 5. v1.0 Gap Closure | 1/3 | In Progress|  |
+| 5. v1.0 Gap Closure | 2/3 | In Progress|  |

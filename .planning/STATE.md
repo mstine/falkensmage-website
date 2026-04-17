@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Gap Closure
 status: executing
-stopped_at: Completed 05-01-PLAN.md — A11Y-01 + PERF-03 code defects fixed
-last_updated: "2026-04-17T19:28:38.470Z"
+stopped_at: Completed 05-02-PLAN.md — SEO-03 regex + 5 Phase-5 checks + npm ci removal + 4 SUMMARY backfills
+last_updated: "2026-04-17T19:45:00.000Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 13
-  completed_plans: 11
-  percent: 85
+  completed_plans: 12
+  percent: 92
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 5 (v1-gap-closure) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-17
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-production-deploy P02 | 8min | 1 tasks | 1 files |
 | Phase 04-production-deploy P02 | 30min | 2 tasks | 0 files |
 | Phase 05-v1-gap-closure P01 | 2min | 3 tasks | 2 files |
+| Phase 05-v1-gap-closure P02 | 3min | 6 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,11 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 05-v1-gap-closure]: css.Build externals accepts exact absolute path slice only — glob patterns empirically fail to preserve url() in CSS
 - [Phase ?]: [Phase 05-v1-gap-closure]: A11Y-01 fix via outer-wrapper removal in index.html — partial owns its own <footer> root, zero CSS blast radius
 - [Phase ?]: [Phase 05-v1-gap-closure]: single source of truth for self-hosted fonts — themes/arcaeon/static/fonts/ only; assets/fonts/ deleted
+- [Phase 05-v1-gap-closure]: ERE with /? trailing-slash optional chosen for SEO-03 canonical regex — portable across BSD (macOS) and GNU (Ubuntu CI) grep
+- [Phase 05-v1-gap-closure]: Phase-5 structural checks embedded in validate-phase-03.sh (not new validate-phase-04.sh) — invariants guard Plan 03 outputs semantically
+- [Phase 05-v1-gap-closure]: npm ci removed from deploy workflow — committed WOFF2 under themes/arcaeon/static/fonts/ is the trust root; package.json retained as version documentation
+- [Phase 05-v1-gap-closure]: requirements-completed inline YAML array (single line) — canonical frontmatter key, matches 01-01, 02-01, 02-02, 04-01, 04-02 convention
+- [Phase 05-v1-gap-closure]: all grep calls in new checks that can match zero items wrapped with || true — set -uo pipefail aborts otherwise
 
 ### Pending Todos
 
@@ -129,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T19:28:22.214Z
-Stopped at: Completed 05-01-PLAN.md — A11Y-01 + PERF-03 code defects fixed
+Last session: 2026-04-17T19:45:00.000Z
+Stopped at: Completed 05-02-PLAN.md — validate-phase-03.sh patched (39/39 checks), npm ci removed, 4 SUMMARY backfills
 Resume file: None
