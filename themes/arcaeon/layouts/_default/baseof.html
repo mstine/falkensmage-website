@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
-  {{ with .Description }}<meta name="description" content="{{ . }}">
-  {{ else }}{{ with site.Params.description }}<meta name="description" content="{{ . }}">
-  {{ end }}{{ end }}
+  <meta name="description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
 
   {{/* Font preload — stable static paths, crossorigin required (PERF-03, D-07) */}}
   <link rel="preload" href="/fonts/cinzel-latin-wght-normal.woff2"
@@ -16,6 +14,31 @@
 
   {{ $css := resources.Get "css/main.css" | css.Build | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+
+  {{/* Open Graph (SEO-01, D-15, D-16) */}}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Falken's Mage">
+  <meta property="og:title" content="Falken's Mage — Matt Stine">
+  <meta property="og:description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
+  <meta property="og:url" content="https://falkensmage.com">
+
+  {{/* OG image — 1200x630 JPEG crop of Magus (D-15) */}}
+  {{ $heroSrc := resources.Get "images/magus-hero.jpg" }}
+  {{ with $heroSrc }}
+    {{ $ogImg := .Fill "1200x630 Center" }}
+    <meta property="og:image" content="{{ $ogImg.Permalink }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:image" content="{{ $ogImg.Permalink }}">
+  {{ end }}
+
+  {{/* Twitter Card (SEO-02, D-13) */}}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Falken's Mage — Matt Stine">
+  <meta name="twitter:description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
+
+  {{/* Canonical URL (SEO-03, D-17) */}}
+  <link rel="canonical" href="https://falkensmage.com">
 </head>
 <body>
   {{ block "main" . }}{{ end }}
