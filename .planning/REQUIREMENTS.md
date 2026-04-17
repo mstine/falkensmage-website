@@ -58,9 +58,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **INFRA-01**: Hugo project initialized with custom `arcaeon` theme under `themes/arcaeon/`
 - [x] **INFRA-02**: `hugo.toml` configured with `baseURL = "https://falkensmage.com/"`, ARCÆON palette values, and Hugo cache settings for RSS
-- [ ] **INFRA-03**: GitHub Actions workflow — Hugo Extended 0.160.1 pinned, `npm ci` for fonts, `hugo --minify`, deploy to GitHub Pages
-- [ ] **INFRA-04**: `static/CNAME` file with `falkensmage.com` to persist custom domain across deploys
-- [ ] **INFRA-05**: Lemniscate sigil favicon (`.ico` + `.svg`)
+- [x] **INFRA-03**: GitHub Actions workflow — Hugo Extended 0.160.1 pinned, `npm ci` for fonts, `hugo --minify`, deploy to GitHub Pages
+- [x] **INFRA-04**: `static/CNAME` file with `falkensmage.com` to persist custom domain across deploys
+- [x] **INFRA-05**: Lemniscate sigil favicon (`.ico` + `.svg`)
 
 ### Performance
 
@@ -156,9 +156,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEO-01 | Phase 3 | Complete |
 | SEO-02 | Phase 3 | Complete |
 | SEO-03 | Phase 3 | Complete |
-| INFRA-03 | Phase 4 | Pending |
-| INFRA-04 | Phase 4 | Pending |
-| INFRA-05 | Phase 4 | Pending |
+| INFRA-03 | Phase 4 | Complete |
+| INFRA-04 | Phase 4 | Complete |
+| INFRA-05 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 42 total (note: prior count of 33 was incorrect — 42 requirements exist across 11 categories)

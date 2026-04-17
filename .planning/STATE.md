@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-17T12:52:15.504Z"
-last_activity: "2026-04-17 - Completed quick task 260416-rkc: Fix 3 UI review issues from phase 03"
+status: executing
+stopped_at: Completed 04-production-deploy/04-01-PLAN.md
+last_updated: "2026-04-17T13:14:13.395Z"
+last_activity: 2026-04-17
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_plans: 10
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** A stranger landing from social media instantly understands who this person is and can reach everything that matters — in under ten seconds, on a phone.
-**Current focus:** Phase 03 — dynamic-layer-quality
+**Current focus:** Phase 04 — production-deploy
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-17 - Completed quick task 260416-rkc: Fix 3 UI review issues from phase 03
+Phase: 04 (production-deploy) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-static-content P03 | 5min | 2 tasks | 1 files |
 | Phase 03-dynamic-layer-quality P01 | 8min | 2 tasks | 7 files |
 | Phase 03 P02 | 6min | 3 tasks | 2 files |
+| Phase 04-production-deploy P01 | 2min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 03-dynamic-layer-quality]: crossorigin attribute required on font preload links even for same-origin fonts to match CORS cache key used by @font-face
 - [Phase 03-dynamic-layer-quality]: OG image generated via .Fill '1200x630 Center' — JPEG not WebP for max crawler compatibility; .Permalink used for absolute social crawler URLs
 - [Phase 03-dynamic-layer-quality]: Meta description hardcoded (not conditional) — single-page site, description is identity, not content-dependent
+- [Phase 04-production-deploy]: ICO committed as static artifact (local rsvg-convert) — eliminates CI apt dependency, only regenerate if favicon design changes
+- [Phase 04-production-deploy]: configure-pages@v6 + deploy-pages@v5 used over D-06 v4 references — current official versions per research (v6 released 2026-03-25)
+- [Phase 04-production-deploy]: CNAME in static/ is defense-in-depth; repo Settings > Pages > Custom domain is authoritative for Actions-based deployments
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T12:52:15.501Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-production-deploy/04-CONTEXT.md
+Last session: 2026-04-17T13:14:13.393Z
+Stopped at: Completed 04-production-deploy/04-01-PLAN.md
+Resume file: None
