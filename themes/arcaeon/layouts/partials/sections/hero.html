@@ -1,5 +1,8 @@
 {{/* Hero Section — Magus image + logotype + tagline */}}
 {{ $img := resources.Get "images/magus-hero.jpg" }}
+{{ if not $img }}
+  {{ errorf "Hero image missing: themes/arcaeon/assets/images/magus-hero.jpg" }}
+{{ end }}
 {{ with $img }}
   {{ $mobileFill := .Fill "750x580 Center" }}
   {{ $mobileWebP := $mobileFill.Process "webp" }}
