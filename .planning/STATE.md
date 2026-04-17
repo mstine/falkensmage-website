@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Gap Closure
 status: executing
-stopped_at: Completed 04-02-PLAN.md — project complete
-last_updated: "2026-04-17T19:23:26.422Z"
-last_activity: 2026-04-17 -- Phase 5 execution started
+stopped_at: Completed 05-01-PLAN.md — A11Y-01 + PERF-03 code defects fixed
+last_updated: "2026-04-17T19:28:38.470Z"
+last_activity: 2026-04-17
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 13
-  completed_plans: 10
-  percent: 77
+  completed_plans: 11
+  percent: 85
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 5 (v1-gap-closure) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 5
-Last activity: 2026-04-17 -- Phase 5 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-production-deploy P01 | 2min | 2 tasks | 6 files |
 | Phase 04-production-deploy P02 | 8min | 1 tasks | 1 files |
 | Phase 04-production-deploy P02 | 30min | 2 tasks | 0 files |
+| Phase 05-v1-gap-closure P01 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 04-production-deploy]: Hero image committed as tracked git asset — was untracked, missing from deployed artifact; Rule 1 auto-fix
 - [Phase 04-production-deploy]: Custom domain set in Settings before first deploy — base_url resolves to https://falkensmage.com/ in CI, ensuring correct asset paths
 - [Phase 04-production-deploy]: DNS A records (185.199.108-111.153) + www CNAME to mstine.github.io — falkensmage.com live with https_enforced: true
+- [Phase ?]: [Phase 05-v1-gap-closure]: css.Build externals accepts exact absolute path slice only — glob patterns empirically fail to preserve url() in CSS
+- [Phase ?]: [Phase 05-v1-gap-closure]: A11Y-01 fix via outer-wrapper removal in index.html — partial owns its own <footer> root, zero CSS blast radius
+- [Phase ?]: [Phase 05-v1-gap-closure]: single source of truth for self-hosted fonts — themes/arcaeon/static/fonts/ only; assets/fonts/ deleted
 
 ### Pending Todos
 
@@ -125,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:35:03.569Z
-Stopped at: Completed 04-02-PLAN.md — project complete
+Last session: 2026-04-17T19:28:22.214Z
+Stopped at: Completed 05-01-PLAN.md — A11Y-01 + PERF-03 code defects fixed
 Resume file: None
