@@ -72,6 +72,18 @@ Progress: [██████████] 100%
 | Phase 05-v1-gap-closure P02 | 3min | 6 tasks | 6 files |
 | Phase 05-v1-gap-closure P03 | 3min | 2 tasks | 2 files |
 
+## Deferred Items
+
+Items acknowledged and deferred at v1.0 milestone close on 2026-04-17. All items were resolved in substance (per `milestones/v1.0-MILESTONE-AUDIT.md`) but carry bookkeeping drift that did not warrant blocking archive.
+
+| Category | Item | Status | Note |
+|----------|------|--------|------|
+| verification | 01-VERIFICATION.md | human_needed | HUMAN-UAT.md is complete; frontmatter not flipped |
+| verification | 02-VERIFICATION.md | human_needed | HUMAN-UAT.md is complete; frontmatter not flipped |
+| verification | 03-VERIFICATION.md | human_needed | No HUMAN-UAT.md exists; milestone audit recorded 13/13 closure |
+| verification | 04-VERIFICATION.md | human_needed | HUMAN-UAT.md is complete; frontmatter not flipped |
+| quick_task | 260416-rkc-fix-3-ui-review-issues-from-phase-03 | missing | PLAN.md + SUMMARY.md present, commit 97fd7d5; audit manifest mismatch |
+
 ## Accumulated Context
 
 ### Decisions
