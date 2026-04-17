@@ -72,7 +72,11 @@ Plans:
   2. `https://falkensmage.com` loads the site with valid HTTPS — no certificate warnings, no redirect loops
   3. The lemniscate sigil favicon appears in browser tabs and bookmark lists (`.ico` + `.svg` both present)
   4. Custom domain survives a deploy cycle — `static/CNAME` file present and GitHub Pages custom domain setting intact after push
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Favicon (SVG + ICO) + CNAME + GitHub Actions workflow
+- [ ] 04-02-PLAN.md — Repo creation, push, DNS configuration + live verification
+**UI hint**: no
 
 ## Progress
 
@@ -81,4 +85,4 @@ Plans:
 | 1. Theme Foundation | 3/3 | Complete   | 2026-04-16 |
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
 | 3. Dynamic Layer + Quality | 2/2 | Complete   | 2026-04-17 |
-| 4. Production Deploy | 0/TBD | Not started | - |
+| 4. Production Deploy | 0/2 | Planning complete | - |
