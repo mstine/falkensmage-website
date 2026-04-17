@@ -1,0 +1,45 @@
+{{/* Currently Section — RSS + current focus (CURR-01, CURR-02, CURR-03) */}}
+{{ $rssURL := "https://feralarchitecture.com/feed" }}
+{{ $latestPost := dict }}
+
+{{ with try (resources.GetRemote $rssURL) }}
+  {{ with .Err }}
+    {{ warnf "Currently section: RSS fetch failed: %s" . }}
+  {{ else with .Value }}
+    {{ with . | transform.Unmarshal }}
+      {{ with .channel.item }}
+        {{ range first 1 . }}
+          {{ $latestPost = dict "title" (.title | htmlUnescape) "link" .link }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+<section class="section section-depth currently-section" aria-labelledby="currently-heading">
+  <div class="section-content">
+    <div class="currently-card">
+      <h2 id="currently-heading" class="currently-label">CURRENTLY</h2>
+      {{ if $latestPost.title }}
+        <p class="currently-sublabel">Latest from Feral Architecture:</p>
+        <a href="{{ $latestPost.link }}"
+           class="currently-post-link glow-interactive"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Read: {{ $latestPost.title }} on Feral Architecture">
+          &laquo;&thinsp;{{ $latestPost.title }}&thinsp;&raquo;
+        </a>
+      {{ else }}
+        <a href="https://feralarchitecture.substack.com"
+           class="currently-post-link glow-interactive"
+           target="_blank"
+           rel="noopener noreferrer">
+          Read Feral Architecture &rarr;
+        </a>
+      {{ end }}
+      {{ with $.Params.currently_focus }}
+        <p class="currently-focus">{{ . }}</p>
+      {{ end }}
+    </div>
+  </div>
+</section>

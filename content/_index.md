@@ -2,7 +2,7 @@
 title: "Falken's Mage"
 tagline: "He's one technomagickal motherfucker."
 identity_blocks:
-  - "Twenty years in the guts of enterprise systems. Distributed architectures where a bad design decision doesn't just fail — it fails at 2 AM on a Friday and takes someone's entire quarter with it. I'm good at that work."
+  - "Twenty-five years in the guts of enterprise systems. Distributed architectures where a bad design decision doesn't just fail — it fails at 2 AM on a Friday and takes someone's entire quarter with it. I'm good at that work."
   - "I'm also an archetypal tarotist, astrologer, chaos witch, and the kind of person who will diagram your org's dysfunction on a whiteboard and then pull a card that names the thing nobody in the room was willing to say out loud."
   - "Most people keep those worlds separate. I think that's a load of horseshit."
   - "The analytical mind and the symbolic mind are not competing systems. They're complementary cognitive architectures — and if you're only running one of them, you're leaving half your intelligence on the table."
@@ -11,6 +11,7 @@ identity_blocks:
 cta_description: "Coaching for leaders done performing. Speaking for rooms done pretending. If you're ready to stop splitting yourself in half to fit — let's fucking go."
 cta_email: "falkensmage@falkenslabyrinth.com"
 cta_button_text: "Get Feral With Me"
+currently_focus: "Mapping the territory between enterprise systems and inner ones."
 footer_closing: "Stay feral, folks."
 social_links:
   - name: "Feral Architecture"

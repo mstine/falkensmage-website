@@ -1,8 +1,13 @@
 {{ define "main" }}
-<main>
+<header>
   {{ partial "sections/hero.html" . }}
+</header>
+<main>
+  {{ partial "sections/currently.html" . }}
   {{ partial "sections/identity-cta.html" . }}
   {{ partial "sections/social.html" . }}
-  {{ partial "sections/footer.html" . }}
 </main>
+<footer>
+  {{ partial "sections/footer.html" . }}
+</footer>
 {{ end }}
