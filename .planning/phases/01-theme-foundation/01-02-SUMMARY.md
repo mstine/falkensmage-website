@@ -22,6 +22,7 @@ decisions:
   - "font-weight ranges declared as '400 900' (Cinzel) and '300 700' (Space Grotesk) matching variable font axis ranges from @fontsource-variable packages"
   - "::before reserved for glow effects, ::after reserved for sigils — consistent pseudo-element convention"
   - "will-change: opacity on all glow ::before elements for GPU layer promotion on mobile"
+requirements-completed: [THEME-02, THEME-03]
 metrics:
   duration: "82 seconds"
   completed: "2026-04-16"
