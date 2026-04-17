@@ -44,9 +44,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Currently Section
 
-- [ ] **CURR-01**: Auto-pulled latest Feral Architecture post title + link via Hugo `resources.GetRemote` + `transform.Unmarshal` at build time
-- [ ] **CURR-02**: Manually editable "current focus" blurb from `content/_index.md` front matter
-- [ ] **CURR-03**: Graceful fallback when Substack RSS is unreachable — `try` wrapping, `warnf` logging, static fallback content
+- [x] **CURR-01**: Auto-pulled latest Feral Architecture post title + link via Hugo `resources.GetRemote` + `transform.Unmarshal` at build time
+- [x] **CURR-02**: Manually editable "current focus" blurb from `content/_index.md` front matter
+- [x] **CURR-03**: Graceful fallback when Substack RSS is unreachable — `try` wrapping, `warnf` logging, static fallback content
 
 ### Footer
 
@@ -66,15 +66,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **PERF-01**: Single page load under 1s on 3G connection
 - [ ] **PERF-02**: Hero image optimized — WebP with JPEG fallback via Hugo image pipeline, lazy-load for below-fold content
-- [ ] **PERF-03**: Self-hosted fonts with `font-display: swap` and `crossorigin` on preload links — no FOIT, no double-download
+- [x] **PERF-03**: Self-hosted fonts with `font-display: swap` and `crossorigin` on preload links — no FOIT, no double-download
 - [ ] **PERF-04**: No external font CDNs, no analytics scripts, no external JS dependencies
 
 ### Accessibility
 
-- [ ] **A11Y-01**: Semantic HTML5 structure — `<header>`, `<main>`, `<section>`, `<footer>`, `<nav>`
+- [x] **A11Y-01**: Semantic HTML5 structure — `<header>`, `<main>`, `<section>`, `<footer>`, `<nav>`
 - [ ] **A11Y-02**: Color contrast ratios meet WCAG AA against dark backgrounds — neon accents reserved for decoration only, Solar White/Ion Glow for body text
 - [ ] **A11Y-03**: All images have meaningful alt text (hero image describes the Magus scene)
-- [ ] **A11Y-04**: `prefers-reduced-motion` media query disables all ambient animations
+- [x] **A11Y-04**: `prefers-reduced-motion` media query disables all ambient animations
 
 ### SEO & Meta
 
@@ -142,17 +142,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FOOT-01 | Phase 2 | Complete |
 | FOOT-02 | Phase 2 | Complete |
 | FOOT-03 | Phase 2 | Complete |
-| CURR-01 | Phase 3 | Pending |
-| CURR-02 | Phase 3 | Pending |
-| CURR-03 | Phase 3 | Pending |
+| CURR-01 | Phase 3 | Complete |
+| CURR-02 | Phase 3 | Complete |
+| CURR-03 | Phase 3 | Complete |
 | PERF-01 | Phase 3 | Pending |
 | PERF-02 | Phase 3 | Pending |
-| PERF-03 | Phase 3 | Pending |
+| PERF-03 | Phase 3 | Complete |
 | PERF-04 | Phase 3 | Pending |
-| A11Y-01 | Phase 3 | Pending |
+| A11Y-01 | Phase 3 | Complete |
 | A11Y-02 | Phase 3 | Pending |
 | A11Y-03 | Phase 3 | Pending |
-| A11Y-04 | Phase 3 | Pending |
+| A11Y-04 | Phase 3 | Complete |
 | SEO-01 | Phase 3 | Pending |
 | SEO-02 | Phase 3 | Pending |
 | SEO-03 | Phase 3 | Pending |

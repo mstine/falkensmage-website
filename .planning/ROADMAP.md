@@ -59,7 +59,7 @@ Plans:
   5. Sharing the URL on social surfaces the Magus image, "Falken's Mage — Matt Stine" title, and identity meta description via Open Graph and Twitter Card
 **Plans**: 2 plans
 Plans:
-- [ ] 03-01-PLAN.md — Currently section partial + landmarks + font preload infrastructure
+- [x] 03-01-PLAN.md — Currently section partial + landmarks + font preload infrastructure
 - [ ] 03-02-PLAN.md — SEO/OG meta tags + validation script + visual checkpoint
 **UI hint**: yes
 
@@ -80,5 +80,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Theme Foundation | 3/3 | Complete   | 2026-04-16 |
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
-| 3. Dynamic Layer + Quality | 0/2 | Planning complete | - |
+| 3. Dynamic Layer + Quality | 1/2 | In Progress|  |
 | 4. Production Deploy | 0/TBD | Not started | - |
