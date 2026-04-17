@@ -10,6 +10,7 @@ Four phases, each delivering a coherent slice of the site. Phase 1 builds the br
 - [x] **Phase 2: Static Content** - All visible sections: hero, identity, social links, CTA, footer (completed 2026-04-16)
 - [x] **Phase 3: Dynamic Layer + Quality** - "Currently" RSS section + performance, accessibility, SEO (completed 2026-04-17)
 - [x] **Phase 4: Production Deploy** - GitHub Actions pipeline, CNAME, favicon, live site (completed 2026-04-17)
+- [ ] **Phase 5: v1.0 Gap Closure** - Phase 3 & 4 code fixes + Phase 1 & 3 documentation backfill
 
 ## Phase Details
 
@@ -78,6 +79,20 @@ Plans:
 - [x] 04-02-PLAN.md — Repo creation, push, DNS configuration + live verification
 **UI hint**: no
 
+### Phase 5: v1.0 Gap Closure
+**Goal**: All v1.0 audit gaps closed — Phase 3 quality defects fixed, tech debt eliminated, and SUMMARY frontmatter traceability restored so the milestone can be archived cleanly.
+**Depends on**: Phase 3, Phase 4
+**Requirements**: A11Y-01, PERF-01, PERF-03
+**Gap Closure**: Closes gaps from `.planning/v1.0-MILESTONE-AUDIT.md`
+**Success Criteria** (what must be TRUE):
+  1. Built HTML contains exactly one `<footer>` landmark — no nested footer elements
+  2. Fonts are fetched exactly once per face — preload href matches the resolved `@font-face` src from `css.Build`
+  3. `validate-phase-03.sh` reports 33/33 with no false failures on SEO-03 canonical check
+  4. CI workflow is internally consistent — either `npm ci` wires fontsource → assets/fonts during build, or `npm ci` is removed and committed WOFF2 files are the intentional source of truth
+  5. Every v1.0 REQ-ID appears in `requirements_completed` frontmatter of at least one SUMMARY.md across Phases 1–4
+**Plans**: TBD (to be created via `/gsd-plan-phase 5`)
+**UI hint**: no
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -86,3 +101,4 @@ Plans:
 | 2. Static Content | 3/3 | Complete   | 2026-04-16 |
 | 3. Dynamic Layer + Quality | 2/2 | Complete   | 2026-04-17 |
 | 4. Production Deploy | 2/2 | Complete   | 2026-04-17 |
+| 5. v1.0 Gap Closure | 0/? | Planned    | — |
