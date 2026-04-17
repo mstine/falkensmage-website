@@ -25,6 +25,7 @@ decisions:
   - ".Permalink used (not .RelPermalink) for og:image — social crawlers require absolute URLs"
   - "Meta description hardcoded (not conditional) — single-page site, description is identity, not content-dependent"
   - "Validation script checks 33 assertions across all 14 Phase 3 requirement IDs"
+requirements-completed: [SEO-01, SEO-02, SEO-03, PERF-01, PERF-02, PERF-04, A11Y-02, A11Y-03]
 metrics:
   duration: "~6 minutes"
   completed: "2026-04-17"
