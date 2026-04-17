@@ -32,6 +32,16 @@ def create_ico(png_paths, output_path):
             f.write(data)
 
 if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print("Usage: python3 scripts/png-to-ico.py input16.png input32.png output.ico", file=sys.stderr)
+        sys.exit(1)
     *inputs, output = sys.argv[1:]
+    # Validate PNG signature before processing
+    for path in inputs:
+        with open(path, 'rb') as f:
+            sig = f.read(8)
+        if sig != b'\x89PNG\r\n\x1a\n':
+            print(f"Error: {path} is not a valid PNG file", file=sys.stderr)
+            sys.exit(1)
     create_ico(inputs, output)
     print(f'Created {output}')
