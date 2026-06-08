@@ -483,6 +483,14 @@ a:hover {
   padding-top: 2rem;
 }
 
+.hero-sigil {
+  display: block;
+  width: clamp(116px, 24vw, 188px);
+  height: auto;
+  margin: 0 auto 1.1rem;
+  filter: drop-shadow(0 0 16px rgba(91, 231, 255, 0.45));
+}
+
 .hero-tagline {
   font-family: var(--font-body);
   font-size: var(--text-h2);
@@ -546,6 +554,19 @@ a:hover {
 .cta-button {
   font-size: var(--text-base);
   text-align: center;
+}
+
+.cta-secondary {
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+  color: var(--color-text);
+  opacity: 0.55;
+  margin-top: 1.25rem;
+}
+
+.cta-secondary a {
+  color: var(--color-ion-glow, #5be7ff);
+  text-decoration: none;
 }
 
 /* ============================================

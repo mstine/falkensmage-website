@@ -24,6 +24,14 @@
     </picture>
   </div>
   <div class="section-content hero-text">
+    {{ with resources.Get "images/pentacle-mark.png" }}
+      {{ $sig := .Resize "400x png" }}
+      <img src="{{ $sig.RelPermalink }}"
+           width="{{ $sig.Width }}" height="{{ $sig.Height }}"
+           alt="Falken's Mage sigil — a dissolved-boundary pentagram of code and root"
+           loading="eager"
+           class="hero-sigil">
+    {{ end }}
     <h1 class="display-text">{{ $.Title | default "Falken's Mage" }}</h1>
     {{ with $.Params.tagline }}<p class="hero-tagline">{{ . }}</p>{{ end }}
   </div>
