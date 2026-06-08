@@ -1,12 +1,19 @@
 # Deploy Hugo site to GitHub Pages
 # Source: Official Hugo starter workflow pattern (D-06)
-# Trigger: push to main only (D-04)
+# Triggers: push to main, a nightly schedule (refreshes the CURRENTLY feed),
+# and manual dispatch.
 
 name: Deploy Hugo site to Pages
 
 on:
   push:
     branches: ["main"]
+  # Nightly rebuild re-fetches the Feral Architecture RSS so the CURRENTLY
+  # section stays fresh without a manual push. (GitHub cron is UTC and may
+  # drift/skip under load — fine for a once-a-day content refresh.)
+  schedule:
+    - cron: "0 9 * * *"   # ~03:00–04:00 America/Chicago
+  workflow_dispatch: {}   # manual "rebuild now" button in the Actions tab
 
 permissions:
   contents: read
@@ -37,7 +44,7 @@ jobs:
         run: sudo snap install dart-sass
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -55,7 +62,7 @@ jobs:
             --baseURL "${{ steps.pages.outputs.base_url }}/"
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./public
 
