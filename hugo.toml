@@ -6,6 +6,7 @@ theme = "arcaeon"
 [params]
   author = "Matt Stine"
   description = "Falken's Mage - Matt Stine"
+  plausible = "falkensmage.com"
 
 [params.colors]
   electricViolet = "#7a2cff"
