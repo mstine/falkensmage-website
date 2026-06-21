@@ -1,6 +1,14 @@
 ---
 title: "Falken's Mage"
 tagline: "He's one technomagickal motherfucker."
+# Rewired launch promo — set active: false to retire it once the launch window passes.
+rewired_launch:
+  active: true
+  eyebrow: "New podcast — just live"
+  title: "Rewired"
+  body: "Me and Jaye Anne Beringer on what happens when you leave the rigid belief systems and start finding what's alive. Three episodes up now. One rule: pull a card, follow it, don't resolve it."
+  cta_text: "Pull a card →"
+  cta_url: "https://rewired.show/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=rewired-launch"
 identity_blocks:
   - "Twenty-five years in the guts of enterprise systems. Distributed architectures where a bad design decision doesn't just fail — it fails at 2 AM on a Friday and takes someone's entire quarter with it. I'm good at that work. It's the floor, not the building."
   - "I'm also an archetypal tarotist, astrologer, and chaos witch — the kind of person who will diagram your org's dysfunction on a whiteboard and then pull a card that names the thing nobody in the room was willing to say out loud."

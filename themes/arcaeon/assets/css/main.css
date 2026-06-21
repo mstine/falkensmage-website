@@ -756,3 +756,76 @@ a:hover {
   opacity: 0.85;
   line-height: 1.6;
 }
+
+/* ============================================
+   LAUNCH BANNER — Rewired promo (top of hub)
+   Warm gold framing to set it apart from the violet cards.
+   Whole card is one link; inner CTA glows on card hover.
+   ============================================ */
+
+.launch-banner {
+  display: block;
+  max-width: 32rem;
+  margin-inline: auto;
+  text-align: center;
+  border: 1px solid rgba(255, 179, 71, 0.4); /* fusion gold @ 40% */
+  border-radius: 10px;
+  padding: 1.75rem 1.5rem;
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.launch-banner:hover,
+.launch-banner:focus-visible {
+  border-color: var(--arcaeon-fusion-gold);
+  transform: translateY(-2px);
+}
+
+.launch-banner__eyebrow {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--arcaeon-fusion-gold);
+  margin-bottom: 0.6rem;
+}
+
+.launch-banner__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.launch-banner__body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  opacity: 0.85;
+  line-height: 1.6;
+  margin-bottom: 1.4rem;
+}
+
+.launch-banner__cta {
+  /* visual button; the parent <a> handles the click */
+  pointer-events: none;
+}
+
+/* Drive the inner CTA's radiant glow from hovering anywhere on the card */
+.launch-banner:hover .launch-banner__cta::before,
+.launch-banner:focus-visible .launch-banner__cta::before {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-banner {
+    transition: border-color 0.25s ease;
+  }
+  .launch-banner:hover,
+  .launch-banner:focus-visible {
+    transform: none;
+  }
+}

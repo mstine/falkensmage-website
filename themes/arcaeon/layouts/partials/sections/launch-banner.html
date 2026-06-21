@@ -1,0 +1,22 @@
+{{/* Rewired launch banner — promo card shown at the top of the hub for the
+     launch window. Data-driven via the `rewired_launch` front-matter block in
+     content/_index.md; set `active: false` there to retire it. The whole card is
+     one link (big tap target for link-in-bio traffic). */}}
+{{ with $.Params.rewired_launch }}
+  {{ if .active }}
+  <section class="section section-depth launch-banner-section" aria-labelledby="launch-banner-heading">
+    <div class="section-content">
+      <a class="launch-banner glow-interactive"
+         href="{{ .cta_url }}"
+         target="_blank"
+         rel="noopener noreferrer"
+         aria-label="{{ .title }} — {{ .eyebrow }}. {{ .cta_text }}">
+        {{ with .eyebrow }}<span class="launch-banner__eyebrow">{{ . }}</span>{{ end }}
+        <h2 id="launch-banner-heading" class="launch-banner__title">{{ .title | default "Rewired" }}</h2>
+        {{ with .body }}<p class="launch-banner__body">{{ . | safeHTML }}</p>{{ end }}
+        <span class="launch-banner__cta glow-radiant-core">{{ .cta_text | default "Listen now →" }}</span>
+      </a>
+    </div>
+  </section>
+  {{ end }}
+{{ end }}
