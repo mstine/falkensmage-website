@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: shipped
-shipped_at: 2026-04-17
-tag: v1.0
-stopped_at: v1.0 MVP archived 2026-04-17 — live at https://falkensmage.com. All 42 v1 requirements Complete. Awaiting /gsd-new-milestone to scope v1.1.
-last_updated: "2026-04-17T23:00:00.000Z"
-last_activity: 2026-04-17
+milestone: v1.1
+milestone_name: Offer Pages
+status: planning
+last_updated: "2026-07-01T20:38:55.543Z"
+last_activity: 2026-07-01
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -27,13 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Milestone: v1.0 (shipped 2026-04-17)
-Phase: — (none active)
-Plan: — (none active)
-Status: v1.0 archived; 42/42 requirements Complete; live at https://falkensmage.com
-Last activity: 2026-04-17
-
-Progress: [██████████] 100% (v1.0 complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-01 — Milestone v1.1 started
 
 ## Performance Metrics
 

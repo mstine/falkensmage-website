@@ -15,19 +15,20 @@ Core value: A stranger landing from social media instantly understands who this 
 
 </details>
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Offer Pages
 
-Not yet defined. Run `/gsd-new-milestone` to scope v1.1.
+**Goal:** Give falkensmage.com a linkable commerce surface — dedicated offer pages sellable from anywhere (social, podcast, DMs), not just email.
 
-Likely candidates (deferred from v1.0, non-binding):
+**Target features:**
+- `/work/` — "Work With Me" hub (framing + 3 offer cards)
+- `/work/the-query` — $250 / 90-min tarot → "Book & Pay" (Cal.com link-out)
+- `/work/the-cast` — $325 / 90-min astrology → "Book & Pay" (Cal.com link-out)
+- `/work/the-daemon` — $4,500 6-mo coaching → "Book a Clarity Consult ($150, credited)" (Cal.com, consult-gated)
+- Homepage secondary CTA repointed from the bare mailto to `/work/`
 
-- **Copy finalization** — real tagline (currently placeholder), real identity statement (currently voice-style placeholder)
-- **Nyquist validation retroactive** — run `/gsd-validate-phase 0{3,4,5}` to fill VALIDATION.md scaffolds
-- **AUTO-01** — scheduled GitHub Actions cron for daily rebuilds so "Currently" RSS stays fresh
-- **AUTO-02** — automated social card image generation for OG tags
-- **EXPAND-01** — "Currently" expanded with multiple content sources (podcast, projects)
-- **EXPAND-02** — additional pages (about, services) using `arcaeon` theme partials
-- **EXPAND-03** — dark mode / light mode toggle
+**Key context:** Composes from the existing `arcaeon` design system (no new design language); holds v1.0's sub-1s/3G, no-external-dependency, mobile-first, WCAG AA budgets (CTAs link OUT — no embedded widget). Cal.com URLs are placeholders until event types are stood up. Interim commerce stack: Cal.com (book+pay via Stripe) + Substack (membership); canonical offer definitions live in `~/.psyche/hermetic/offer-architecture.md`.
+
+**Deferred (non-binding, from v1.0):** Copy finalization (real tagline/identity), Nyquist retro-validation (`/gsd-validate-phase 0{3,4,5}`), AUTO-01/02 (cron rebuild, social-card gen), EXPAND-01/03 (Currently multi-source, dark/light toggle).
 
 ## What This Is
 
@@ -58,9 +59,9 @@ A stranger landing from social media instantly understands who this person is an
 - ✓ Lemniscate sigil favicon — Electric Violet / Neon Magenta, SVG + ICO — v1.0
 - ✓ Hugo static site with GitHub Actions build/deploy to GitHub Pages, HTTPS enforced, custom domain persistent — v1.0
 
-### Active
+### Active (v1.1 Offer Pages)
 
-*None at close. Define via `/gsd-new-milestone` for v1.1.*
+- OFFER-01…05, NAV-01, OFFERQ-01…02 — see `REQUIREMENTS.md`. Offer pages (`/work/` hub + The Query / The Cast / The Daemon) with Cal.com link-out CTAs; homepage secondary CTA repointed to `/work/`.
 
 ### Out of Scope
 
@@ -68,12 +69,12 @@ Reasoning held through v1.0; re-audit at next milestone start.
 
 - CRM / email capture — that's the sovereign stack project, not this site
 - Content platform — Feral Architecture on Substack handles that
-- Full offer stack with scheduling/payment — premature, ICP still being refined
+- On-site scheduling/payment — still out of scope; money runs through Cal.com + Stripe (hosted, link-out). Offer *pages* are now in scope as of v1.1 (ICP refined, offers grounded)
 - Portfolio / resume site — this is identity, not credentials
 - Analytics — not included unless explicitly revisited
 - Podcast link — omitted until Rewired feed is live (no dead links)
 - OAuth / login — this is a static public page, no user accounts
-- Multi-page navigation — single page by design
+- ~~Multi-page navigation — single page by design~~ — REVERSED in v1.1: `/work/*` offer pages add routes; the homepage remains the single front door
 - Third-party theme — `arcaeon` is the brand, not a skin on someone else's work
 
 ## Context
@@ -156,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-17 after v1.0 milestone*
+*Last updated: 2026-07-01 after v1.1 milestone scoping (Offer Pages)*

@@ -1,0 +1,63 @@
+# Requirements: falkensmage.com — v1.1 Offer Pages
+
+**Defined:** 2026-07-01
+**Core Value:** A stranger landing from social media instantly understands who this person is and can reach everything that matters — in under ten seconds, on a phone.
+
+## v1.1 Requirements
+
+Offer pages that turn falkensmage.com into a linkable commerce surface — sellable from anywhere (social, podcast, DMs), not just email. All compose from the existing `arcaeon` design system and hold v1.0's performance/accessibility budgets. Money and booking run off-site (Cal.com + Stripe); the site links out, never transacts.
+
+### Offers
+
+- [ ] **OFFER-01**: Visitor can view a "Work With Me" hub at `/work/` that frames the offers and links to each individual offer page.
+- [ ] **OFFER-02**: Visitor can view a dedicated **The Query** page (`/work/the-query`) — voiced pitch, what-it-is, $250 / 90-min tarot reading — with a Radiant-Core "Book & Pay" CTA that links out to Cal.com.
+- [ ] **OFFER-03**: Visitor can view a dedicated **The Cast** page (`/work/the-cast`) — $325 / 90-min astrology reading — with a Radiant-Core "Book & Pay" CTA that links out to Cal.com.
+- [ ] **OFFER-04**: Visitor can view a dedicated **The Daemon** page (`/work/the-daemon`) — 6-month Hermetic coaching, $4,500 — with a consult-gated "Book a Clarity Consult ($150, credited)" CTA that links out to Cal.com (not a direct buy).
+- [ ] **OFFER-05**: Every offer CTA link-target is a single-source-of-truth config value (placeholder Cal.com URLs), trivially swapped when Cal.com event types exist.
+
+### Navigation
+
+- [ ] **NAV-01**: The homepage secondary CTA links to `/work/` (replacing the bare mailto), so the offers are reachable from the front door.
+
+### Quality (inherited budgets)
+
+- [ ] **OFFERQ-01**: Offer pages compose only from the existing `arcaeon` design system (ARCÆON palette vars, Cinzel/Space Grotesk, `.section-void`/`.section-depth`, `.glow-radiant-core`, sigils) — no new design language.
+- [ ] **OFFERQ-02**: Offer pages hold v1.0's budgets — sub-1s 3G, zero external dependencies/CDN (CTAs link out; no embedded booking widget/script), mobile-first 375px, WCAG AA.
+
+## Future Requirements (deferred)
+
+### Offers
+
+- **OFFER-F1**: Swap placeholder Cal.com URLs for live event-type booking links once Cal.com is stood up.
+- **OFFER-F2**: Offer pages become source material for the Sigil & Thread-rendered version of the site.
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Embedded Cal.com/Stripe widget or script | Violates sub-1s / no-external-dependency budget — CTAs link OUT to hosted flows |
+| Payment / checkout on-site | Money runs through Cal.com + Stripe (hosted); the site never transacts |
+| Membership (The Construct) page/checkout | Sold via Substack link, not a falkensmage.com surface |
+| CRM / email capture on offer pages | Sovereign-stack (Sigil & Thread) concern, not this site |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| OFFER-01 | Phase 6 | Pending |
+| OFFER-02 | Phase 6 | Pending |
+| OFFER-03 | Phase 6 | Pending |
+| OFFER-04 | Phase 6 | Pending |
+| OFFER-05 | Phase 6 | Pending |
+| NAV-01 | Phase 6 | Pending |
+| OFFERQ-01 | Phase 6 | Pending |
+| OFFERQ-02 | Phase 6 | Pending |
+
+**Coverage:**
+- v1.1 requirements: 8 total
+- Mapped to phases: 8
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-07-01*
+*Last updated: 2026-07-01 after v1.1 milestone scoping*
