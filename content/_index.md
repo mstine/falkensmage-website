@@ -19,7 +19,7 @@ identity_blocks:
 cta_description: "No funnel. No newsletter popup clawing at your ankles. The writing is the front door — start there, then follow whatever pulls you."
 cta_button_text: "Read Feral Architecture"
 cta_url: "https://feralarchitecture.com"
-cta_secondary: "Want to work together? <a href=\"mailto:falkensmage@falkenslabyrinth.com\">falkensmage@falkenslabyrinth.com</a>"
+cta_secondary: "Want to work together? <a href=\"/work/\">See how we can work together</a>"
 currently_focus: "Turning a lifetime of scattered obsessions into systems that actually hold. Also: a rock opera."
 footer_closing: "Stay feral, folks."
 social_links:
