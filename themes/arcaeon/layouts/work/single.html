@@ -1,36 +1,80 @@
 {{ define "main" }}
 <main>
 
-  {{/* ===== HERO — offer name, title, price/shape ===== */}}
+  {{/* ===== HERO — eyebrow, title, price-as-hero, lede ===== */}}
   <section class="section section-void sigil-arc sigil-boundary-tr">
     <div class="section-content">
       {{ with .Params.offer_name }}
-      <p class="currently-label">{{ . }}</p>
+      <p class="offer-eyebrow">{{ . }}</p>
       {{ end }}
       <h1 class="display-text">{{ .Title }}</h1>
-      <p>
-        {{ with .Params.price }}{{ . }}{{ end }}{{ with .Params.duration }} / {{ . }}{{ end }}
-      </p>
+      {{ with .Params.price }}
+      <p class="offer-price">{{ . }}</p>
+      {{ end }}
+      {{ with .Params.duration }}
+      <p class="offer-price__meta">{{ . }}</p>
+      {{ end }}
+      {{ with .Params.lede }}
+      <p class="offer-lede">{{ . }}</p>
+      {{ end }}
     </div>
   </section>
 
-  {{/* ===== PITCH — voiced markdown body ===== */}}
-  <section class="section section-depth">
-    <div class="section-content">
+  {{/* ===== PITCH — voiced markdown body, with imposed rhythm ===== */}}
+  <section class="section section-depth sigil-gradient">
+    <div class="section-content offer-body">
       {{ .Content }}
     </div>
   </section>
 
-  {{/* ===== CTA — Cal.com link-out, config-driven (OFFER-05, OFFERQ-02) ===== */}}
+  {{/* ===== FACETS — scannable "what you get" / "who it's for" ===== */}}
+  {{ if or .Params.what_you_get .Params.who_for }}
   <section class="section section-void">
     <div class="section-content">
+      <div class="offer-facets">
+        {{ with .Params.what_you_get }}
+        <div class="offer-card">
+          <p class="offer-card__label">What you get</p>
+          <ul class="offer-list">
+            {{ range . }}<li>{{ . }}</li>{{ end }}
+          </ul>
+        </div>
+        {{ end }}
+        {{ with .Params.who_for }}
+        <div class="offer-card">
+          <p class="offer-card__label">Who it's for</p>
+          <ul class="offer-list">
+            {{ range . }}<li>{{ . }}</li>{{ end }}
+          </ul>
+        </div>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+  {{ end }}
+
+  {{/* ===== PULL-QUOTE — the money line ===== */}}
+  {{ with .Params.pull_quote }}
+  <section class="section section-depth sigil-gradient">
+    <div class="section-content">
+      <blockquote class="offer-pullquote">{{ . }}</blockquote>
+    </div>
+  </section>
+  {{ end }}
+
+  {{/* ===== CTA — Cal.com link-out, config-driven (OFFER-05, OFFERQ-02) ===== */}}
+  <section class="section section-void sigil-arc sigil-boundary-bl">
+    <div class="section-content">
       {{ with .Params.price }}
-      <p class="cta-description">{{ . }}</p>
+      <p class="cta-description">{{ . }}{{ with $.Params.duration }} · {{ . }}{{ end }}</p>
       {{ end }}
       {{ with index site.Params.booking .Params.booking_key }}
       <a href="{{ . }}" class="glow-radiant-core cta-button" target="_blank" rel="noopener noreferrer">
         {{ $.Params.cta_text | default "Book & Pay" }}
       </a>
+      {{ end }}
+      {{ with .Params.reassurance }}
+      <p class="offer-reassurance">{{ . }}</p>
       {{ end }}
     </div>
   </section>
