@@ -13,7 +13,7 @@ Offer pages that turn falkensmage.com into a linkable commerce surface — sella
 - [ ] **OFFER-02**: Visitor can view a dedicated **The Query** page (`/work/the-query`) — voiced pitch, what-it-is, $250 / 90-min tarot reading — with a Radiant-Core "Book & Pay" CTA that links out to Cal.com.
 - [ ] **OFFER-03**: Visitor can view a dedicated **The Cast** page (`/work/the-cast`) — $325 / 90-min astrology reading — with a Radiant-Core "Book & Pay" CTA that links out to Cal.com.
 - [ ] **OFFER-04**: Visitor can view a dedicated **The Daemon** page (`/work/the-daemon`) — 6-month Hermetic coaching, $4,500 — with a consult-gated "Book a Clarity Consult ($150, credited)" CTA that links out to Cal.com (not a direct buy).
-- [ ] **OFFER-05**: Every offer CTA link-target is a single-source-of-truth config value (placeholder Cal.com URLs), trivially swapped when Cal.com event types exist.
+- [x] **OFFER-05**: Every offer CTA link-target is a single-source-of-truth config value (placeholder Cal.com URLs), trivially swapped when Cal.com event types exist.
 
 ### Navigation
 
@@ -48,12 +48,13 @@ Offer pages that turn falkensmage.com into a linkable commerce surface — sella
 | OFFER-02 | Phase 6 | Pending |
 | OFFER-03 | Phase 6 | Pending |
 | OFFER-04 | Phase 6 | Pending |
-| OFFER-05 | Phase 6 | Pending |
+| OFFER-05 | Phase 6 | Complete |
 | NAV-01 | Phase 6 | Pending |
 | OFFERQ-01 | Phase 6 | Pending |
 | OFFERQ-02 | Phase 6 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 8 total
 - Mapped to phases: 8
 - Unmapped: 0 ✓

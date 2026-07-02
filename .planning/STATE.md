@@ -6,14 +6,14 @@ current_phase: 06
 current_phase_name: offer-pages
 status: executing
 stopped_at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
-last_updated: "2026-07-02T00:20:57.074Z"
+last_updated: "2026-07-02T00:25:04.041Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 06 (offer-pages) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 06
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-07-02 — Phase 06 execution started
 
 ## Performance Metrics
@@ -72,6 +72,7 @@ Last activity: 2026-07-02 — Phase 06 execution started
 | Phase 05-v1-gap-closure P01 | 2min | 3 tasks | 2 files |
 | Phase 05-v1-gap-closure P02 | 3min | 6 tasks | 6 files |
 | Phase 05-v1-gap-closure P03 | 3min | 2 tasks | 2 files |
+| Phase 06-offer-pages P01 | 6min | 3 tasks | 3 files |
 
 ## Deferred Items
 
@@ -133,6 +134,9 @@ Recent decisions affecting current work:
 - [Phase 05-v1-gap-closure]: all grep calls in new checks that can match zero items wrapped with || true — set -uo pipefail aborts otherwise
 - [Phase 05-v1-gap-closure]: clean-rebuild discipline (rm -rf public/ resources/_gen/) mandatory before verification — Hugo's asset cache and fingerprinted CSS accumulation can mask bugs under stale state
 - [Phase 05-v1-gap-closure]: test-path synchronization after source-of-truth moves — validate-phase-01.sh font paths updated from assets/fonts/ to static/fonts/ per Plan 05-01 architecture; hardcoded test paths must follow intentional file moves
+- [Phase ?]: Cal.com config lives in hugo.toml [params.booking] (not a separate data/booking.toml) - single-source location, matches existing [params.colors] sibling-table convention
+- [Phase ?]: Hub cards reuse social-grid/social-card rather than currently-card - three offers read better as a grid than a stacked single-card list
+- [Phase ?]: CTA anchor guarded with {{ with index site.Params.booking .Params.booking_key }} so a missing/mistyped booking_key silently omits the CTA rather than emitting a broken empty href
 
 ### Pending Todos
 
@@ -155,6 +159,6 @@ Carried forward to v1.1 scoping:
 
 ## Session Continuity
 
-Last session: 2026-04-17T23:00:00.000Z
+Last session: 2026-07-02T00:24:32.655Z
 Stopped at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
 Resume file: None
