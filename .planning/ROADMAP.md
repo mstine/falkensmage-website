@@ -56,4 +56,4 @@ Next: `/gsd-plan-phase 6` to plan execution.
 | 3. Dynamic Layer + Quality | v1.0 | 2/2 | Complete | 2026-04-17 |
 | 4. Production Deploy | v1.0 | 2/2 | Complete | 2026-04-17 |
 | 5. v1.0 Gap Closure | v1.0 | 3/3 | Complete | 2026-04-17 |
-| 6. Offer Pages | v1.1 | 3/3 | Complete   | 2026-07-02 |
+| 6. Offer Pages | v1.1 | 3/3 | Complete    | 2026-07-02 |
