@@ -8,6 +8,16 @@ theme = "arcaeon"
   description = "Falken's Mage - Matt Stine"
   plausible = "falkensmage.com"
 
+# Single source of truth for Cal.com booking link-outs (OFFER-05).
+# PLACEHOLDER URLs until Cal.com event types are stood up (OFFER-F1) —
+# swap the three values here, nowhere else. Templates dereference
+# site.Params.booking by each offer page's booking_key; never hardcode
+# a Cal.com URL in a template.
+[params.booking]
+  "the-query" = "https://cal.com/PLACEHOLDER/the-query"
+  "the-cast" = "https://cal.com/PLACEHOLDER/the-cast"
+  "the-daemon" = "https://cal.com/PLACEHOLDER/the-daemon-consult"
+
 [params.colors]
   electricViolet = "#7a2cff"
   neonMagenta = "#ff3cac"
