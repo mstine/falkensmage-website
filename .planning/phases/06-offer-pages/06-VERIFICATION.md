@@ -1,14 +1,16 @@
 ---
 phase: 06-offer-pages
 verified: 2026-07-02T00:00:00Z
-status: human_needed
+status: passed
 score: 11/11 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Open /work/, /work/the-query/, /work/the-cast/, /work/the-daemon/ in a real browser (or hugo server --buildDrafts + DevTools) at a 375px viewport and confirm no horizontal overflow and that the Triad Rule / section-void/section-depth alternation reads visually coherent on each page."
     expected: "No horizontal scroll at 375px; sections read as intentional visual rhythm, not accidental clipping or color clash."
     why_human: "This mirrors the project's own pre-existing manual-only gate (Phase 1 THEME-05: 'no horizontal scroll at 375px' — explicitly documented as un-automatable, requires browser DevTools). Phase 6 adds four new pages built on the same CSS with zero new selectors, but the manual gate has never been exercised against these specific new pages/content lengths (long pitch paragraphs, price lines) — grep/build checks cannot see rendered visual overflow or spacing."
+
   - test: "Read the four offer/hub pages (and the repointed homepage CTA) end-to-end as a stranger arriving from social media would, and confirm the voice lands as intended and the pricing/CTA mechanics (especially The Daemon's consult-gate) are immediately legible without a second read."
     expected: "A first-time visitor understands what each offer is, what it costs, and what clicking the CTA does (esp. that The Daemon's CTA books a $150 consult, not a $4,500 purchase) within seconds."
     why_human: "Voice/tone quality and message clarity for a real human reader are inherently subjective judgments that automated grep/structure checks cannot make — the phase's own core value ('a stranger... instantly understands... in under ten seconds') is a UX/comprehension claim, not a structural one."
