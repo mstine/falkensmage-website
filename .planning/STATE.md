@@ -6,14 +6,14 @@ current_phase: 06
 current_phase_name: offer-pages
 status: executing
 stopped_at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
-last_updated: "2026-07-02T00:25:04.041Z"
+last_updated: "2026-07-02T00:30:08.122Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 06 (offer-pages) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-02 — Phase 06 execution started
 
@@ -73,6 +73,7 @@ Last activity: 2026-07-02 — Phase 06 execution started
 | Phase 05-v1-gap-closure P02 | 3min | 6 tasks | 6 files |
 | Phase 05-v1-gap-closure P03 | 3min | 2 tasks | 2 files |
 | Phase 06-offer-pages P01 | 6min | 3 tasks | 3 files |
+| Phase 06-offer-pages P02 P02 | 3min | 3 tasks | 4 files |
 
 ## Deferred Items
 
@@ -137,6 +138,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Cal.com config lives in hugo.toml [params.booking] (not a separate data/booking.toml) - single-source location, matches existing [params.colors] sibling-table convention
 - [Phase ?]: Hub cards reuse social-grid/social-card rather than currently-card - three offers read better as a grid than a stacked single-card list
 - [Phase ?]: CTA anchor guarded with {{ with index site.Params.booking .Params.booking_key }} so a missing/mistyped booking_key silently omits the CTA rather than emitting a broken empty href
+- [Phase ?]: [Phase 06-offer-pages P02]: Practitioner framing varied per offer (archetypal tarotist for The Query, chaos witch/astrologer for The Cast) to match the homepage identity block's three-part framing rather than mechanically repeating one label
+- [Phase ?]: [Phase 06-offer-pages P02]: The Daemon's duration field omitted entirely (not empty string) so single.html's with .Params.duration guard suppresses the session-length fragment for a 6-month container
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ Carried forward to v1.1 scoping:
 
 ## Session Continuity
 
-Last session: 2026-07-02T00:24:32.655Z
+Last session: 2026-07-02T00:29:33.824Z
 Stopped at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
 Resume file: None

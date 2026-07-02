@@ -29,12 +29,12 @@ Full details: [milestones/v1.0-ROADMAP.md](./milestones/v1.0-ROADMAP.md)
 **Goal:** Turn falkensmage.com into a linkable commerce surface — offer pages sellable from anywhere (social, podcast, DMs), not just email. Ships a `/work/` hub plus The Query / The Cast / The Daemon offer pages with Cal.com link-out CTAs, and repoints the homepage secondary CTA to `/work/`. Composes only from the existing `arcaeon` design system; holds v1.0 perf/a11y budgets.
 **Depends on:** Phase 5 (v1.0 shipped)
 **Requirements:** OFFER-01, OFFER-02, OFFER-03, OFFER-04, OFFER-05, NAV-01, OFFERQ-01, OFFERQ-02
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 
 - [x] 06-01-PLAN.md — Cal.com booking config (single-source) + `/work/` section templates (hub list + offer single)
-- [ ] 06-02-PLAN.md — `/work/` hub content + The Query / The Cast / The Daemon voiced offer pages
+- [x] 06-02-PLAN.md — `/work/` hub content + The Query / The Cast / The Daemon voiced offer pages
 - [ ] 06-03-PLAN.md — Homepage secondary CTA repoint to `/work/` + Phase 6 validation script + clean-build check
 
 **Success Criteria**:
@@ -56,4 +56,4 @@ Next: `/gsd-plan-phase 6` to plan execution.
 | 3. Dynamic Layer + Quality | v1.0 | 2/2 | Complete | 2026-04-17 |
 | 4. Production Deploy | v1.0 | 2/2 | Complete | 2026-04-17 |
 | 5. v1.0 Gap Closure | v1.0 | 3/3 | Complete | 2026-04-17 |
-| 6. Offer Pages | v1.1 | 1/3 | In Progress|  |
+| 6. Offer Pages | v1.1 | 2/3 | In Progress|  |
