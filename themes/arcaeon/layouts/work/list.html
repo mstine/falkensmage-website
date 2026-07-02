@@ -1,0 +1,31 @@
+{{ define "main" }}
+<main>
+
+  {{/* ===== FRAMING — short front-door copy from content/work/_index.md ===== */}}
+  <section class="section section-void">
+    <div class="section-content">
+      <h1 class="display-text">{{ .Title }}</h1>
+      {{ .Content }}
+    </div>
+  </section>
+
+  {{/* ===== OFFERS — cards linking to each offer page ===== */}}
+  <section class="section section-depth">
+    <div class="section-content">
+      <div class="social-grid">
+        {{ range .Pages.ByWeight }}
+        <a href="{{ .RelPermalink }}" class="social-card glow-interactive">
+          <span class="social-card__label">
+            {{ with .Params.offer_name }}<strong>{{ . }}</strong><br>{{ end }}
+            {{ .Title }}
+            {{ with .Params.price }}&mdash; {{ . }}{{ end }}
+            {{ with .Params.summary }}<br>{{ . }}{{ end }}
+          </span>
+        </a>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+
+</main>
+{{ end }}
