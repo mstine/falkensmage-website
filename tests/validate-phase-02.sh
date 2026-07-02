@@ -202,25 +202,15 @@ fi
 echo ""
 
 # ── CTA-02 ────────────────────────────────────────────────────────────────────
-# mailto link present AND glow-radiant-core class present
+# glow-radiant-core class present on the CTA button.
+# NOTE (Phase 6 / NAV-01): the secondary CTA's mailto:falkensmage@falkenslabyrinth.com
+# target was intentionally repointed to /work/ by 06-03-PLAN.md (NAV-01) — that
+# assertion moved to tests/validate-phase-06.sh (NAV-01 check). Asserting the
+# mailto string here would fail permanently against the new, intended design.
 
-echo "[ CTA-02 ] CTA button — mailto link + glow-radiant-core class"
-MAILTO_PRESENT=false
-GLOW_RADIANT_PRESENT=false
-
-if html_has_fixed "mailto:falkensmage@falkenslabyrinth.com" "$HTML"; then
-  MAILTO_PRESENT=true
-fi
+echo "[ CTA-02 ] CTA button — glow-radiant-core class present"
 if html_has_fixed "glow-radiant-core" "$HTML"; then
-  GLOW_RADIANT_PRESENT=true
-fi
-
-if $MAILTO_PRESENT && $GLOW_RADIANT_PRESENT; then
-  pass "CTA-02: mailto:falkensmage@falkenslabyrinth.com AND glow-radiant-core both present"
-elif ! $MAILTO_PRESENT && ! $GLOW_RADIANT_PRESENT; then
-  fail "CTA-02: both mailto link AND glow-radiant-core class MISSING"
-elif ! $MAILTO_PRESENT; then
-  fail "CTA-02: mailto:falkensmage@falkenslabyrinth.com MISSING from built HTML"
+  pass "CTA-02: glow-radiant-core present (secondary CTA mailto->/work/ repoint verified in validate-phase-06.sh NAV-01 check)"
 else
   fail "CTA-02: glow-radiant-core class MISSING from built HTML"
 fi
