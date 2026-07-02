@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Offer Pages — scoped 2026-07-01
 current_phase: 06
 current_phase_name: offer-pages
-status: executing
-stopped_at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
-last_updated: "2026-07-02T00:30:08.122Z"
+status: verifying
+stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
+last_updated: "2026-07-02T00:46:12.826Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 Phase: 06 (offer-pages) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-02 — Phase 06 execution started
 
 ## Performance Metrics
@@ -74,6 +74,7 @@ Last activity: 2026-07-02 — Phase 06 execution started
 | Phase 05-v1-gap-closure P03 | 3min | 2 tasks | 2 files |
 | Phase 06-offer-pages P01 | 6min | 3 tasks | 3 files |
 | Phase 06-offer-pages P02 P02 | 3min | 3 tasks | 4 files |
+| Phase 06 P03 | 11min | 2 tasks | 3 files |
 
 ## Deferred Items
 
@@ -140,6 +141,9 @@ Recent decisions affecting current work:
 - [Phase ?]: CTA anchor guarded with {{ with index site.Params.booking .Params.booking_key }} so a missing/mistyped booking_key silently omits the CTA rather than emitting a broken empty href
 - [Phase ?]: [Phase 06-offer-pages P02]: Practitioner framing varied per offer (archetypal tarotist for The Query, chaos witch/astrologer for The Cast) to match the homepage identity block's three-part framing rather than mechanically repeating one label
 - [Phase ?]: [Phase 06-offer-pages P02]: The Daemon's duration field omitted entirely (not empty string) so single.html's with .Params.duration guard suppresses the session-length fragment for a 6-month container
+- [Phase 06]: Homepage cta_secondary repointed from mailto: to /work/ hub with voiced anchor text (NAV-01); safeHTML mechanism and no-target-blank internal-nav convention preserved
+- [Phase 06]: tests/validate-phase-02.sh CTA-02 narrowed to glow-radiant-core only, dropping the mailto assertion made permanently obsolete by NAV-01 (superseding coverage moved to validate-phase-06.sh)
+- [Phase 06]: OFFERQ-02's mobile-first and WCAG-AA legs verified as inherited-by-reuse (viewport-meta + no-new-hex + no-fixed-px guards) rather than re-measured, since Phase 6 introduces no new CSS system
 
 ### Pending Todos
 
@@ -147,12 +151,13 @@ None yet.
 
 ### Blockers/Concerns
 
-*None at v1.0 close.*
+*at v1.0 close.*
 
 Carried forward to v1.1 scoping:
 
 - **Copy dependencies:** Placeholder tagline + identity statement still in place — real copy is human-written and deferred.
 - **Nyquist validation draft scaffolds:** Phases 3, 4, 5 have VALIDATION.md in draft state. Non-blocking; `/gsd-validate-phase 0{3,4,5}` can fill retroactively.
+- tests/validate-phase-02.sh has two unrelated pre-existing failures (SOCIAL-04 tarotpulse-domain mismatch, CTA-01 stale 'Coaching' text) logged in .planning/phases/06-offer-pages/deferred-items.md — recommend a future tech-debt plan to reconcile
 
 ### Quick Tasks Completed
 
@@ -162,6 +167,6 @@ Carried forward to v1.1 scoping:
 
 ## Session Continuity
 
-Last session: 2026-07-02T00:29:33.824Z
-Stopped at: v1.0 MVP milestone archived — ROADMAP collapsed, REQUIREMENTS archived to milestones/v1.0-REQUIREMENTS.md, MILESTONES.md and RETROSPECTIVE.md written, git tag v1.0 pending. Ready for `/gsd-new-milestone` to scope v1.1.
+Last session: 2026-07-02T00:46:12.813Z
+Stopped at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
 Resume file: None

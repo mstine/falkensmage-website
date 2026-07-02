@@ -17,12 +17,12 @@ Offer pages that turn falkensmage.com into a linkable commerce surface — sella
 
 ### Navigation
 
-- [ ] **NAV-01**: The homepage secondary CTA links to `/work/` (replacing the bare mailto), so the offers are reachable from the front door.
+- [x] **NAV-01**: The homepage secondary CTA links to `/work/` (replacing the bare mailto), so the offers are reachable from the front door.
 
 ### Quality (inherited budgets)
 
-- [ ] **OFFERQ-01**: Offer pages compose only from the existing `arcaeon` design system (ARCÆON palette vars, Cinzel/Space Grotesk, `.section-void`/`.section-depth`, `.glow-radiant-core`, sigils) — no new design language.
-- [ ] **OFFERQ-02**: Offer pages hold v1.0's budgets — sub-1s 3G, zero external dependencies/CDN (CTAs link out; no embedded booking widget/script), mobile-first 375px, WCAG AA.
+- [x] **OFFERQ-01**: Offer pages compose only from the existing `arcaeon` design system (ARCÆON palette vars, Cinzel/Space Grotesk, `.section-void`/`.section-depth`, `.glow-radiant-core`, sigils) — no new design language.
+- [x] **OFFERQ-02**: Offer pages hold v1.0's budgets — sub-1s 3G, zero external dependencies/CDN (CTAs link out; no embedded booking widget/script), mobile-first 375px, WCAG AA.
 
 ## Future Requirements (deferred)
 
@@ -49,9 +49,9 @@ Offer pages that turn falkensmage.com into a linkable commerce surface — sella
 | OFFER-03 | Phase 6 | Complete |
 | OFFER-04 | Phase 6 | Complete |
 | OFFER-05 | Phase 6 | Complete |
-| NAV-01 | Phase 6 | Pending |
-| OFFERQ-01 | Phase 6 | Pending |
-| OFFERQ-02 | Phase 6 | Pending |
+| NAV-01 | Phase 6 | Complete |
+| OFFERQ-01 | Phase 6 | Complete |
+| OFFERQ-02 | Phase 6 | Complete |
 
 **Coverage:**
 
