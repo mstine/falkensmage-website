@@ -1,5 +1,17 @@
 # Milestones: falkensmage.com
 
+## v1.1 Offer Pages (Shipped: 2026-07-02)
+
+**Phases completed:** 1 phases, 3 plans, 8 tasks
+
+**Key accomplishments:**
+
+- Single-source `[params.booking]` Cal.com config in hugo.toml plus two arcaeon-native `/work/` templates (hub list + offer single) whose CTAs are structurally forced to dereference the config key instead of a hardcoded URL.
+- Four voiced content files — the `/work/` hub plus The Query ($250 tarot), The Cast ($325 astrology), and The Daemon ($4,500 consult-gated coaching) — rendering through Plan 06-01's templates with zero hardcoded booking URLs.
+- Homepage secondary CTA repointed from a bare `mailto:` to the `/work/` hub (NAV-01), plus a 32-check `tests/validate-phase-06.sh` acceptance gate proving all eight Phase 6 requirement IDs on a clean `hugo --minify` build.
+
+---
+
 Ship log. One entry per shipped version. Each entry summarizes scope, stats, and accomplishments. Full phase detail lives in `.planning/milestones/v{VERSION}-ROADMAP.md`; full requirement detail in `.planning/milestones/v{VERSION}-REQUIREMENTS.md`.
 
 ---

@@ -2,6 +2,10 @@
 
 ## Current State
 
+✅ **v1.1 shipped 2026-07-02** — offer pages live under `/work/`.
+
+The front door now has a commerce surface. A `/work/` hub plus three offer pages — The Query ($250 tarot), The Cast ($325 astrology), The Daemon ($4,500 consult-gated coaching) — each a voiced sales page with a Cal.com link-out CTA, composed from the `arcaeon` system. Homepage secondary CTA repoints to `/work/`. Cal.com URLs are placeholders until event types are stood up (OFFER-F1). Sub-1s/3G, zero-external-dependency, mobile-first, WCAG AA budgets held.
+
 ✅ **v1.0 shipped 2026-04-17** — live at https://falkensmage.com.
 
 The front door is up. A stranger landing from social media can see who this person is and reach every platform in under ten seconds on a phone screen. Hugo Extended 0.160.1 static site, GitHub Actions + Pages deploy, custom domain with HTTPS enforced, sub-1s 3G budget, WCAG AA.
@@ -15,20 +19,17 @@ Core value: A stranger landing from social media instantly understands who this 
 
 </details>
 
-## Current Milestone: v1.1 Offer Pages
+## Current Milestone: none — v1.1 shipped, next milestone TBD
 
-**Goal:** Give falkensmage.com a linkable commerce surface — dedicated offer pages sellable from anywhere (social, podcast, DMs), not just email.
+v1.1 Offer Pages shipped 2026-07-02 (Phase 6). Start the next cycle with `/gsd-new-milestone` when scoped.
 
-**Target features:**
-- `/work/` — "Work With Me" hub (framing + 3 offer cards)
-- `/work/the-query` — $250 / 90-min tarot → "Book & Pay" (Cal.com link-out)
-- `/work/the-cast` — $325 / 90-min astrology → "Book & Pay" (Cal.com link-out)
-- `/work/the-daemon` — $4,500 6-mo coaching → "Book a Clarity Consult ($150, credited)" (Cal.com, consult-gated)
-- Homepage secondary CTA repointed from the bare mailto to `/work/`
+**Open follow-ups carried forward:**
+- **OFFER-F1** — swap placeholder Cal.com URLs (`cal.com/PLACEHOLDER/*`) for live event-type booking links once Cal.com is stood up. This is the one thing between the offer pages and being genuinely sellable.
+- **OFFER-F2** — offer pages become source material for the Sigil & Thread-rendered version of the site.
+- Tech debt: `tests/validate-phase-02.sh` has 2 stale assertions (SOCIAL-04 TarotPulse domain, CTA-01 "Coaching" text) from an earlier homepage copy rewrite — reconcile in a future cleanup plan.
+- **Deferred from v1.0 (non-binding):** Copy finalization (real tagline/identity), Nyquist retro-validation (`/gsd-validate-phase 0{3,4,5}`), AUTO-01/02 (cron rebuild, social-card gen), EXPAND-01/03 (Currently multi-source, dark/light toggle).
 
-**Key context:** Composes from the existing `arcaeon` design system (no new design language); holds v1.0's sub-1s/3G, no-external-dependency, mobile-first, WCAG AA budgets (CTAs link OUT — no embedded widget). Cal.com URLs are placeholders until event types are stood up. Interim commerce stack: Cal.com (book+pay via Stripe) + Substack (membership); canonical offer definitions live in `~/.psyche/hermetic/offer-architecture.md`.
-
-**Deferred (non-binding, from v1.0):** Copy finalization (real tagline/identity), Nyquist retro-validation (`/gsd-validate-phase 0{3,4,5}`), AUTO-01/02 (cron rebuild, social-card gen), EXPAND-01/03 (Currently multi-source, dark/light toggle).
+**Interim commerce stack:** Cal.com (book+pay via Stripe) + Substack (membership); canonical offer definitions live in `~/.psyche/hermetic/offer-architecture.md`. Sigil & Thread later replaces Cal.com on the same Stripe rail.
 
 ## What This Is
 
@@ -59,9 +60,20 @@ A stranger landing from social media instantly understands who this person is an
 - ✓ Lemniscate sigil favicon — Electric Violet / Neon Magenta, SVG + ICO — v1.0
 - ✓ Hugo static site with GitHub Actions build/deploy to GitHub Pages, HTTPS enforced, custom domain persistent — v1.0
 
-### Active (v1.1 Offer Pages)
+### Validated (v1.1 Offer Pages)
 
-- OFFER-01…05, NAV-01, OFFERQ-01…02 — see `REQUIREMENTS.md`. Offer pages (`/work/` hub + The Query / The Cast / The Daemon) with Cal.com link-out CTAs; homepage secondary CTA repointed to `/work/`.
+- ✓ `/work/` "Work With Me" hub — framing + 3 offer cards linking to each page (OFFER-01) — v1.1
+- ✓ The Query — $250 / 90-min archetypal tarot, voiced sales page, "Book & Pay" Cal.com link-out (OFFER-02) — v1.1
+- ✓ The Cast — $325 / 90-min archetypal astrology, voiced sales page, "Book & Pay" Cal.com link-out (OFFER-03) — v1.1
+- ✓ The Daemon — $4,500 6-mo Hermetic coaching, consult-gated "Book a Clarity Consult ($150, credited)" (OFFER-04) — v1.1
+- ✓ Cal.com URLs centralized as single-source `[params.booking]` config, templates dereference the key (OFFER-05) — v1.1
+- ✓ Homepage secondary CTA repointed from bare mailto to `/work/` (NAV-01) — v1.1
+- ✓ Offer pages compose from the `arcaeon` system — with a deliberate, tasteful CSS extension for sales-page hierarchy, palette-vars only (OFFERQ-01, amended) — v1.1
+- ✓ v1.0 budgets held — sub-1s/3G, zero external deps, link-out CTAs, mobile-first 375px, WCAG AA (OFFERQ-02) — v1.1
+
+### Active (next milestone)
+
+- (TBD — scope with `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -138,6 +150,10 @@ Reasoning held through v1.0; re-audit at next milestone start.
 | `css.Build` externals with absolute path strings | Glob patterns empirically fail with esbuild CSS `url()` resolver | ✓ Good — Phase 5 fix landed |
 | Committed WOFF2 as CI trust root | Remove `npm ci` from workflow; `package.json` as version documentation only | ✓ Good — eliminated Node from CI entirely |
 | Clean-rebuild verification gate | `rm -rf public/ resources/_gen/` before assertions — exposed stale-state masking in Phase 5 | ✓ Good — established discipline |
+| Cal.com URLs as single-source `[params.booking]` config | Templates dereference the key; live-URL swap is a one-place edit when event types exist | — Pending (OFFER-F1 swap outstanding) |
+| The Daemon consult-gated ($150 credited), not a direct buy | High-ticket coaching needs a qualifying conversation, not an impulse checkout; CTA text structurally enforced + validator-checked | ✓ Good — v1.1 |
+| Offer pages redesigned as structured sales pages after UAT | Human gate caught flat one-block prose; restructured into price-hero, scannable facet cards, pull-quotes, CTA reassurance | ✓ Good — v1.1, Matt-approved |
+| OFFERQ-01 "no new CSS" fence amended | Strict reuse-only is what produced the flatness; extended `arcaeon` with a palette-var-only content-level CSS block — extends the system, doesn't fork it | ✓ Good — v1.1 conscious amendment |
 
 ## Evolution
 
@@ -157,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-01 after v1.1 milestone scoping (Offer Pages)*
+*Last updated: 2026-07-02 after v1.1 milestone completion (Offer Pages)*

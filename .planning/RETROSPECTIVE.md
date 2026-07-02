@@ -60,6 +60,52 @@
 
 ---
 
+## Milestone: v1.1 — Offer Pages
+
+**Shipped:** 2026-07-02
+**Phases:** 1 (Phase 6) | **Plans:** 3 | **Timeline:** 1 day
+
+### What Was Built
+
+- New `/work/` Hugo section — a "Work With Me" hub plus three offer pages (The Query $250 tarot, The Cast $325 astrology, The Daemon $4,500 consult-gated coaching), each a voiced sales page with a Cal.com link-out CTA
+- Single-source `[params.booking]` config in `hugo.toml` — templates structurally dereference the booking key, never a hardcoded URL (one-place swap for OFFER-F1)
+- Homepage secondary CTA repointed from a bare `mailto:` to the `/work/` hub (NAV-01)
+- `tests/validate-phase-06.sh` — 32-check acceptance gate proving all 8 requirement IDs, all four OFFERQ-02 budget legs, and a concrete consult-gate check on The Daemon
+- Offer-page sales redesign (UAT gap closure) — price-as-hero, lede, scannable facet cards, pull-quotes, CTA reassurance; one palette-vars-only `arcaeon` CSS extension
+
+### What Worked
+
+- **Templates-before-content sequencing (Wave 1 plumbing first).** The offer template was built to dereference `[params.booking]` and compose only from `arcaeon` classes *before* any content landed — so OFFER-05 (no hardcoded URLs) and OFFERQ-01 (reuse-only) became properties of the render path, not per-page discipline.
+- **Plan-checker caught two real validation gaps before execution.** OFFERQ-02's mobile-first/WCAG legs were unasserted and OFFER-04's consult-gate check was prose, not a grep. Folding both into 06-03 before executing meant the phase's own gate actually tested what it claimed.
+- **The human UAT gate caught what every automated check missed.** All 32 script checks and 11 verifier truths passed on offer pages a human immediately called flat and weak. This is the Generator self-evaluation blind spot exactly — structure verified, desire didn't.
+- **Live-proof iteration for the design fix.** Instead of firing the formal diagnose→plan→execute gap-closure pipeline at a taste problem, redesigned one page live against a running `hugo server`, got approval on the real thing, then rolled out. Faster and truer for a design decision.
+
+### What Was Inefficient
+
+- **The spec produced the flatness, not the execution.** The CONTEXT constraints "voiced pitch, not a spec sheet" + "no new design language, pure `arcaeon` reuse" jointly optimized for voice + reuse + budgets and silently under-specified sales-page craft and visual hierarchy. The pages were built exactly to spec — and the spec was the gap.
+- **"Pure reuse" got read as "minimal."** The first-pass offer template deployed almost none of the graphical vocabulary `arcaeon` already had (sigils, glow, cards, section alternation). Reuse-only isn't the same as good; here it meant flat.
+- **Phase 6 was hand-registered into ROADMAP.md and didn't resolve.** The `roadmap.get-phase` parser needs a `### Phase N:` heading; the milestone-scoping session wrote a decorative heading instead, so planning couldn't start until it was re-registered. Machine-readable format matters when a human authors roadmap entries.
+
+### Patterns Established
+
+- **Front-matter-driven page structure** (`lede`, `what_you_get`, `who_for`, `pull_quote`, `reassurance`) with graceful `with`/`range` guards — one template serves both rich and minimal pages, and content authors add structure without touching templates.
+- **Conscious design-system amendment** — when a "no new CSS" fence is what produces the bad outcome, extend the system with a named, palette-vars-only block and record *why* (extends vs. forks). Not silent scope creep.
+- **Live-proof iteration for taste/design gaps** — for a static site, iterate a proof against the running server before invoking the formal gap-closure machinery; the machinery root-causes bugs, and taste isn't a bug.
+
+### Key Lessons
+
+1. **Automated checks verify structure, not desire.** 32 script checks + 11 verifier truths all passed on pages a human called weak in one sentence. Keep the human gate, and aim its questions squarely at the Core Value (comprehension/UX), because that's the one thing greps can't see.
+2. **A "pure reuse / no new design" constraint can be the defect.** When a fence causes the bad outcome, amend it consciously rather than executing harder inside it. Reuse-only ≠ good.
+3. **Human-authored roadmap entries must match the parser's format.** A `### Phase N:` heading, not decorative prose. Re-registration cost a step before planning could begin.
+4. **Coherence over ceremony (again).** A design/taste fix on a static site didn't need the diagnose→plan→execute subagent pipeline — a live proof + approval was the coherent move. Same instinct as v1.0's acknowledge-and-ship.
+
+### Cost Observations
+
+- Model mix: opus planner, sonnet executors + verifier + plan-checker; single focused session.
+- Notable: the two efficiency wins were the plan-checker catching validation gaps pre-execution, and the live-proof loop replacing a heavier gap-closure round for the design fix.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -67,13 +113,17 @@
 | Milestone | Phases | Key Change |
 |-----------|--------|------------|
 | v1.0 | 5 | Established GSD workflow baseline — discuss → plan → execute → verify → audit → gap-close → archive |
+| v1.1 | 1 | Human UAT gate + live-proof iteration — caught a Core-Value gap all automated checks passed, fixed it live instead of via the formal gap-closure pipeline |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | Zero-Dep Additions |
 |-----------|-------|----------|-------------------|
 | v1.0 | 3 validation scripts (46 + 18 + 39 = 103 checks) | 42/42 requirements | 0 runtime JS, 0 external CDNs, 0 Node in CI |
+| v1.1 | +1 validation script (validate-phase-06.sh, 32 checks) | 8/8 v1.1 requirements | 0 runtime JS, 0 external CDNs, CTAs link OUT (no widget) |
 
 ### Top Lessons (Verified Across Milestones)
 
-*Will accumulate once v1.1+ ship. For now, v1.0 lessons stand on their own.*
+1. **Coherence over bookkeeping/ceremony.** v1.0 acknowledged-and-shipped past frontmatter drift; v1.1 fixed a design gap with a live proof instead of the full subagent pipeline. Both times, the coherent move beat the ceremonial one.
+2. **Automated verification proves structure; humans prove desire.** v1.1's flat offer pages passed every script and verifier truth. The human gate is where Core-Value (comprehension/UX) claims actually get tested.
+3. **Hugo/toolchain reality over docs.** v1.0's API-version lessons (`.Process` not `.Format`, `@v6` not `@v4`) and v1.1's parser-format requirement both reward verifying in the running system over trusting the spec.

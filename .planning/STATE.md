@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Offer Pages — scoped 2026-07-01
-current_phase: 6
-status: verifying
+current_phase: 1
+status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-07-02T12:59:04.275Z"
+last_updated: "2026-07-02T13:05:52.314Z"
 last_activity: 2026-07-02
-last_activity_desc: Phase 6 complete
+last_activity_desc: Milestone v1.1 completed and archived
 progress:
   total_phases: 1
   completed_phases: 1
@@ -21,17 +21,17 @@ current_phase_name: offer-pages
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-17)
+See: .planning/PROJECT.md (updated 2026-07-02)
 
 **Core value:** A stranger landing from social media instantly understands who this person is and can reach everything that matters — in under ten seconds, on a phone.
-**Current focus:** Phase 06 — offer-pages
+**Current focus:** v1.1 shipped — awaiting next milestone (`/gsd-new-milestone`)
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-07-02 — Phase 6 complete
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-02 — Milestone v1.1 completed and archived
 
 ## Performance Metrics
 
@@ -79,7 +79,7 @@ Last activity: 2026-07-02 — Phase 6 complete
 
 ## Deferred Items
 
-Items acknowledged and deferred at v1.0 milestone close on 2026-04-17. All items were resolved in substance (per `milestones/v1.0-MILESTONE-AUDIT.md`) but carry bookkeeping drift that did not warrant blocking archive.
+Items acknowledged and deferred at v1.0 milestone close on 2026-04-17, and **re-acknowledged at v1.1 close on 2026-07-02** (the audit re-detects them because the frontmatter was never flipped). All items were resolved in substance (per `milestones/v1.0-MILESTONE-AUDIT.md`) but carry bookkeeping drift that did not warrant blocking archive. None are v1.1 scope.
 
 | Category | Item | Status | Note |
 |----------|------|--------|------|
@@ -171,3 +171,7 @@ Carried forward to v1.1 scoping:
 Last session: 2026-07-02T00:46:12.813Z
 Stopped at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
