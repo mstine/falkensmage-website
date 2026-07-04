@@ -1,21 +1,43 @@
-{{/* Rewired launch banner — promo card shown at the top of the hub for the
-     launch window. Data-driven via the `rewired_launch` front-matter block in
-     content/_index.md; set `active: false` there to retire it. The whole card is
-     one link (big tap target for link-in-bio traffic). */}}
+{{/* Rewired launch banner — promo card for the launch window. Data-driven via the
+     `rewired_launch` front-matter block in content/_index.md; set `active: false` to
+     retire it. Holds the latest-episode link + a native audio player (preload="none",
+     so zero bytes until the visitor hits play) alongside the CTA. */}}
 {{ with $.Params.rewired_launch }}
   {{ if .active }}
   <section class="section section-depth launch-banner-section" aria-labelledby="launch-banner-heading">
     <div class="section-content">
-      <a class="launch-banner glow-interactive"
-         href="{{ .cta_url }}"
-         target="_blank"
-         rel="noopener noreferrer"
-         aria-label="{{ .title }} — {{ .eyebrow }}. {{ .cta_text }}">
+      <div class="launch-banner glow-interactive">
+        {{ with resources.Get "images/rewired-mark.png" }}
+          {{ $mark := .Resize "160x png" }}
+          {{ $markWebP := $mark.Process "webp" }}
+          <picture>
+            <source type="image/webp" srcset="{{ $markWebP.RelPermalink }}">
+            <img src="{{ $mark.RelPermalink }}" width="{{ $mark.Width }}" height="{{ $mark.Height }}"
+                 alt="" loading="lazy" class="launch-banner__mark">
+          </picture>
+        {{ end }}
         {{ with .eyebrow }}<span class="launch-banner__eyebrow">{{ . }}</span>{{ end }}
         <h2 id="launch-banner-heading" class="launch-banner__title">{{ .title | default "Rewired" }}</h2>
         {{ with .body }}<p class="launch-banner__body">{{ . | safeHTML }}</p>{{ end }}
-        <span class="launch-banner__cta glow-radiant-core">{{ .cta_text | default "Listen now →" }}</span>
-      </a>
+
+        {{ with .latest_episode_url }}
+        <p class="launch-banner__nowplaying">{{ $.Params.rewired_launch.latest_episode_label | default "Latest episode" }}</p>
+        <a class="launch-banner__episode glow-interactive"
+           href="{{ . }}" target="_blank" rel="noopener noreferrer">
+          &laquo;&thinsp;{{ $.Params.rewired_launch.latest_episode_title | default "Listen" }}&thinsp;&raquo;
+        </a>
+        {{ with $.Params.rewired_launch.latest_episode_audio }}
+        <audio class="launch-banner__player" controls preload="none" src="{{ . }}">
+          Your browser can’t play this — <a href="{{ $.Params.rewired_launch.latest_episode_url }}">listen on Substack</a>.
+        </audio>
+        {{ end }}
+        {{ end }}
+
+        <a class="launch-banner__cta glow-radiant-core"
+           href="{{ .cta_url }}" target="_blank" rel="noopener noreferrer">
+          {{ .cta_text | default "Listen now →" }}
+        </a>
+      </div>
     </div>
   </section>
   {{ end }}

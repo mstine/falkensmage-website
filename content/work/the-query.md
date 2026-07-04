@@ -5,6 +5,7 @@ price: "$250"
 duration: "90 minutes"
 cta_text: "Book & Pay"
 booking_key: "the-query"
+glyph: "query"
 summary: "A 90-minute archetypal tarot reading — naming what you already know and haven't said out loud."
 lede: "You already know what's wrong. You just haven't said it out loud — and saying it out loud is the whole point."
 what_you_get:

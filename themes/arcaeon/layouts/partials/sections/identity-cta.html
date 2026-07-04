@@ -8,19 +8,5 @@
     {{ with .Params.cta_description }}
     <p class="cta-description">{{ . }}</p>
     {{ end }}
-
-    {{ with .Params.cta_url }}
-    <a href="{{ . }}" class="glow-radiant-core cta-button" target="_blank" rel="noopener noreferrer">
-      {{ $.Params.cta_button_text | default "Read Feral Architecture" }}
-    </a>
-    {{ else with .Params.cta_email }}
-    <a href="mailto:{{ . }}" class="glow-radiant-core cta-button">
-      {{ $.Params.cta_button_text | default "Work With Me" }}
-    </a>
-    {{ end }}
-
-    {{ with .Params.cta_secondary }}
-    <p class="cta-secondary">{{ . | safeHTML }}</p>
-    {{ end }}
   </div>
 </section>

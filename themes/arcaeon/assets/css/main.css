@@ -353,8 +353,10 @@ a:hover {
   z-index: 1;
 }
 
-/* Gradient transition between sections (D-11) */
-.section + .section::before {
+/* Gradient transition at the top seam of every section (D-11).
+   Applied to every .section (not just DOM siblings) so the hero→first-main
+   seam fades identically to the rest — the hero, being first, opts out below. */
+.section::before {
   content: '';
   position: absolute;
   top: -2rem;
@@ -369,6 +371,101 @@ a:hover {
   );
   pointer-events: none;
   z-index: 0;
+}
+
+/* Hero is the first section — nothing above it to transition from */
+.hero-section::before {
+  content: none;
+}
+
+/* ============================================
+   SITE HEADER / NAV — global, sticky, consistent
+   ============================================ */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--arcaeon-void-purple);
+  border-bottom: 1px solid rgba(122, 44, 255, 0.25);
+}
+
+.site-header__inner {
+  max-width: 56rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.25rem;
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.site-header__mark {
+  width: 1.6rem;
+  height: auto;
+  display: block;
+}
+
+.site-header__wordmark {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.35rem;
+}
+
+.site-nav a {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  text-decoration: none;
+  opacity: 0.82;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible,
+.site-nav a[aria-current="page"] {
+  color: var(--color-text-accent);
+  opacity: 1;
+}
+
+/* Footer nav — mirrors header links for redundant wayfinding */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.footer-nav a {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.footer-nav a:hover,
+.footer-nav a:focus-visible {
+  color: var(--color-text-accent);
+  opacity: 1;
 }
 
 /* Tablet breakpoint — 768px */
@@ -576,6 +673,22 @@ a:hover {
    D-08: Ghost card style (border only, no fill)
    ============================================ */
 
+.link-group + .link-group {
+  margin-top: 2.5rem;
+}
+
+.link-group__heading {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-text-accent);
+  opacity: 0.85;
+  margin-bottom: 1rem;
+}
+
 .social-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -590,7 +703,7 @@ a:hover {
 
 @media (min-width: 64rem) {
   .social-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -810,8 +923,8 @@ a:hover {
 }
 
 .launch-banner__cta {
-  /* visual button; the parent <a> handles the click */
-  pointer-events: none;
+  /* real link now; still glows when the card is hovered */
+  display: inline-block;
 }
 
 /* Drive the inner CTA's radiant glow from hovering anywhere on the card */
@@ -820,12 +933,159 @@ a:hover {
   opacity: 0.7;
 }
 
+/* Latest-episode / latest-dispatch block inside the banner cards */
+.launch-banner__nowplaying {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 0.35rem;
+}
+
+.launch-banner__episode {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 1.25rem;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-accent);
+  text-decoration: none;
+}
+
+.launch-banner__player {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: 2.5rem;
+  margin: 0 auto 1.4rem;
+}
+
+/* Feral Architecture variant — violet framing instead of Rewired's gold */
+.launch-banner--fa {
+  border-color: rgba(122, 44, 255, 0.4); /* electric violet @ 40% */
+}
+
+.launch-banner--fa:hover,
+.launch-banner--fa:focus-visible {
+  border-color: var(--arcaeon-electric-violet);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .launch-banner {
     transition: border-color 0.25s ease;
   }
   .launch-banner:hover,
   .launch-banner:focus-visible {
+    transform: none;
+  }
+}
+
+/* Rewired mark above the banner title */
+.launch-banner__mark {
+  display: block;
+  width: auto;
+  height: 5rem;
+  margin: 0 auto 1rem;
+}
+
+/* ============================================
+   FERAL ARCHITECTURE SECTION (was CURRENTLY)
+   Wordmark stands in for the text label.
+   ============================================ */
+
+.fa-wordmark-heading {
+  margin: 0 0 0.75rem;
+  line-height: 0;
+}
+
+.fa-wordmark {
+  display: block;
+  width: 100%;
+  max-width: 18rem;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* ============================================
+   WORK SECTION — dedicated /work/ entry point
+   Peer prominence to Rewired; violet framing.
+   ============================================ */
+
+.work-card {
+  max-width: 32rem;
+  margin-inline: auto;
+  text-align: center;
+  border: 1px solid rgba(122, 44, 255, 0.4); /* electric violet @ 40% */
+  border-radius: 10px;
+  padding: 1.75rem 1.5rem;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.work-card:hover {
+  border-color: var(--arcaeon-electric-violet);
+  transform: translateY(-2px);
+}
+
+.work-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.work-card__body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  opacity: 0.85;
+  line-height: 1.6;
+  margin-bottom: 1.4rem;
+}
+
+.work-offerings {
+  list-style: none;
+  max-width: 26rem;
+  margin: 0 auto 1.5rem;
+  padding: 0;
+  text-align: left;
+}
+
+.work-offerings li {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  opacity: 0.9;
+  padding-left: 1.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.work-offerings li:last-child {
+  margin-bottom: 0;
+}
+
+.work-offerings li::before {
+  content: "◈";
+  position: absolute;
+  left: 0;
+  color: var(--arcaeon-electric-violet);
+  opacity: 0.9;
+}
+
+.work-offerings strong {
+  font-weight: 600;
+  color: var(--color-text-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-card {
+    transition: border-color 0.25s ease;
+  }
+  .work-card:hover {
     transform: none;
   }
 }
@@ -966,13 +1226,18 @@ a:hover {
 }
 
 /* Reassurance line under the CTA button */
+/* CTA block on offer pages — centered focal moment (price → button → reassurance) */
+.offer-cta {
+  text-align: center;
+}
+
 .offer-reassurance {
   font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
   color: var(--color-text);
   opacity: 0.6;
   margin-top: 1.1rem;
-  max-width: 26rem;
+  max-width: 34rem;
   margin-inline: auto;
 }
 
@@ -985,5 +1250,141 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   .offer-card {
     transition: none;
+  }
+}
+
+/* ============================================
+   OFFER TEASERS — /work/ hub cards (spacious,
+   one numeral + one corner sigil-arc per card)
+   ============================================ */
+
+.offer-intro > .display-text {
+  margin-bottom: 1.25rem;
+}
+
+.offer-intro p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  opacity: 0.85;
+  max-width: 42rem;
+}
+
+.offer-intro p + p {
+  margin-top: 1rem;
+}
+
+.offer-teasers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 48rem) {
+  .offer-teasers {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+.offer-teaser {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 2.5rem 1.85rem;
+  border: 1px solid rgba(122, 44, 255, 0.35);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.offer-teaser:hover,
+.offer-teaser:focus-visible {
+  border-color: var(--arcaeon-electric-violet);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px rgba(122, 44, 255, 0.28);
+}
+
+/* Corner sigil-arc — broken circle, matches the sigil grammar */
+.offer-teaser::after {
+  content: '';
+  position: absolute;
+  top: -28px;
+  right: -28px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 1px solid var(--arcaeon-electric-violet);
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  opacity: 0.28;
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+
+.offer-teaser__glyph {
+  display: block;
+  margin-bottom: 1rem;
+  line-height: 0;
+}
+
+.offer-teaser__glyph svg {
+  width: 3rem;
+  height: 3rem;
+  filter: drop-shadow(0 0 10px rgba(122, 44, 255, 0.4));
+}
+
+.offer-teaser__eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  opacity: 0.85;
+}
+
+.offer-teaser__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.offer-teaser__price {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.offer-teaser__summary {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  opacity: 0.8;
+  margin-top: 0.35rem;
+}
+
+.offer-teaser__cue {
+  margin-top: auto;
+  padding-top: 1.1rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-teaser {
+    transition: border-color 0.25s ease;
+  }
+  .offer-teaser:hover,
+  .offer-teaser:focus-visible {
+    transform: none;
   }
 }

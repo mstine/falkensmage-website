@@ -1,0 +1,16 @@
+{{/* Global site header — sticky, consistent across all pages. Brand links home;
+     Work links to the offer hub. Keeps navigation one tap away without the back button. */}}
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="/" class="site-header__brand"{{ if .IsHome }} aria-current="page"{{ end }} aria-label="Falken&rsquo;s Mage — home">
+      {{ with resources.Get "images/pentacle-mark.png" }}
+        {{ $m := .Resize "80x png" }}
+        <img src="{{ $m.RelPermalink }}" width="{{ $m.Width }}" height="{{ $m.Height }}" alt="" class="site-header__mark">
+      {{ end }}
+      <span class="site-header__wordmark">Falken&rsquo;s Mage</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="/work/"{{ if hasPrefix .RelPermalink "/work" }} aria-current="page"{{ end }}>Work With Me</a>
+    </nav>
+  </div>
+</header>

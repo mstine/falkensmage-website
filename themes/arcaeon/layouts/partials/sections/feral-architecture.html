@@ -1,0 +1,54 @@
+{{/* Feral Architecture Section — mirrors the Rewired banner card treatment.
+     Wordmark stands in for the eyebrow+title; live latest-post feed + glow CTA.
+     Reuses .launch-banner with the --fa violet modifier. */}}
+{{ $rssURL := "https://feralarchitecture.com/feed" }}
+{{ $latestPost := dict }}
+
+{{ with try (resources.GetRemote $rssURL) }}
+  {{ with .Err }}
+    {{ warnf "Feral Architecture section: RSS fetch failed: %s" . }}
+  {{ else with .Value }}
+    {{ with . | transform.Unmarshal }}
+      {{ with .channel.item }}
+        {{ range first 1 . }}
+          {{ $latestPost = dict "title" (.title | htmlUnescape) "link" .link }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+<section class="section section-void feral-architecture-section" aria-labelledby="fa-heading">
+  <div class="section-content">
+    <div class="launch-banner launch-banner--fa glow-interactive">
+      <h2 id="fa-heading" class="fa-wordmark-heading">
+        {{ with resources.Get "images/fa-wordmark.png" }}
+          {{ $wm := .Resize "640x png" }}
+          {{ $wmWebP := $wm.Process "webp" }}
+          <picture>
+            <source type="image/webp" srcset="{{ $wmWebP.RelPermalink }}">
+            <img src="{{ $wm.RelPermalink }}" width="{{ $wm.Width }}" height="{{ $wm.Height }}"
+                 alt="Feral Architecture" loading="lazy" class="fa-wordmark">
+          </picture>
+        {{ else }}
+          <span class="launch-banner__title">Feral Architecture</span>
+        {{ end }}
+      </h2>
+      {{ with $.Params.feral_blurb }}<p class="launch-banner__body">{{ . | safeHTML }}</p>{{ end }}
+
+      {{ if $latestPost.title }}
+      <p class="launch-banner__nowplaying">Latest dispatch</p>
+      <a class="launch-banner__episode glow-interactive"
+         href="{{ $latestPost.link }}" target="_blank" rel="noopener noreferrer"
+         aria-label="Read: {{ $latestPost.title }} on Feral Architecture">
+        &laquo;&thinsp;{{ $latestPost.title }}&thinsp;&raquo;
+      </a>
+      {{ end }}
+
+      <a class="launch-banner__cta glow-radiant-core"
+         href="https://feralarchitecture.com" target="_blank" rel="noopener noreferrer">
+        Read Feral Architecture &rarr;
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,19 +1,25 @@
-{{/* Social Links Section — 2-col mobile grid, ghost cards, inline SVG icons */}}
+{{/* Link groups — "What I've Built" vs "Find Me Elsewhere". Each group is a
+     labeled 2-col mobile grid of ghost cards with inline SVG icons. */}}
 <section class="section section-depth social-section sigil-arc sigil-boundary-tr">
   <div class="section-content">
-    <div class="social-grid">
-      {{ range .Params.social_links }}
-      <a href="{{ .url }}"
-         class="social-card glow-interactive"
-         target="_blank"
-         rel="noopener noreferrer"
-         aria-label="{{ .name }}">
-        <span class="social-card__icon" aria-hidden="true">
-          {{ partial (printf "icons/%s.html" .icon) . }}
-        </span>
-        <span class="social-card__label">{{ .label }}</span>
-      </a>
-      {{ end }}
+    {{ range .Params.link_groups }}
+    <div class="link-group">
+      <h2 class="link-group__heading">{{ .heading }}</h2>
+      <div class="social-grid">
+        {{ range .links }}
+        <a href="{{ .url }}"
+           class="social-card glow-interactive"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="{{ .name }}">
+          <span class="social-card__icon" aria-hidden="true">
+            {{ partial (printf "icons/%s.html" .icon) . }}
+          </span>
+          <span class="social-card__label">{{ .label }}</span>
+        </a>
+        {{ end }}
+      </div>
     </div>
+    {{ end }}
   </div>
 </section>

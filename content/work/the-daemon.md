@@ -4,6 +4,7 @@ offer_name: "6-Month Hermetic Coaching"
 price: "$4,500"
 cta_text: "Book a Clarity Consult ($150, credited)"
 booking_key: "the-daemon"
+glyph: "daemon"
 summary: "A 6-month Hermetic coaching container for people done optimizing their way to burnout."
 lede: "Six months. Not a program, not a course, not eight modules and a Slack channel that goes quiet by week three."
 what_you_get:

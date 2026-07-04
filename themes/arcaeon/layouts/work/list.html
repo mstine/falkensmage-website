@@ -3,24 +3,28 @@
 
   {{/* ===== FRAMING — short front-door copy from content/work/_index.md ===== */}}
   <section class="section section-void">
-    <div class="section-content">
+    <div class="section-content offer-intro">
       <h1 class="display-text">{{ .Title }}</h1>
       {{ .Content }}
     </div>
   </section>
 
-  {{/* ===== OFFERS — cards linking to each offer page ===== */}}
+  {{/* ===== OFFERS — spacious teaser cards, one graphic anchor each ===== */}}
   <section class="section section-depth">
     <div class="section-content">
-      <div class="social-grid">
-        {{ range .Pages.ByWeight }}
-        <a href="{{ .RelPermalink }}" class="social-card glow-interactive">
-          <span class="social-card__label">
-            {{ with .Params.offer_name }}<strong>{{ . }}</strong><br>{{ end }}
-            {{ .Title }}
-            {{ with .Params.price }}&mdash; {{ . }}{{ end }}
-            {{ with .Params.summary }}<br>{{ . }}{{ end }}
+      <div class="offer-teasers">
+        {{ range $p := .Pages.ByWeight }}
+        <a href="{{ $p.RelPermalink }}" class="offer-teaser">
+          {{ with $p.Params.glyph }}
+          <span class="offer-teaser__glyph" aria-hidden="true">{{ partial (printf "icons/offer-%s.html" .) $p }}</span>
+          {{ end }}
+          {{ with $p.Params.offer_name }}<span class="offer-teaser__eyebrow">{{ . }}</span>{{ end }}
+          <span class="offer-teaser__title">{{ $p.Title }}</span>
+          <span class="offer-teaser__price">
+            {{- with $p.Params.price }}{{ . }}{{ end }}{{ with $p.Params.duration }} &middot; {{ . }}{{ end -}}
           </span>
+          {{ with $p.Params.summary }}<span class="offer-teaser__summary">{{ . }}</span>{{ end }}
+          <span class="offer-teaser__cue">Explore &rarr;</span>
         </a>
         {{ end }}
       </div>

@@ -55,6 +55,8 @@
   {{ end }}
 </head>
 <body>
+  {{ partial "nav/header.html" . }}
   {{ block "main" . }}{{ end }}
+  {{ partial "sections/footer.html" . }}
 </body>
 </html>

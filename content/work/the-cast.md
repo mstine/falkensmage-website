@@ -5,6 +5,7 @@ price: "$325"
 duration: "90 minutes"
 cta_text: "Book & Pay"
 booking_key: "the-cast"
+glyph: "cast"
 summary: "A 90-minute archetypal astrology reading — your chart as a map of the psyche, not a horoscope."
 lede: "Your chart is not a horoscope. It's a map — the psyche's own architecture diagram, laid out in the sky at the exact moment you showed up and started running."
 what_you_get:
