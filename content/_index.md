@@ -1,20 +1,22 @@
 ---
 title: "Falken's Mage"
 tagline: "He's one technomagickal motherfucker."
-# Rewired launch promo — set active: false to retire it once the launch window passes.
+# Rewired card — PERMANENT, feed-driven latest-episode card (see launch-banner.html).
+# Pulls the newest episode live from rewired.show/episodes.xml at build time; the
+# latest_episode_* fields below are only a static fallback if that fetch ever fails.
 rewired_launch:
   active: true
-  eyebrow: "New podcast — just live"
+  eyebrow: "New episodes every other Sunday"
   title: "Rewired"
-  body: "Me and Jaye Anne Beringer on what happens when you leave the rigid belief systems and start finding what's alive. Three episodes up now. One rule: pull a card, follow it, don't resolve it."
+  body: "Me and Jaye Anne Beringer on what happens when you leave the rigid belief systems and start finding what's alive. One rule: pull a card, follow it, don't resolve it."
   cta_text: "Pull a card →"
-  cta_url: "https://rewired.show/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=rewired-launch"
-  # Latest episode — hand-maintained (Substack /feed only surfaces the newest post,
-  # not a reliable episode list). Update these three when a new episode drops.
+  cta_url: "https://rewired.show/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=rewired"
+  # Static fallback only — normally overwritten by the live rewired.show/episodes.xml
+  # fetch. Kept current as a belt-and-suspenders default.
   latest_episode_label: "Latest episode"
-  latest_episode_title: "Episode 003 — Shadow Capitalism"
-  latest_episode_url: "https://rewiredshow.substack.com/p/episode-003-shadow-capitalism"
-  latest_episode_audio: "https://api.substack.com/feed/podcast/201931149/999381574b0ba7a2507bd80da4f0ffb5.mp3"
+  latest_episode_title: "Episode 004: Animism All the Way Down"
+  latest_episode_url: "https://rewiredshow.substack.com/p/episode-004-animism-all-the-way-down"
+  latest_episode_audio: "https://api.substack.com/feed/podcast/203431665/4b7a89f487ce03b44855960c319ef0a8.mp3"
 identity_blocks:
   - "Twenty-five years in the guts of enterprise systems — distributed architectures where a bad design decision doesn't just fail, it fails at 2 AM on a Friday and takes someone's entire quarter with it. Lately that's AI: building with it, governing it, and writing about what it's quietly doing to the people using it. I'm good at this work. It's the floor, not the building."
   - "I'm also an archetypal tarotist, astrologer, and chaos witch — the kind of person who will diagram your org's dysfunction on a whiteboard and then pull a card that names the thing nobody in the room was willing to say out loud."

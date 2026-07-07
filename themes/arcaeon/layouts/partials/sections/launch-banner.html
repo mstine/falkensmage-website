@@ -1,9 +1,34 @@
-{{/* Rewired launch banner — promo card for the launch window. Data-driven via the
-     `rewired_launch` front-matter block in content/_index.md; set `active: false` to
-     retire it. Holds the latest-episode link + a native audio player (preload="none",
-     so zero bytes until the visitor hits play) alongside the CTA. */}}
+{{/* Rewired card — a PERMANENT, feed-driven "latest episode" card, mirroring the
+     Feral Architecture section below it. The episode is fetched live at build from
+     rewired.show/episodes.xml — rewired.show vendors + auto-refreshes the Substack
+     podcast feed and republishes it as a static file. We fetch THAT (not Substack
+     directly) because Substack 403s CI datacenter IPs on its own endpoints, but
+     rewired.show is GitHub Pages and isn't blocked. The `rewired_launch.latest_episode_*`
+     front-matter fields remain as a static fallback if the live fetch ever fails. */}}
 {{ with $.Params.rewired_launch }}
   {{ if .active }}
+  {{/* Start from the front-matter fallback, then overwrite from the live feed. */}}
+  {{ $epTitle := .latest_episode_title }}
+  {{ $epURL   := .latest_episode_url }}
+  {{ $epAudio := .latest_episode_audio }}
+  {{ with try (resources.GetRemote "https://rewired.show/episodes.xml") }}
+    {{ with .Err }}
+      {{ warnf "Rewired card: proxy feed fetch failed (%s) — using front-matter fallback" . }}
+    {{ else with .Value }}
+      {{ with . | transform.Unmarshal }}
+        {{ with .channel.item }}
+          {{ range first 1 . }}
+            {{ $epTitle = .title | htmlUnescape }}
+            {{ $epURL = .link }}
+            {{ with .enclosure }}
+              {{ $u := or (index . "-url") (index . "url") }}
+              {{ with $u }}{{ $epAudio = . }}{{ end }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
   <section class="section section-depth launch-banner-section" aria-labelledby="launch-banner-heading">
     <div class="section-content">
       <div class="launch-banner glow-interactive">
@@ -20,15 +45,15 @@
         <h2 id="launch-banner-heading" class="launch-banner__title">{{ .title | default "Rewired" }}</h2>
         {{ with .body }}<p class="launch-banner__body">{{ . | safeHTML }}</p>{{ end }}
 
-        {{ with .latest_episode_url }}
+        {{ with $epURL }}
         <p class="launch-banner__nowplaying">{{ $.Params.rewired_launch.latest_episode_label | default "Latest episode" }}</p>
         <a class="launch-banner__episode glow-interactive"
            href="{{ . }}" target="_blank" rel="noopener noreferrer">
-          &laquo;&thinsp;{{ $.Params.rewired_launch.latest_episode_title | default "Listen" }}&thinsp;&raquo;
+          &laquo;&thinsp;{{ $epTitle | default "Listen" }}&thinsp;&raquo;
         </a>
-        {{ with $.Params.rewired_launch.latest_episode_audio }}
+        {{ with $epAudio }}
         <audio class="launch-banner__player" controls preload="none" src="{{ . }}">
-          Your browser can’t play this — <a href="{{ $.Params.rewired_launch.latest_episode_url }}">listen on Substack</a>.
+          Your browser can’t play this — <a href="{{ $epURL }}">listen on Substack</a>.
         </audio>
         {{ end }}
         {{ end }}
