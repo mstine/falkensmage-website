@@ -2,7 +2,7 @@
 <main>
 
   {{/* ===== HERO — eyebrow, title, price-as-hero, lede ===== */}}
-  <section class="section section-void sigil-arc sigil-boundary-tr">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-arc sigil-boundary-tr">
     <div class="section-content">
       {{ with .Params.offer_name }}
       <p class="offer-eyebrow">{{ . }}</p>
@@ -21,7 +21,7 @@
   </section>
 
   {{/* ===== PITCH — voiced markdown body, with imposed rhythm ===== */}}
-  <section class="section section-depth sigil-gradient">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
     <div class="section-content offer-body">
       {{ .Content }}
     </div>
@@ -29,7 +29,7 @@
 
   {{/* ===== FACETS — scannable "what you get" / "who it's for" ===== */}}
   {{ if or .Params.what_you_get .Params.who_for }}
-  <section class="section section-void">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <div class="offer-facets">
         {{ with .Params.what_you_get }}
@@ -55,7 +55,7 @@
 
   {{/* ===== PULL-QUOTE — the money line ===== */}}
   {{ with .Params.pull_quote }}
-  <section class="section section-depth sigil-gradient">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
     <div class="section-content">
       <blockquote class="offer-pullquote">{{ . }}</blockquote>
     </div>
@@ -63,7 +63,7 @@
   {{ end }}
 
   {{/* ===== CTA — Cal.com link-out, config-driven (OFFER-05, OFFERQ-02) ===== */}}
-  <section class="section section-void sigil-arc sigil-boundary-bl">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-arc sigil-boundary-bl">
     <div class="section-content offer-cta">
       {{ with .Params.price }}
       <p class="cta-description">{{ . }}{{ with $.Params.duration }} · {{ . }}{{ end }}</p>

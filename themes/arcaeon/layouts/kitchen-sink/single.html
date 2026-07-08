@@ -2,7 +2,7 @@
 <main>
 
   {{/* ===== COLOR TOKENS ===== */}}
-  <section class="section section-void">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h1>ARCAEON Design System</h1>
       <p>Kitchen sink demo page — visual validation of all Phase 1 design tokens, typography, glow treatments, and decorative elements.</p>
@@ -39,7 +39,7 @@
   </section>
 
   {{/* ===== TYPOGRAPHY ===== */}}
-  <section class="section section-depth">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h2>Typography Scale</h2>
 
@@ -53,7 +53,7 @@
   </section>
 
   {{/* ===== GLOW TREATMENTS ===== */}}
-  <section class="section section-void">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h2>Glow Treatments</h2>
 
@@ -76,7 +76,7 @@
   </section>
 
   {{/* ===== SIGIL GRAMMAR ===== */}}
-  <section class="section section-depth">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h2>Sigil Grammar</h2>
       <p style="margin-bottom: 1rem;">CSS-only decorative elements — broken geometric circles and gradient lines.</p>
@@ -96,18 +96,18 @@
   </section>
 
   {{/* ===== SECTION ALTERNATION DEMO ===== */}}
-  <section class="section section-void">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h2>Section Alternation (D-11)</h2>
-      <p>This section uses <code>.section-void</code> — Void Purple background (#1a0f2e).</p>
+      <p>This section uses <code>.{{ partial "helpers/band-tone.html" $ }}</code> — Void Purple background (#1a0f2e).</p>
       <p>Notice the Midnight Blue gradient transition at the boundary above.</p>
     </div>
   </section>
 
-  <section class="section section-depth">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <h2>Alternate Section</h2>
-      <p>This section uses <code>.section-depth</code> — Deep Indigo background (#0a0f3c).</p>
+      <p>This section uses <code>.{{ partial "helpers/band-tone.html" $ }}</code> — Deep Indigo background (#0a0f3c).</p>
       <p>Sections alternate to create visual separation without hard borders.</p>
     </div>
   </section>

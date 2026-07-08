@@ -29,7 +29,9 @@
       {{ end }}
     {{ end }}
   {{ end }}
-  <section class="section section-depth launch-banner-section" aria-labelledby="launch-banner-heading">
+  {{/* Band tone is computed in render order (see helpers/band-tone.html) — no
+       hardcoded void/depth, so inserting bands above never needs a manual re-stripe. */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} launch-banner-section" aria-labelledby="launch-banner-heading">
     <div class="section-content">
       <div class="launch-banner glow-interactive">
         {{ with resources.Get "images/rewired-mark.png" }}

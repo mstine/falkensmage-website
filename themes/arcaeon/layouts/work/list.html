@@ -2,7 +2,7 @@
 <main>
 
   {{/* ===== FRAMING — short front-door copy from content/work/_index.md ===== */}}
-  <section class="section section-void">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content offer-intro">
       <h1 class="display-text">{{ .Title }}</h1>
       {{ .Content }}
@@ -10,7 +10,7 @@
   </section>
 
   {{/* ===== OFFERS — spacious teaser cards, one graphic anchor each ===== */}}
-  <section class="section section-depth">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <div class="section-content">
       <div class="offer-teasers">
         {{ range $p := .Pages.ByWeight }}

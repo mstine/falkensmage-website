@@ -9,7 +9,7 @@
   {{ $desktopResize := .Resize "1200x q85" }}
   {{ $desktopWebP := $desktopResize.Process "webp" }}
 
-<section class="section section-void hero-section">
+<section class="section {{ partial "helpers/band-tone.html" $ }} hero-section">
   <div class="hero-image-wrapper glow-ambient">
     <picture>
       <source media="(min-width: 768px)" type="image/webp" srcset="{{ $desktopWebP.RelPermalink }}">

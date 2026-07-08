@@ -1,0 +1,21 @@
+{{- /*
+  band-tone.html — returns the next section band tone ("section-void" /
+  "section-depth"), alternating in render order.
+
+  Each full-bleed band emits its tone by calling this instead of hardcoding one:
+
+      <section class="section {{ partial "helpers/band-tone.html" $ }} hero-section">
+
+  A page-scoped counter (Page.Store "bandIndex") advances once per call, so tone
+  is a function of render position, not a value baked into each partial. Because
+  the counter only advances when a band actually renders, conditional bands
+  (e.g. the Time as Oracle hero when expired, or an absent pull_quote) don't
+  consume a slot — the alternation stays correct with zero manual re-striping,
+  and the footer (the last caller) self-corrects. Insert or remove a band and
+  everything downstream, footer included, re-stripes on its own.
+
+  Pass the Page as context ($). Reset is implicit: Store is per-page-render.
+*/ -}}
+{{- $i := .Store.Get "bandIndex" | default 0 -}}
+{{- .Store.Set "bandIndex" (add $i 1) -}}
+{{- return (cond (eq (mod $i 2) 0) "section-void" "section-depth") -}}
