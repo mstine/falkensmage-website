@@ -1,0 +1,42 @@
+{{/* Time as Oracle talk hero — a TIME-LIMITED, image-forward promo band sitting
+     just above the Rewired launch-banner, as its OWN section. It occupies band #2
+     (depth) in the page's void/depth alternation; every band below it is striped
+     accordingly (see the section tones in hero/launch-banner/feral/work/identity/
+     social). The promo graphic (which already carries title, date, room, and hub
+     URL) is the attention-grabber and links to the timeasoracle hub, as does the
+     CTA button. Controlled by the `talk_launch` front-matter block: `active` gates
+     it on/off, and `expires` (a date) auto-retires it once `now` is on/after it. */}}
+{{ with $.Params.talk_launch }}
+  {{ if .active }}
+    {{ $show := true }}
+    {{ with .expires }}
+      {{ if ge now.Unix (time.AsTime .).Unix }}{{ $show = false }}{{ end }}
+    {{ end }}
+    {{ if $show }}
+    <section class="section {{ partial "helpers/band-tone.html" $ }} talk-banner-section" aria-labelledby="talk-banner-heading">
+      <div class="section-content">
+        <div class="launch-banner launch-banner--talk glow-interactive">
+          {{ with .eyebrow }}<span class="launch-banner__eyebrow">{{ . }}</span>{{ end }}
+          <h2 id="talk-banner-heading" class="launch-banner__title visually-hidden">{{ .title | default "Time as Oracle" }}</h2>
+          {{ with resources.Get "images/time-as-oracle.png" }}
+            {{ $img := .Resize "1024x png" }}
+            {{ $webp := $img.Process "webp" }}
+            <a class="talk-banner__figure" href="{{ $.Params.talk_launch.cta_url }}" target="_blank" rel="noopener noreferrer">
+              <picture>
+                <source type="image/webp" srcset="{{ $webp.RelPermalink }}">
+                <img src="{{ $img.RelPermalink }}" width="{{ $img.Width }}" height="{{ $img.Height }}"
+                     alt="{{ $.Params.talk_launch.title }} — a tarot workshop at Mystic South. Friday, July 17, 12:30 PM, Ravinia C."
+                     loading="lazy">
+              </picture>
+            </a>
+          {{ end }}
+          <a class="launch-banner__cta glow-radiant-core"
+             href="{{ .cta_url }}" target="_blank" rel="noopener noreferrer">
+            {{ .cta_text | default "Get the details →" }}
+          </a>
+        </div>
+      </div>
+    </section>
+    {{ end }}
+  {{ end }}
+{{ end }}

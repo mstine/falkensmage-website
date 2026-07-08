@@ -1,6 +1,17 @@
 ---
 title: "Falken's Mage"
 tagline: "He's one technomagickal motherfucker."
+# Time as Oracle talk hero — TIME-LIMITED. Auto-retires after `expires` (see talk-banner.html).
+# Points link-in-bio traffic (Instagram/etc.) at the timeasoracle hub. Flip active:false or
+# let it self-expire; the whole block can be deleted after the talk.
+talk_launch:
+  active: true
+  expires: "2026-07-18"
+  eyebrow: "Live workshop · Mystic South 2026"
+  title: "Time as Oracle"
+  body: "Tracking your tarot patterns through the lens of personal cycles — a 90-minute hands-on workshop. Bring a deck, leave with a method. <strong>Friday, July 17 · 12:30 PM · Ravinia C.</strong>"
+  cta_text: "Get the details →"
+  cta_url: "https://timeasoracle.mytarotpulse.com/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=time-as-oracle"
 # Rewired card — PERMANENT, feed-driven latest-episode card (see launch-banner.html).
 # Pulls the newest episode live from rewired.show/episodes.xml at build time; the
 # latest_episode_* fields below are only a static fallback if that fetch ever fails.
