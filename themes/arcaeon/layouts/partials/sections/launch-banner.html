@@ -60,6 +60,21 @@
         {{ end }}
         {{ end }}
 
+        <div class="launch-banner__platforms">
+          <a class="launch-banner__platform-link" href="https://open.spotify.com/show/033CfL5f9scqVjOibTK0f5"
+             target="_blank" rel="noopener noreferrer" aria-label="Listen on Spotify">
+            {{ with resources.Get "images/badges/spotify-badge-blk-grn.svg" }}
+              <img src="{{ .RelPermalink }}" alt="Listen on Spotify" width="165" height="40" loading="lazy" decoding="async">
+            {{ end }}
+          </a>
+          <a class="launch-banner__platform-link" href="https://podcasts.apple.com/us/podcast/rewired/id1896945601"
+             target="_blank" rel="noopener noreferrer" aria-label="Listen on Apple Podcasts">
+            {{ with resources.Get "images/badges/apple-podcasts-mono-white.svg" }}
+              <img src="{{ .RelPermalink }}" alt="Listen on Apple Podcasts" width="114" height="26" loading="lazy" decoding="async">
+            {{ end }}
+          </a>
+        </div>
+
         <a class="launch-banner__cta glow-radiant-core"
            href="{{ .cta_url }}" target="_blank" rel="noopener noreferrer">
           {{ .cta_text | default "Listen now →" }}

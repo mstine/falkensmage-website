@@ -964,6 +964,33 @@ a:hover {
   margin: 0 auto 1.4rem;
 }
 
+.launch-banner__platforms {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+}
+
+.launch-banner__platform-link {
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.launch-banner__platform-link:hover,
+.launch-banner__platform-link:focus-visible {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.launch-banner__platform-link img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
 /* Feral Architecture variant — violet framing instead of Rewired's gold */
 .launch-banner--fa {
   border-color: rgba(122, 44, 255, 0.4); /* electric violet @ 40% */
