@@ -73,6 +73,14 @@
               <img src="{{ .RelPermalink }}" alt="Listen on Apple Podcasts" width="114" height="26" loading="lazy" decoding="async">
             {{ end }}
           </a>
+          {{/* Rewired is a video podcast — "Watch on YouTube", not "Listen on". Badge art is
+               141x46 natively; rendered at 123x40 so its height matches the Spotify badge. */}}
+          <a class="launch-banner__platform-link" href="https://www.youtube.com/@RewiredShowPodcast"
+             target="_blank" rel="noopener noreferrer" aria-label="Watch on YouTube">
+            {{ with resources.Get "images/badges/youtube-watch-white.svg" }}
+              <img src="{{ .RelPermalink }}" alt="Watch on YouTube" width="123" height="40" loading="lazy" decoding="async">
+            {{ end }}
+          </a>
         </div>
 
         <a class="launch-banner__cta glow-radiant-core"
