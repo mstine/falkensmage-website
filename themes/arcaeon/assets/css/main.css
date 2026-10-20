@@ -588,6 +588,16 @@ a:hover {
   filter: drop-shadow(0 0 16px rgba(91, 231, 255, 0.45));
 }
 
+.hero-byline {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  margin-top: 0.5rem;
+}
+
 .hero-tagline {
   font-family: var(--font-body);
   font-size: var(--text-h2);
