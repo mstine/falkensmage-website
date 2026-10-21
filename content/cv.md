@@ -76,7 +76,7 @@ Engineering executive with 25+ years building platforms. I lead delivery, reliab
 - **Author,** [*Code Governance for AI-Native Software Development*](https://www.oreilly.com/library/view/code-governance-for/0642572416409/) (O'Reilly report, early release, 2026): how engineering orgs keep control of what AI agents ship.
 - **Author,** [*Migrating to Cloud-Native Application Architectures*](https://www.oreilly.com/library/view/migrating-to-cloud-native/9781492047605/) (O'Reilly).
 - **Writer,** [*Feral Architecture*](https://feralarchitecture.com): essays on AI, engineering culture, and the inner life of the people who build software.
-- **Open source:** Cloud Foundry BOSH contributor.
+- **Open source:** [sigil-spinner](https://github.com/mstine/sigil-spinner), planetary sigils traced across the classical kamea as stylable inline SVG (CLI, library, and web component; on npm as `@falkensmage/sigil-spinner`). Cloud Foundry BOSH contributor.
 
 ## Education & Skills
 
