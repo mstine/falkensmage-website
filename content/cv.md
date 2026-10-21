@@ -46,6 +46,12 @@ Engineering executive with 25+ years building platforms. I lead delivery, reliab
 - Chartered the firmwide governance council for language adoption and deprecation; onboarded Rust as a firm-supported language.
 - Standardized architecture-as-code (C4, Structurizr DSL) across divisions.
 
+*Executive Director, Architecture & Engineering — Wealth Management* · 2019–2020
+
+- Led architectural direction across critical Wealth Management systems, keeping platforms able to scale and evolve with long-term enterprise strategy.
+- Product owner for a web-based C4 architecture model repository that standardized architectural visibility across distributed systems.
+- Introduced opinionated guidance for API design, database selection, caching strategy, and schema migration, and turned architecture from static documentation into an actively governed discipline.
+
 ### Pivotal Software (now VMware Tanzu)
 
 *Global Field CTO* · 2017–2019
