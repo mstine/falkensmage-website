@@ -4,7 +4,7 @@ eyebrow: "Matt Stine"
 lede: "Engineering executive. AI-native software delivery, reliability, and observability. Writer and symbolic practitioner on the side that doesn't fit on a résumé, until now."
 ---
 
-Memphis, TN (remote) · [linkedin.com/in/mattstine](https://linkedin.com/in/mattstine) · [github.com/mstine](https://github.com/mstine) · [feralarchitecture.com](https://feralarchitecture.com)
+Near Memphis, TN (remote) · [linkedin.com/in/mattstine](https://linkedin.com/in/mattstine) · [github.com/mstine](https://github.com/mstine) · [feralarchitecture.com](https://feralarchitecture.com)
 
 ## Summary
 
