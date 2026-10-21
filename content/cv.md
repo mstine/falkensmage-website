@@ -74,9 +74,9 @@ Engineering executive with 25+ years building platforms. I lead delivery, reliab
 ## Selected Writing
 
 - **Author,** [*Code Governance for AI-Native Software Development*](https://www.oreilly.com/library/view/code-governance-for/0642572416409/) (O'Reilly report, early release, 2026): how engineering orgs keep control of what AI agents ship.
-- **Author,** [*Migrating to Cloud-Native Application Architectures*](https://www.oreilly.com/library/view/migrating-to-cloud-native/9781492048701/) (O'Reilly).
+- **Author,** [*Migrating to Cloud-Native Application Architectures*](https://www.oreilly.com/library/view/migrating-to-cloud-native/9781492047605/) (O'Reilly).
 - **Writer,** [*Feral Architecture*](https://feralarchitecture.com): essays on AI, engineering culture, and the inner life of the people who build software.
-- **Open source:** Cloud Foundry BOSH contributor; [Psyche](https://github.com/mstine/psyche).
+- **Open source:** Cloud Foundry BOSH contributor.
 
 ## Education & Skills
 

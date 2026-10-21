@@ -14,7 +14,7 @@ Most people keep those lives in separate rooms. I did that for a long time. It c
 
 The two halves run on the same engine: pattern recognition under uncertainty. An incident review and a tarot spread ask the same question. What's the structure underneath the surface behavior, and what is nobody in the room saying out loud? Engineering taught me to diagram the system before touching it. The symbolic work taught me to notice what the diagram leaves out. I'm better at each because of the other.
 
-These days most of my engineering happens by directing fleets of AI agents, with human gates and independent verification on everything they ship. A lot of my writing is about what that kind of work does to the people doing it. [Psyche](https://psyche.sh), the open-source cognitive system I built for myself, is where both halves meet in code.
+These days most of my engineering happens by directing fleets of AI agents, with human gates and independent verification on everything they ship. A lot of my writing is about what that kind of work does to the people doing it. [Psyche](https://psyche.sh), the cognitive system I built for myself, is where both halves meet in code.
 
 I live near Memphis, Tennessee.
 
