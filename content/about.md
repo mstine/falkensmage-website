@@ -6,7 +6,7 @@ photo: "images/matt-stine.jpg"
 photo_alt: "Matt Stine — black wide-brimmed hat, black shirt, pentacle pendant, against a dark brick wall"
 ---
 
-If you got here from a job application: yes, this is me. I've spent twenty-five years in software. Right now I'm an Executive Director at CVS Health, leading delivery, reliability, and observability engineering for the Enterprise Data & AI Platforms. Before that I was a principal architect in JPMorgan Chase's Chief Technology Office, and before that Global Field CTO at Pivotal. I wrote *Migrating to Cloud-Native Application Architectures* for O'Reilly, and I'm writing their report on governing AI-generated code. The [full CV](/cv/) has the receipts.
+If you got here from a technology organization: yes, this is me. I've spent twenty-five years in software. Right now I'm an Executive Director at CVS Health, leading delivery, reliability, and observability engineering for the Enterprise Data & AI Platforms. Before that I was a principal architect in JPMorgan Chase's Chief Technology Office, and before that Global Field CTO at Pivotal. I wrote *Migrating to Cloud-Native Application Architectures* for O'Reilly, and I'm writing their report on governing AI-generated code. The [full CV](/cv/) has the receipts.
 
 If you got here from a tarot reading, a podcast, or a Note on Substack: also me. I'm an archetypal tarotist and astrologer. I co-host [*Rewired*](https://rewired.show) with Jaye Anne Beringer, write [*Feral Architecture*](https://feralarchitecture.com), made a rock opera called [*ARCÆON*](https://arcaeon.rocks), and build [TarotPulse](https://mytarotpulse.com).
 
@@ -16,6 +16,6 @@ The two halves run on the same engine: pattern recognition under uncertainty. An
 
 These days most of my engineering happens by directing fleets of AI agents, with human gates and independent verification on everything they ship. A lot of my writing is about what that kind of work does to the people doing it. [Psyche](https://psyche.sh), the open-source cognitive system I built for myself, is where both halves meet in code.
 
-I live in Memphis, Tennessee.
+I live near Memphis, Tennessee.
 
 Want the work history? [Read the CV](/cv/). Want to talk shop? [LinkedIn](https://linkedin.com/in/mattstine) is the fastest way to reach me on the professional side. Everything else lives on the [home page](/).
