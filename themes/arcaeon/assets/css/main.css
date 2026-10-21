@@ -1364,6 +1364,22 @@ a:hover {
   }
 }
 
+/* Venus sigil at the foot of the identity section — decorative, unexplained */
+.identity-sigil {
+  margin: 2.5rem auto 0;
+  width: clamp(96px, 22vw, 140px);
+}
+
+.identity-sigil svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--arcaeon-plasma-pink);
+  --sigil-stroke-width: 2.4;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px rgba(255, 60, 172, 0.55));
+}
+
 /* ============================================
    CONTENT PAGES — /about/, /cv/ (_default/single.html)
    ============================================ */

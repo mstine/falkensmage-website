@@ -8,5 +8,7 @@
     {{ with .Params.cta_description }}
     <p class="cta-description">{{ . }}</p>
     {{ end }}
+
+    <div class="identity-sigil">{{ partial "sigils/coaching-venus.html" . }}</div>
   </div>
 </section>
