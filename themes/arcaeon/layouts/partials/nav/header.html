@@ -9,8 +9,35 @@
       {{ end }}
       <span class="site-header__wordmark">Falken&rsquo;s Mage</span>
     </a>
-    <nav class="site-nav" aria-label="Primary">
+    <button type="button" class="site-nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Menu" hidden>
+      <span class="site-nav-toggle__bar" aria-hidden="true"></span>
+      <span class="site-nav-toggle__bar" aria-hidden="true"></span>
+      <span class="site-nav-toggle__bar" aria-hidden="true"></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a href="/about/"{{ if hasPrefix .RelPermalink "/about" }} aria-current="page"{{ end }}>About</a>
+      <a href="/cv/"{{ if hasPrefix .RelPermalink "/cv" }} aria-current="page"{{ end }}>CV</a>
       <a href="/work/"{{ if hasPrefix .RelPermalink "/work" }} aria-current="page"{{ end }}>Work With Me</a>
     </nav>
   </div>
+  {{/* Burger toggle — progressive enhancement. Without JS the button stays hidden
+       and the links render inline; with JS, narrow screens collapse them behind it. */}}
+  <script>
+    (function () {
+      var btn = document.querySelector('.site-nav-toggle');
+      var header = btn.closest('.site-header');
+      btn.hidden = false;
+      header.classList.add('site-header--js');
+      function set(open) {
+        btn.setAttribute('aria-expanded', open);
+        header.classList.toggle('site-header--open', open);
+      }
+      btn.addEventListener('click', function () {
+        set(btn.getAttribute('aria-expanded') !== 'true');
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && header.classList.contains('site-header--open')) { set(false); btn.focus(); }
+      });
+    })();
+  </script>
 </header>

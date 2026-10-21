@@ -443,6 +443,80 @@ a:hover {
   opacity: 1;
 }
 
+.site-header__wordmark,
+.site-nav a {
+  white-space: nowrap;
+}
+
+/* Burger toggle — shown only when JS is present AND the screen is narrow */
+.site-nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.site-nav-toggle__bar {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-text);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.site-header--open .site-nav-toggle__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.site-header--open .site-nav-toggle__bar:nth-child(2) {
+  opacity: 0;
+}
+
+.site-header--open .site-nav-toggle__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (max-width: 39.99rem) {
+  .site-header--js .site-nav-toggle {
+    display: flex;
+  }
+
+  .site-header--js .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 1.25rem 1rem;
+    background: var(--arcaeon-void-purple);
+    border-bottom: 1px solid rgba(122, 44, 255, 0.25);
+  }
+
+  .site-header--js.site-header--open .site-nav {
+    display: flex;
+  }
+
+  .site-header--js .site-nav a {
+    font-size: 1.05rem;
+    padding: 0.8rem 0;
+    border-top: 1px solid rgba(122, 44, 255, 0.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-toggle__bar {
+    transition: none;
+  }
+}
+
 /* Footer nav — mirrors header links for redundant wayfinding */
 .footer-nav {
   display: flex;
@@ -1287,6 +1361,88 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   .offer-card {
     transition: none;
+  }
+}
+
+/* ============================================
+   CONTENT PAGES — /about/, /cv/ (_default/single.html)
+   ============================================ */
+
+.hero-byline a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero-byline a:hover,
+.hero-byline a:focus-visible {
+  color: var(--color-hover);
+}
+
+.page-hero--photo {
+  display: grid;
+  gap: 1.75rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.page-portrait img {
+  display: block;
+  width: clamp(180px, 50vw, 280px);
+  height: auto;
+  border-radius: 50%;
+  border: 2px solid var(--arcaeon-electric-violet);
+  box-shadow: 0 0 28px rgba(122, 44, 255, 0.45);
+}
+
+.page-body h2 {
+  font-size: var(--text-h2);
+  margin-top: 2.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(122, 44, 255, 0.35);
+}
+
+.page-body h3 {
+  font-family: var(--font-body);
+  font-size: var(--text-h3);
+  font-weight: 700;
+  margin-top: 1.75rem;
+}
+
+.page-body h3 + p {
+  margin-top: 0.35rem;
+}
+
+.page-body ul {
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.page-body li {
+  position: relative;
+  padding-left: 1.4rem;
+  line-height: 1.55;
+  opacity: 0.92;
+}
+
+.page-body li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--arcaeon-electric-blue) 0%, var(--arcaeon-electric-violet) 100%);
+}
+
+@media (min-width: 48rem) {
+  .page-hero--photo {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    text-align: left;
+    gap: 2.5rem;
   }
 }
 

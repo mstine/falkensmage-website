@@ -33,7 +33,7 @@
            class="hero-sigil">
     {{ end }}
     <h1 class="display-text">{{ $.Title | default "Falken's Mage" }}</h1>
-    {{ with site.Params.author }}<p class="hero-byline">{{ . }}</p>{{ end }}
+    {{ with site.Params.author }}<p class="hero-byline"><a href="/about/">{{ . }}</a></p>{{ end }}
     {{ with $.Params.tagline }}<p class="hero-tagline">{{ . }}</p>{{ end }}
   </div>
 </section>

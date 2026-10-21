@@ -1,0 +1,34 @@
+{{ define "main" }}
+<main>
+
+  {{/* ===== HERO — eyebrow, title, lede, optional real-photo portrait ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-arc sigil-boundary-tr">
+    <div class="section-content page-hero{{ if .Params.photo }} page-hero--photo{{ end }}">
+      {{ with .Params.photo }}
+        {{ with resources.Get . }}
+          {{ $sq := .Fill "560x560 Center" }}
+          {{ $sqWebP := $sq.Process "webp" }}
+          <picture class="page-portrait">
+            <source type="image/webp" srcset="{{ $sqWebP.RelPermalink }}">
+            <img src="{{ $sq.RelPermalink }}" width="{{ $sq.Width }}" height="{{ $sq.Height }}"
+                 alt="{{ $.Params.photo_alt | default site.Params.author }}" loading="eager">
+          </picture>
+        {{ end }}
+      {{ end }}
+      <div class="page-hero__text">
+        {{ with .Params.eyebrow }}<p class="offer-eyebrow">{{ . }}</p>{{ end }}
+        <h1 class="display-text">{{ .Title }}</h1>
+        {{ with .Params.lede }}<p class="offer-lede">{{ . | markdownify }}</p>{{ end }}
+      </div>
+    </div>
+  </section>
+
+  {{/* ===== BODY — markdown content ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content offer-body page-body">
+      {{ .Content }}
+    </div>
+  </section>
+
+</main>
+{{ end }}

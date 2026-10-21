@@ -50,7 +50,8 @@
     {{ $sameAs := slice }}
     {{ range .Params.link_groups }}{{ if eq .heading "Find Me Elsewhere" }}{{ range .links }}{{ $sameAs = $sameAs | append .url }}{{ end }}{{ end }}{{ end }}
     {{ $person := dict "@context" "https://schema.org" "@type" "Person" "name" site.Params.author "alternateName" site.Title "url" site.BaseURL "sameAs" $sameAs }}
-    {{ with $heroSrc }}{{ $person = merge $person (dict "image" (.Fill "1200x630 Center").Permalink) }}{{ end }}
+    {{ with resources.Get "images/matt-stine.jpg" }}{{ $person = merge $person (dict "image" (.Fill "800x800 Center").Permalink) }}{{ end }}
+    {{ $person = merge $person (dict "jobTitle" "Engineering Executive" "description" "Engineering executive, writer, archetypal tarotist, and astrologer. Publishes as Falken's Mage.") }}
     <script type="application/ld+json">{{ $person | jsonify | safeJS }}</script>
   {{ end }}
 
