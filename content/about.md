@@ -3,7 +3,7 @@ title: "About"
 eyebrow: "Matt Stine · Falken's Mage"
 lede: "Falken's Mage is the name I make things under. Matt Stine is the name on my résumé. Same person, same brain, one website."
 photo: "images/matt-stine.jpg"
-photo_alt: "Matt Stine — black wide-brimmed hat, black shirt, pentacle pendant, against a dark brick wall"
+photo_alt: "Matt Stine — black wide-brimmed hat, black shirt, pentacle pendant, on a violet-to-blue gradient"
 ---
 
 If you got here from a technology organization: yes, this is me. I've spent twenty-five years in software. Right now I'm an Executive Director at CVS Health, leading delivery, reliability, and observability engineering for the Enterprise Data & AI Platforms. Before that I was a principal architect in JPMorgan Chase's Chief Technology Office, and before that Global Field CTO at Pivotal. I wrote *Migrating to Cloud-Native Application Architectures* for O'Reilly, and I'm writing their report on governing AI-generated code. The [full CV](/cv/) has the receipts.
