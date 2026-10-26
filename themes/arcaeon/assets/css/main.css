@@ -2165,3 +2165,17 @@ a:hover {
 .fa-prose--grid > h2 {
   margin-top: 1.5rem;
 }
+
+/* Numbered lists keep their numbers — the bullet dot is for unordered lists only */
+.page-body ol > li::before {
+  content: none;
+}
+
+.page-body ol > li {
+  padding-left: 0.25rem;
+}
+
+.page-body ol {
+  list-style: decimal;
+  padding-left: 1.75rem;
+}
