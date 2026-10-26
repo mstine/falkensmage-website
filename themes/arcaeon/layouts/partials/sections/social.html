@@ -10,7 +10,7 @@
         <a href="{{ .url }}"
            class="social-card glow-interactive"
            target="_blank"
-           rel="noopener noreferrer"
+           rel="{{ if .rel_me }}me {{ end }}noopener noreferrer"
            aria-label="{{ .name }}">
           <span class="social-card__icon" aria-hidden="true">
             {{ partial (printf "icons/%s.html" .icon) . }}

@@ -148,15 +148,15 @@ fi
 echo ""
 
 # ── SOCIAL-04 ─────────────────────────────────────────────────────────────────
-# Every listed platform domain present in built HTML (Threads removed 2026-10-26)
+# Every listed platform domain present in built HTML (Threads, X, Substack removed 2026-10-26)
 
 echo "[ SOCIAL-04 ] Social platforms — all platform domains present"
 # Feral Architecture moved on-site (/fa/) — its link is "href=/fa/" (minified) now,
 # not the old feralarchitecture.com Substack domain.
 PLATFORMS=(
   "href=/fa/"
+  "mastodon.social/@falkensmage"
   "linkedin.com"
-  "x.com/falkensmage"
   "bsky.app"
   "instagram.com/falkensmage"
   "open.spotify.com"

@@ -66,6 +66,9 @@
   <meta name="twitter:title" content="{{ $ogTitle }}">
   <meta name="twitter:description" content="{{ $desc }}">
 
+  {{/* Mastodon profile verification — the profile's link back here shows as verified */}}
+  <link rel="me" href="https://mastodon.social/@falkensmage">
+
   {{/* FA feed discovery — readers and Buttondown find /fa/index.xml from any page */}}
   {{ with site.GetPage "/fa" }}{{ with .OutputFormats.Get "rss" }}
   <link rel="alternate" type="application/rss+xml" title="Feral Architecture" href="{{ .Permalink }}">
