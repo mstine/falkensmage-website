@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+  {{/* FA pages carry the publication's name — that's what readers search for */}}
+  {{ $inFA := eq .Section "fa" }}
+  {{ $siteName := cond $inFA "Feral Architecture" site.Title }}
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else if and $inFA .IsSection }}Feral Architecture — essays by Matt Stine{{ else }}{{ .Title }} | {{ $siteName }}{{ end }}</title>
   {{/* Per-page social metadata. FA essays share as articles with their own title,
        dek and cover; every other page keeps the site-wide Falken's Mage card. */}}
   {{ $desc := "Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft." }}
@@ -38,7 +41,7 @@
 
   {{/* Open Graph (SEO-01, D-15, D-16) */}}
   <meta property="og:type" content="{{ $ogType }}">
-  <meta property="og:site_name" content="Falken's Mage">
+  <meta property="og:site_name" content="{{ $siteName }}">
   <meta property="og:title" content="{{ $ogTitle }}">
   <meta property="og:description" content="{{ $desc }}">
   <meta property="og:url" content="{{ .Permalink }}">
@@ -76,10 +79,33 @@
   {{ if .IsHome }}
     {{ $sameAs := slice }}
     {{ range .Params.link_groups }}{{ if eq .heading "Find Me Elsewhere" }}{{ range .links }}{{ $sameAs = $sameAs | append .url }}{{ end }}{{ end }}{{ end }}
-    {{ $person := dict "@context" "https://schema.org" "@type" "Person" "name" site.Params.author "alternateName" site.Title "url" site.BaseURL "sameAs" $sameAs }}
+    {{ $person := dict "@context" "https://schema.org" "@type" "Person" "@id" (printf "%s#person" site.BaseURL) "name" site.Params.author "alternateName" site.Title "url" site.BaseURL "sameAs" $sameAs }}
     {{ with resources.Get "images/matt-stine.jpg" }}{{ $person = merge $person (dict "image" (.Fill "800x800 Center").Permalink) }}{{ end }}
     {{ $person = merge $person (dict "jobTitle" "Engineering Executive" "description" "Engineering executive, writer, archetypal tarotist, and astrologer. Publishes as Falken's Mage.") }}
     <script type="application/ld+json">{{ $person | jsonify | safeJS }}</script>
+  {{ end }}
+
+  {{/* Feral Architecture structured data — essays as BlogPosting, /fa/ as the Blog.
+       The author points at the homepage Person by @id so search ties them together. */}}
+  {{ $author := dict "@type" "Person" "@id" (printf "%s#person" site.BaseURL) "name" site.Params.author "url" site.BaseURL }}
+  {{ $faURL := printf "%sfa/" site.BaseURL }}
+  {{ if $isEssay }}
+    {{ $post := dict "@context" "https://schema.org" "@type" "BlogPosting"
+         "headline" .Title "description" $desc "url" .Permalink "mainEntityOfPage" .Permalink
+         "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")
+         "dateModified" (.Lastmod.Format "2006-01-02T15:04:05Z07:00")
+         "author" $author "publisher" $author
+         "isPartOf" (dict "@type" "Blog" "@id" (printf "%s#blog" $faURL) "name" "Feral Architecture" "url" $faURL) }}
+    {{ with .Resources.GetMatch "cover.jpg" }}{{ $post = merge $post (dict "image" (.Fill "1200x630 Center jpg").Permalink) }}{{ end }}
+    <script type="application/ld+json">{{ $post | jsonify | safeJS }}</script>
+    {{ $crumbs := dict "@context" "https://schema.org" "@type" "BreadcrumbList" "itemListElement" (slice
+         (dict "@type" "ListItem" "position" 1 "name" "Feral Architecture" "item" $faURL)
+         (dict "@type" "ListItem" "position" 2 "name" .Title "item" .Permalink)) }}
+    <script type="application/ld+json">{{ $crumbs | jsonify | safeJS }}</script>
+  {{ else if and $inFA .IsSection }}
+    {{ $blog := dict "@context" "https://schema.org" "@type" "Blog" "@id" (printf "%s#blog" $faURL)
+         "name" "Feral Architecture" "description" $desc "url" $faURL "author" $author "publisher" $author }}
+    <script type="application/ld+json">{{ $blog | jsonify | safeJS }}</script>
   {{ end }}
 
   {{/* Favicon — the FA crow reduction (line crow reads at 16px; the full mark doesn't) */}}

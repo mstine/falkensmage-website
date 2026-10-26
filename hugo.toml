@@ -2,6 +2,8 @@ baseURL = "https://falkensmage.com/"
 languageCode = "en-us"
 title = "Falken's Mage"
 theme = "arcaeon"
+# No tags/categories anywhere — keep their empty index pages out of the sitemap.
+disableKinds = ["taxonomy", "term"]
 
 [params]
   author = "Matt Stine"

@@ -21,7 +21,7 @@
         {{ with .Resources.GetMatch "cover.jpg" }}
           {{ $c := .Resize "1200x webp q80" }}
           <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
-               alt="" class="fa-essay-cover" fetchpriority="high">
+               alt="{{ $.Params.cover_alt | default (printf "Cover illustration for %s" $.Title) }}" class="fa-essay-cover" fetchpriority="high">
         {{ end }}
       {{ end }}
     </header>
