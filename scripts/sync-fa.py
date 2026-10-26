@@ -325,8 +325,13 @@ def main():
             return f"[![{etitle}](cover-{name}.jpg)](/fa/{eslug}/)"
 
         body = INSERT_COVER_RE.sub(insert_cover, body)
+        if pg.get("grid"):
+            # Grid cards read cover-first: "**I · Title**\n*[![…](cover)](link)*" → cover line, then title.
+            body = re.sub(r"^(\*\*[^\n]+\*\*)\n(\*\[!\[[^\n]+\)\*)$", r"\2\n\1", body, flags=re.M)
         front = {"title": title, "subtitle": dek.group(1) if dek else "", "slug": pg["slug"],
                  "fa_page": True, "weight": weight, "source": pg["source"]}
+        if pg.get("grid"):
+            front["grid"] = True
         if pg["slug"] != "about":
             front["legacy_url"] = f"https://feralarchitecture.com/p/{pg['slug']}"
         head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())

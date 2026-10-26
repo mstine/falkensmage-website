@@ -1,5 +1,5 @@
 {
-  "_comment": "Standalone FA pages built by scripts/sync-fa.py at /fa/<slug>/. Entries with `nav` appear in the FA sub-nav, in this order (Archive is added by the template before About).",
+  "_comment": "Standalone FA pages built by scripts/sync-fa.py at /fa/<slug>/. Entries with `nav` appear in the FA sub-nav, in this order (Archive is added by the template before About). `grid: true` lays a page's cover-entry paragraphs out as a card grid.",
   "pages": [
     {
       "slug": "start-here",
@@ -9,7 +9,8 @@
     {
       "slug": "the-foundations",
       "source": "hermetic/the-foundations-hub-page.md",
-      "nav": "The Foundations"
+      "nav": "The Foundations",
+      "grid": true
     },
     {
       "slug": "the-resource-library",

@@ -28,7 +28,7 @@
   </section>
 
   <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
-    <div class="section-content offer-body page-body fa-prose">
+    <div class="section-content offer-body page-body fa-prose{{ if .Params.grid }} fa-prose--grid{{ end }}">
       {{ .Content }}
     </div>
   </section>
