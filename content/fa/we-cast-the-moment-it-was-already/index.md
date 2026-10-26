@@ -112,10 +112,6 @@ Here's the thing I want you to take from this, and it isn't "Matt's software has
 
 It's that *the moment has a chart*. Any moment. Your Tuesday at 10:06 AM is not empty time — it has a face, a knot, a hidden cup, and it will tell you where they are if you ask it a real question. That's the practice. Not prediction. Not personality quizzes. Casting the actual sky over the actual moment and reading what nests inside it.
 
-That's what we're going to do together on August 13th — the inaugural New-Moon Reading for paying members of The Deck and The Construct. New moon in Leo, 7:00 PM Central, live. We cast the moment of the lunation and read it against what's actually moving in the room — the mountains and the weather, the knot and the hidden cup — because the moment you're standing in is never empty, and it's never generic.
-
-What you just read is the demo. If it worked on you — if some cup on your own periphery came into focus around the second nesting — the founding-member door is open through August 13th. Come sit in the room where we cast the moment.
-
 The moment, it turns out, was already inside me. Yours is already inside you.
 
 Stay feral, folks.

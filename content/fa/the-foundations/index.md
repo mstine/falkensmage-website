@@ -1,6 +1,6 @@
 ---
 title: "The Foundations"
-subtitle: "You're inside now. This is where the work begins."
+subtitle: "This is where the work begins."
 slug: "the-foundations"
 fa_page: true
 weight: 2
@@ -8,7 +8,7 @@ source: "hermetic/the-foundations-hub-page.md"
 legacy_url: "https://feralarchitecture.com/p/the-foundations"
 ---
 
-The Foundations are the on-ramp — the build-once spine of everything we do in here. Read them **in order** the first time; the worldview comes first and everything else hangs off it. After that, this page is a shelf you **consult**, not a thing you finish — come back whenever you need to find your footing again.
+The Foundations are the on-ramp — the build-once spine of everything here. Read them **in order** the first time; the worldview comes first and everything else hangs off it. After that, this page is a shelf you **consult**, not a thing you finish — come back whenever you need to find your footing again.
 
 There are two arcs. **Foundations I–VII** teach the whole frame: the worldview, the grammar, the three practices, and the life they add up to. The **Deeper Cuts (VIII–X)** go down into the floor under the floor — the metaphysical ground and the operative current. Read the Foundations first; the Deeper Cuts assume them.
 
@@ -78,7 +78,7 @@ The operative current, and the capstone. Where you stop *reading* the field and 
 
 When you forget what a word means, or you want the one book worth owning, or a snake shows up in a dream and you need somewhere to start — the **[Resource Library](/fa/the-resource-library/)** is the shelf next to this one.
 
-The reading is the heartbeat; the **Chat** is the bloodstream. Bring the whole of you — that's the price of admission, and it's also the entire point.
+Bring the whole of you. That's the entire point.
 
 Stay feral, folks.
 

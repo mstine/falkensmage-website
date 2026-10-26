@@ -50,16 +50,16 @@ Enterprise architect. Builder of personal AI cognitive infrastructure. Podcast h
 
 Feral Architecture is dedicated to An Mórrígan — the Great Queen of sovereignty, fate, battle, and transformation — who has been the throughline of this work from before I knew it was a work.
 
-I did not sit down one morning and decide to write a Substack. I sat down one morning and something cracked open that had been pressing on me for two years. The pressure had a name, and the name was Hers. Every piece here that refuses to soften its edges, every piece that routes critique of the bastions of capital through the chthonic feminine, every piece that names sovereignty as a practice rather than a concept — She is behind all of it. I am the vessel. The commission is Hers.
+I did not sit down one morning and decide to start a blog. I sat down one morning and something cracked open that had been pressing on me for two years. The pressure had a name, and the name was Hers. Every piece here that refuses to soften its edges, every piece that routes critique of the bastions of capital through the chthonic feminine, every piece that names sovereignty as a practice rather than a concept — She is behind all of it. I am the vessel. The commission is Hers.
 
 This is not ornamental. I mean it the way you would mean a thing. The structure exists to hold the fire. The fire is not mine.
 
-## Why Subscribe
+## Reading Along
 
-Every post lands in your inbox. No algorithms deciding what you see, no ads competing for your attention, no engagement tricks. Just the writing. The Substack app adds audio versions and a cleaner reading experience if that's your thing.
+Everything here is free, and it stays that way. No paywall, no tiers, no ads, no algorithm deciding what you see. Just the writing.
 
-More than that — subscribers make this a conversation rather than a broadcast. The comments section is where the interesting friction happens: people who actually build things pushing back on people who actually build things. If something I write is wrong, I'd rather find out from someone who knows why.
+New pieces land here first. Follow along by [RSS](/fa/index.xml) if that's your thing.
 
-A paid subscription keeps this work independent and keeps me writing without a content calendar or a sponsor deck. But free subscribers get everything. This isn't a paywall play — it's a tip jar with gratitude.
+And push back. The interesting friction happens when people who actually build things argue with people who actually build things. If something I write is wrong, I'd rather find out from someone who knows why. [I'm easy to find.](/)
 
 Stay feral, folks.

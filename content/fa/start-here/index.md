@@ -115,6 +115,6 @@ Post-religion, post-old-self, post-old-trajectory. What remains when the false s
 
 That's the field as of June 2026. New pieces arrive on a Monday/Wednesday/Friday cadence at Mercury hour, and the ARCÆON series — a twenty-two-card sequence reading every Major Arcana card through the technomagickal lens — is in active publication.
 
-Subscribe if you haven't yet. Reply if a piece lands. Push back if a piece misses.
+Read what grips you. Tell me when a piece lands. Push back when one misses.
 
 Stay feral, folks.

@@ -113,7 +113,7 @@ legacy_url: "https://feralarchitecture.com/p/the-book-shelf"
 - **Grant Morrison — *The Invisibles*** 🔥 — Chaos magick as comic book — or comic book as sigil. Morrison wrote it as a hypersigil and the practice bled into the writing. The myth in motion.
 - **Peter J. Carroll — *This Is Chaos*** 🔥 — The current brought up to now (Weiser, 2025) — where the tradition takes stock of itself decades in.
 - **Peter J. Carroll — *Liber Kaos*** 🜍 — The systematized sequel: the theory tightened, the magical model made explicit. For when *Liber Null* leaves you wanting the engineering diagram.
-- **Mark Stavish — *Egregores: The Occult Entities That Watch Over Human Destiny*** 🜍 — The book on the thing The Construct *is* — a group mind, fed and formed by attention. Read this and the membership tier stops being a metaphor.
+- **Mark Stavish — *Egregores: The Occult Entities That Watch Over Human Destiny*** 🜍 — The book on the thing The Construct *is* — a group mind, fed and formed by attention. Read this and The Construct stops being a metaphor.
 
 ## The Mórrígan & Irish Practice
 
@@ -124,4 +124,4 @@ legacy_url: "https://feralarchitecture.com/p/the-book-shelf"
 
 ---
 
-*Curated, not complete — a living shelf, every title personally walked. If a book changed how you read the world, tell me in the Chat; that's how the shelf grows. Buy through [the Bookshop](https://bookshop.org/shop/falkensmage). Stay feral, folks.*
+*Curated, not complete — a living shelf, every title personally walked. If a book changed how you read the world, [tell me](/); that's how the shelf grows. Buy through [the Bookshop](https://bookshop.org/shop/falkensmage). Stay feral, folks.*
