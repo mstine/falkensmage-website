@@ -54,8 +54,6 @@ Hold that picture. *That’s a data center.*
 
 ---
 
----
-
 ## Colossus
 
 In 2024, Elon Musk asked what it would take to build one and got quoted eighteen to twenty-four months.
@@ -117,8 +115,6 @@ What would you have to believe about your own consequences to keep pouring concr
 That’s not a compliance problem. Compliance problems look like paperwork and a fine and a chastened press statement. This looks like arithmetic — a company that priced the penalty against the delay and found the penalty cheaper. Which it is. That’s not xAI being uniquely evil, that’s the design flaw sitting right out in the open where you can see it.
 
 And it’s a pattern, not an incident. Ask Senator Whitehouse, who [wrote EPA in April](https://www.epw.senate.gov/public/index.cfm/2026/4/whitehouse-calls-for-answers-about-musk-backed-xai-s-pattern-of-operating-illegal-data-center-gas-plants) demanding answers about xAI’s “pattern of operating illegal data center gas plants.” Plural. Official. On the record.
-
----
 
 ---
 

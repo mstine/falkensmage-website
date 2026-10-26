@@ -34,8 +34,6 @@ And — this is where it gets uncomfortable for everyone — the harm has almost
 
 ---
 
----
-
 ## The Bottle of Water That Doesn’t Exist
 
 Here’s the claim you’ve probably seen: every AI query wastes a bottle of water.
@@ -77,8 +75,6 @@ Goldman Sachs estimates that 60% of incremental data center power demand between
 Carbon removal? The Frontier Fund committed over a billion dollars. Microsoft contracted 22 million tonnes of removal in 2024. But total global carbon removal to date — all of it, everyone, every company — amounts to fewer than 10,000 tons. Microsoft’s annual emissions are 15 million metric tons. The gap is not percentage points. It is orders of magnitude.
 
 This is what’s real. This is what matters. And this is what gets zero traction on social media because “the REC accounting framework that enables corporate greenwashing of Scope 2 emissions needs to shift to hourly geographic matching” doesn’t fit on a protest sign.
-
----
 
 ---
 

@@ -170,7 +170,9 @@ def clean_body(body, title, subtitle):
     # The italic dek line duplicates `subtitle`; the template renders that.
     if lines and re.fullmatch(r"\*[^*].*\*", lines[0].strip()):
         lines = lines[1:]
-    return "\n".join(lines).strip() + "\n"
+    body = "\n".join(lines).strip() + "\n"
+    # Back-to-back dividers (a removed Substack widget leaves one on each side) → one.
+    return re.sub(r"(?m)^---[ \t]*\n(?:[ \t]*\n)*---[ \t]*$", "---", body)
 
 
 def rewrite_links(body, known, withdrawn, where, problems):
