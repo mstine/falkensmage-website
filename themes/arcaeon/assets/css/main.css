@@ -121,14 +121,6 @@ img {
 }
 
 @font-face {
-  font-family: 'Roboto Mono Variable';
-  src: url('/fonts/roboto-mono-latin-wght-normal.woff2') format('woff2');
-  font-weight: 100 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
   font-family: 'Space Grotesk Variable';
   src: url('/fonts/space-grotesk-latin-wght-normal.woff2') format('woff2');
   font-weight: 300 700;
@@ -146,7 +138,6 @@ img {
   --font-display: 'Cinzel Variable', 'Times New Roman', serif;
   --font-heading: 'Cinzel Variable', 'Times New Roman', serif;
   --font-body: 'Space Grotesk Variable', system-ui, sans-serif;
-  --font-fa: 'Roboto Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Minor Third scale (D-04) */
   --text-base: 1rem;
@@ -1665,7 +1656,7 @@ a:hover {
 /* ============================================
    FERAL ARCHITECTURE — the /fa/ room
    Magazine index, essays, pages, archive. Its own atmosphere inside the house:
-   Roboto Mono headings (FA's Substack-era voice), crow mark up front.
+   Same type system as the rest of the house (Cinzel headings), crow mark up front.
    Built ONLY from existing palette vars + type scale — no new palette.
    ============================================ */
 
@@ -1676,9 +1667,9 @@ a:hover {
 .fa-rail-heading,
 .fa-sidebar__title,
 .fa-essay-title {
-  font-family: var(--font-fa);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: none;
 }
 
@@ -2157,7 +2148,7 @@ a:hover {
 .fa-prose--grid > p:has(img) > em:first-child + strong {
   display: block;
   margin-bottom: 0.4rem;
-  font-family: var(--font-fa);
+  font-family: var(--font-heading);
   font-size: 1.05rem;
   line-height: 1.3;
 }
