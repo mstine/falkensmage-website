@@ -1645,3 +1645,227 @@ a:hover {
   white-space: nowrap;
   border: 0;
 }
+
+/* ============================================
+   FERAL ARCHITECTURE — /fa/ essay index + essay pages
+   Long-form reading surface. Built ONLY from existing palette vars + type
+   scale (same rule as the offer pages) — no new palette.
+   ============================================ */
+
+.fa-masthead {
+  text-align: center;
+}
+
+.fa-masthead__title {
+  margin: 0.5rem 0 0;
+  line-height: 0;
+}
+
+.fa-masthead .fa-wordmark {
+  max-width: 24rem;
+}
+
+.fa-feed-link {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.fa-list {
+  list-style: none;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.fa-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(122, 44, 255, 0.35);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.fa-card:hover,
+.fa-card:focus-visible {
+  border-color: var(--color-hover);
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fa-card:hover,
+  .fa-card:focus-visible {
+    transform: translateY(-0.125rem);
+  }
+}
+
+.fa-card__cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.fa-card__text {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fa-card__meta {
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  opacity: 0.85;
+}
+
+.fa-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-h3);
+  line-height: 1.25;
+}
+
+.fa-card__subtitle {
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+@media (min-width: 40rem) {
+  .fa-card {
+    grid-template-columns: 12rem 1fr;
+    align-items: center;
+  }
+}
+
+/* Essay header */
+.fa-essay-header .offer-eyebrow a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fa-essay-title {
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.1;
+}
+
+.fa-essay-byline {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+.fa-essay-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 1.75rem;
+  border-radius: 0.75rem;
+}
+
+/* Essay prose — long-form rhythm on top of .offer-body/.page-body */
+.fa-prose {
+  font-size: 1.0625rem;
+}
+
+.fa-prose p {
+  line-height: 1.75;
+}
+
+.fa-prose a {
+  color: var(--color-text-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.fa-prose a:hover {
+  color: var(--color-hover);
+}
+
+.fa-prose img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.fa-prose blockquote {
+  padding-left: 1.25rem;
+  border-left: 0.2rem solid var(--color-accent);
+  font-style: italic;
+  opacity: 0.92;
+}
+
+.fa-prose hr {
+  border: 0;
+  height: 1px;
+  margin: 2.5rem auto;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+}
+
+.fa-prose ol {
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.fa-prose code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  background: rgba(122, 44, 255, 0.18);
+}
+
+.fa-prose .footnotes {
+  margin-top: 3rem;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.fa-prose .footnotes hr {
+  margin: 0 0 1.5rem;
+  width: 100%;
+}
+
+/* After the essay — email CTA, neighbors, back to index */
+.fa-after {
+  display: grid;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.fa-after__neighbors {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.fa-after__link {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(122, 44, 255, 0.35);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+}
+
+.fa-after__link--newer {
+  text-align: right;
+}
+
+.fa-after__link:hover,
+.fa-after__link:focus-visible {
+  border-color: var(--color-hover);
+  color: inherit;
+}
+
+@media (min-width: 40rem) {
+  .fa-after__neighbors {
+    grid-template-columns: 1fr 1fr;
+  }
+}

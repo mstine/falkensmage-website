@@ -1,0 +1,56 @@
+{{ define "main" }}
+<main>
+
+  {{/* ===== MASTHEAD — wordmark, eyebrow, lede from content/fa/_index.md ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-arc sigil-boundary-tr">
+    <div class="section-content page-hero fa-masthead">
+      {{ with .Params.eyebrow }}<p class="offer-eyebrow">{{ . }}</p>{{ end }}
+      <h1 class="fa-masthead__title">
+        {{ with resources.Get "images/fa-wordmark.png" }}
+          {{ $wm := .Resize "640x png" }}
+          {{ $wmWebP := $wm.Process "webp" }}
+          <picture>
+            <source type="image/webp" srcset="{{ $wmWebP.RelPermalink }}">
+            <img src="{{ $wm.RelPermalink }}" width="{{ $wm.Width }}" height="{{ $wm.Height }}"
+                 alt="{{ $.Title }}" class="fa-wordmark">
+          </picture>
+        {{ else }}
+          <span class="display-text">{{ .Title }}</span>
+        {{ end }}
+      </h1>
+      {{ with .Params.lede }}<p class="offer-lede">{{ . | markdownify }}</p>{{ end }}
+      {{ with .OutputFormats.Get "rss" }}
+        <p class="fa-feed-link"><a href="{{ .RelPermalink }}">RSS feed</a></p>
+      {{ end }}
+    </div>
+  </section>
+
+  {{/* ===== ESSAYS — newest first ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <div class="section-content fa-index">
+      <ol class="fa-list" reversed>
+        {{ range .Pages.ByDate.Reverse }}
+        <li>
+          <a href="{{ .RelPermalink }}" class="fa-card">
+            {{ with .Resources.GetMatch "cover.jpg" }}
+              {{ $t := .Fill "480x270 Center webp q75" }}
+              <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}"
+                   alt="" loading="lazy" decoding="async" class="fa-card__cover">
+            {{ end }}
+            <span class="fa-card__text">
+              <span class="fa-card__meta">
+                <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+                {{- with .Params.series }} &middot; {{ . }}{{ end -}}
+              </span>
+              <span class="fa-card__title">{{ .Title }}</span>
+              {{ with .Params.subtitle }}<span class="fa-card__subtitle">{{ . }}</span>{{ end }}
+            </span>
+          </a>
+        </li>
+        {{ end }}
+      </ol>
+    </div>
+  </section>
+
+</main>
+{{ end }}

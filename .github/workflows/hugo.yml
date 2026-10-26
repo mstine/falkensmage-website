@@ -8,9 +8,9 @@ name: Deploy Hugo site to Pages
 on:
   push:
     branches: ["main"]
-  # Nightly rebuild re-fetches the Feral Architecture RSS so the CURRENTLY
-  # section stays fresh without a manual push. (GitHub cron is UTC and may
-  # drift/skip under load — fine for a once-a-day content refresh.)
+  # Nightly rebuild refreshes the feed-driven cards (Rewired's latest episode).
+  # Feral Architecture is now local content and needs no refresh.
+  # (GitHub cron is UTC and may drift/skip under load — fine for a daily refresh.)
   schedule:
     - cron: "0 9 * * *"   # ~03:00–04:00 America/Chicago
   workflow_dispatch: {}   # manual "rebuild now" button in the Actions tab
@@ -63,6 +63,11 @@ jobs:
           hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+
+      # Gate: every legacy feralarchitecture.com/p/<slug> must have a /fa/ page
+      # before anything deploys — a missing one is a silent 404 behind the redirect.
+      - name: Validate Feral Architecture section
+        run: bash tests/validate-fa.sh
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5

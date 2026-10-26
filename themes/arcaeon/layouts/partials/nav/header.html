@@ -15,6 +15,7 @@
       <span class="site-nav-toggle__bar" aria-hidden="true"></span>
     </button>
     <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a href="/fa/"{{ if hasPrefix .RelPermalink "/fa" }} aria-current="page"{{ end }}>Feral Architecture</a>
       <a href="/about/"{{ if hasPrefix .RelPermalink "/about" }} aria-current="page"{{ end }}>About</a>
       <a href="/cv/"{{ if hasPrefix .RelPermalink "/cv" }} aria-current="page"{{ end }}>CV</a>
       <a href="/work/"{{ if hasPrefix .RelPermalink "/work" }} aria-current="page"{{ end }}>Work With Me</a>

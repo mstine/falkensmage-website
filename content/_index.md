@@ -37,7 +37,7 @@ identity_blocks:
   - "If any of that made you flinch, we're probably not a fit. If it made something in you go <em>finally</em> — every door's below. Wander."
 cta_description: "No funnel. No newsletter popup clawing at your ankles. The writing is the front door — start there, then follow whatever pulls you."
 cta_button_text: "Read Feral Architecture"
-cta_url: "https://feralarchitecture.com"
+cta_url: "/fa/"
 feral_blurb: "Field notes from the seam between the analytical mind and the symbolic one — the two systems most people keep in separate rooms. One dispatch is about what AI is quietly doing to the people who use it; the next pulls the card that names what nobody would say out loud. Same voice, no apology for either half."
 footer_closing: "Stay feral, folks."
 link_groups:

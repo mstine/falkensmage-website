@@ -151,8 +151,10 @@ echo ""
 # All 8 platform domains present in built HTML
 
 echo "[ SOCIAL-04 ] Social platforms — all 8 platform domains present"
+# Feral Architecture moved on-site (/fa/) — its link is "href=/fa/" (minified) now,
+# not the old feralarchitecture.com Substack domain.
 PLATFORMS=(
-  "feralarchitecture.com"
+  "href=/fa/"
   "linkedin.com"
   "x.com/falkensmage"
   "bsky.app"

@@ -1,20 +1,12 @@
 {{/* Feral Architecture Section — mirrors the Rewired banner card treatment.
+     Links stay on-site: the essays live at /fa/.
      Wordmark stands in for the eyebrow+title; live latest-post feed + glow CTA.
      Reuses .launch-banner with the --fa violet modifier. */}}
-{{ $rssURL := "https://feralarchitecture.com/feed" }}
+{{/* Latest essay comes straight from the /fa/ section — no network fetch at build. */}}
 {{ $latestPost := dict }}
-
-{{ with try (resources.GetRemote $rssURL) }}
-  {{ with .Err }}
-    {{ warnf "Feral Architecture section: RSS fetch failed: %s" . }}
-  {{ else with .Value }}
-    {{ with . | transform.Unmarshal }}
-      {{ with .channel.item }}
-        {{ range first 1 . }}
-          {{ $latestPost = dict "title" (.title | htmlUnescape) "link" .link }}
-        {{ end }}
-      {{ end }}
-    {{ end }}
+{{ with site.GetPage "/fa" }}
+  {{ range first 1 .Pages.ByDate.Reverse }}
+    {{ $latestPost = dict "title" .Title "link" .RelPermalink }}
   {{ end }}
 {{ end }}
 
@@ -39,14 +31,14 @@
       {{ if $latestPost.title }}
       <p class="launch-banner__nowplaying">Latest dispatch</p>
       <a class="launch-banner__episode glow-interactive"
-         href="{{ $latestPost.link }}" target="_blank" rel="noopener noreferrer"
+         href="{{ $latestPost.link }}"
          aria-label="Read: {{ $latestPost.title }} on Feral Architecture">
         &laquo;&thinsp;{{ $latestPost.title }}&thinsp;&raquo;
       </a>
       {{ end }}
 
       <a class="launch-banner__cta glow-radiant-core"
-         href="https://feralarchitecture.com" target="_blank" rel="noopener noreferrer">
+         href="/fa/">
         Read Feral Architecture &rarr;
       </a>
     </div>

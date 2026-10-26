@@ -1,0 +1,48 @@
+{{ define "main" }}
+<main>
+
+  {{/* ===== ESSAY HEADER — series/date, title, subtitle, cover ===== */}}
+  <article>
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-arc sigil-boundary-tr">
+    <header class="section-content page-hero fa-essay-header">
+      <p class="offer-eyebrow">
+        <a href="/fa/">Feral Architecture</a>{{ with .Params.series }} &middot; {{ . }}{{ end }}
+      </p>
+      <h1 class="display-text fa-essay-title">{{ .Title }}</h1>
+      {{ with .Params.subtitle }}<p class="offer-lede">{{ . }}</p>{{ end }}
+      <p class="fa-essay-byline">
+        {{ site.Params.author }} &middot;
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+      </p>
+      {{ with .Resources.GetMatch "cover.jpg" }}
+        {{ $c := .Resize "1200x webp q80" }}
+        <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
+             alt="" class="fa-essay-cover" fetchpriority="high">
+      {{ end }}
+    </header>
+  </section>
+
+  {{/* ===== BODY ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content offer-body page-body fa-prose">
+      {{ .Content }}
+    </div>
+  </section>
+  </article>
+
+  {{/* ===== AFTER — email signup (when configured), neighbors, back to index ===== */}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <nav class="section-content fa-after" aria-label="More essays">
+      {{ with site.Params.fa_newsletter_url }}
+        <p class="fa-after__email"><a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Get the next one by email &rarr;</a></p>
+      {{ end }}
+      <div class="fa-after__neighbors">
+        {{ with .NextInSection }}<a href="{{ .RelPermalink }}" class="fa-after__link"><span class="fa-card__meta">Older</span><span>{{ .Title }}</span></a>{{ end }}
+        {{ with .PrevInSection }}<a href="{{ .RelPermalink }}" class="fa-after__link fa-after__link--newer"><span class="fa-card__meta">Newer</span><span>{{ .Title }}</span></a>{{ end }}
+      </div>
+      <p><a href="/fa/">All essays &rarr;</a></p>
+    </nav>
+  </section>
+
+</main>
+{{ end }}
