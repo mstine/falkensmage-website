@@ -77,8 +77,4 @@ link_groups:
         url: "https://www.instagram.com/falkensmage"
         label: "Instagram"
         icon: "instagram"
-      - name: "Threads"
-        url: "https://www.threads.com/@falkensmage"
-        label: "Threads"
-        icon: "threads"
 ---

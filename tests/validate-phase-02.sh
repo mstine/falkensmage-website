@@ -148,9 +148,9 @@ fi
 echo ""
 
 # ── SOCIAL-04 ─────────────────────────────────────────────────────────────────
-# All 8 platform domains present in built HTML
+# Every listed platform domain present in built HTML (Threads removed 2026-10-26)
 
-echo "[ SOCIAL-04 ] Social platforms — all 8 platform domains present"
+echo "[ SOCIAL-04 ] Social platforms — all platform domains present"
 # Feral Architecture moved on-site (/fa/) — its link is "href=/fa/" (minified) now,
 # not the old feralarchitecture.com Substack domain.
 PLATFORMS=(
@@ -159,7 +159,6 @@ PLATFORMS=(
   "x.com/falkensmage"
   "bsky.app"
   "instagram.com/falkensmage"
-  "threads.com"
   "open.spotify.com"
   "my.tarotpulse.com"
 )
@@ -174,9 +173,9 @@ for platform in "${PLATFORMS[@]}"; do
   fi
 done
 if [ "$PLATFORM_FAIL" -eq 0 ]; then
-  pass "SOCIAL-04: all 8 platform domains present ($PLATFORM_PASS/8)"
+  pass "SOCIAL-04: all ${#PLATFORMS[@]} platform domains present ($PLATFORM_PASS/${#PLATFORMS[@]})"
 else
-  fail "SOCIAL-04: $PLATFORM_FAIL of 8 platform domains MISSING from built HTML"
+  fail "SOCIAL-04: $PLATFORM_FAIL of ${#PLATFORMS[@]} platform domains MISSING from built HTML"
 fi
 echo ""
 
