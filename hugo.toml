@@ -15,7 +15,7 @@ theme = "arcaeon"
 # template.
 # Feral Architecture email signup (Buttondown). Empty = the essay footer hides the
 # "Get the next one by email" link. Set once Buttondown is live.
-  fa_newsletter_url = ""
+  fa_newsletter_url = "https://buttondown.com/falkensmage"
 
 [params.booking]
   "the-query" = "https://cal.com/falkensmage/the-query"
