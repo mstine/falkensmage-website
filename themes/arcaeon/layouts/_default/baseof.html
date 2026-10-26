@@ -18,6 +18,7 @@
     {{ $ogType = "article" }}
     {{ $ogTitle = .Title }}
     {{ with .Params.subtitle }}{{ $desc = . }}{{ end }}
+    {{ with index site.Data.fa_descriptions .Params.slug }}{{ $desc = . }}{{ end }}
     {{ with .Resources.GetMatch "cover.jpg" }}{{ $ogImgSrc = . }}{{ end }}
   {{ else if and (eq .Section "fa") .IsSection }}
     {{ $ogTitle = "Feral Architecture — essays by Matt Stine" }}

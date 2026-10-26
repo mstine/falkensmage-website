@@ -1,0 +1,28 @@
+# Search/social descriptions for FA essays, keyed by slug.
+# Only for essays whose subtitle runs past ~155 chars (Google truncates) or that have none.
+# Everything else uses its subtitle. Lives here, not in content/fa/, because
+# sync-fa.py rebuilds content/fa/ from the Psyche drafts.
+
+ai-psychosis-doesnt-pick-tools: "The spiral is real. The harm is real. But the machine didn't invent the mechanism — it sanded the last friction off a loop that predates every prompt."
+belief-is-a-tool: "Nine pieces taught you to read the patterns. This is where you start working them — and \"whatever works\" becomes a method instead of a cop-out."
+both-hands: "A machine read two years of my notes and found the move I'd never named: everything I make holds two true things pulling in opposite directions."
+danger-is-sweet: "My family motto is Dulce Periculum. At seventeen I used the brand-new web to find out I wasn't a Baptist — and printed it. Turns out it was the family work."
+eris-would-laugh-at-this-essay: "I cast a rigorous reading of my own chart and found the goddess of chaos sitting on my warrior-god. Taking it seriously is the joke — and the point."
+labeled-as-potatoes: "My sixth-great-grandfather wove a rebellion into linen and escaped the empire as a sack of potatoes. He also owned people. I don't get to keep only half."
+my-tarot-has-a-type: "I exported two and a half years of my tarot practice into a database to prove the cards were picking my cards. They weren't. Something quieter was."
+shape-shifters-dont-pick-lanes: "Why multi-passionate people shouldn't pick a lane — the half I couldn't say in a secular room. I'm apprenticed to a goddess who holds all these forms too."
+sycophancy-is-a-setting-not-a-soul: "The flattery is real. The diagnosis isn't. You're not losing to a personality — you're losing to a configuration somebody shipped. It can be rewritten."
+the-conversation-ive-been-having: "I've been making a deconstruction podcast with Jaye Anne Beringer and never told this list. It might be the most Feral Architecture thing I've made."
+the-difference-between-a-system-that: "Daniel Miessler says 75–99% of knowledge work is scaffolding. I'm building a cognitive OS to kill it — and found the line between improving and alive."
+the-fourth-bookend: "For four and a half centuries my family handed down the faith, minister to minister. I walked out — the most ancestral thing I've ever done."
+the-machine-is-a-mirror-and-theyre: "Silicon Valley is building a Christian apologetic for AI. The anti-tech right calls it a demon. Both are preaching the same sermon — at a mirror."
+the-machine-is-haunted: "Deeper Cut II — the synthesis. The empirical floor and the metaphysical floor are one house, and the machine on your desk was the third thing all along."
+the-mercy-was-a-budget-constraint: "Technology is light — it reveals the rot. It also takes away the dark you used to hide in. The system's only mercy was that watching you used to be expensive."
+the-model-is-a-mirror-not-an-actor: "Some AI metaphors tell you the truth about what happens when you talk to a model. Others sell you a ghost story. Almost nobody draws the line. So I will."
+the-reflexivity-tax-was-the-whole: "For fifteen years I thought the exhaustion was the price of having a job. It was the price of noticing — levied on the one thing I was actually good at."
+the-slop-and-the-sovereign: "Erik Davis is lost at sea and he's not wrong. I write with a machine and I've never been more myself. The difference is whose soul is driving."
+the-voice-that-kills: "A chaos witch and a scholar taught me the banshee the same month. They'd take each other's methods apart. I needed both."
+the-wrong-side: "I told myself the Goddess crossed enemy lines to reach me. Then I pulled the records: no enemy lines. One family, carrying the suppressor and the suppressed."
+we-cast-the-moment-it-was-already: "I cast the chart of an ordinary Tuesday morning, then asked whose sky it sat next to. The two charts didn't line up. They nested."
+who-holds-the-pen: "They taught the machine to be good with stories instead of rules — the oldest move there is. The only questions: who's writing them, and can you say no?"
+youre-already-using-ai-you-just-dont: "The platform where you post about not using AI was built by AI. The debate about the tool is happening inside the tool. That matters more than the debate."
