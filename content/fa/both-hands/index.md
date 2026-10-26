@@ -1,6 +1,6 @@
 ---
 title: "Both Hands"
-subtitle: "'A machine read two years of my notes and found the move I''d never named:"
+subtitle: "A machine read two years of my notes and found the move I'd never named: everything I make holds two true things pulling in opposite directions — and refuses to let go of either."
 date: "2026-08-07T13:00:48.037Z"
 slug: "both-hands"
 legacy_url: "https://feralarchitecture.com/p/both-hands"

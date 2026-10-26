@@ -4,8 +4,8 @@
      Reuses .launch-banner with the --fa violet modifier. */}}
 {{/* Latest essay comes straight from the /fa/ section — no network fetch at build. */}}
 {{ $latestPost := dict }}
-{{ with site.GetPage "/fa" }}
-  {{ range first 1 .Pages.ByDate.Reverse }}
+{{ with partial "fa/essays.html" . }}
+  {{ range first 1 . }}
     {{ $latestPost = dict "title" .Title "link" .RelPermalink }}
   {{ end }}
 {{ end }}

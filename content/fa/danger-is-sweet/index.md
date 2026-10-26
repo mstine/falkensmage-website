@@ -1,6 +1,6 @@
 ---
 title: "Danger Is Sweet"
-subtitle: "My family motto is Dulce Periculum. At seventeen I used the brand-new web"
+subtitle: "My family motto is Dulce Periculum. At seventeen I used the brand-new web to find out I wasn't a Baptist — and, being the editorials editor, I printed it. Turns out I was just doing the family work."
 date: "2026-07-15T20:00:41.556Z"
 slug: "danger-is-sweet"
 legacy_url: "https://feralarchitecture.com/p/danger-is-sweet"

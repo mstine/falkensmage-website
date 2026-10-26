@@ -1,6 +1,6 @@
 ---
 title: "We Cast the Moment. It Was Already Inside Me."
-subtitle: "I cast the chart of an ordinary Tuesday morning the way you'd check the"
+subtitle: "I cast the chart of an ordinary Tuesday morning the way you'd check the weather. Then I asked whose sky it was sitting next to — and the two charts didn't line up. They nested."
 date: "2026-07-30T02:46:12.012Z"
 slug: "we-cast-the-moment-it-was-already"
 legacy_url: "https://feralarchitecture.com/p/we-cast-the-moment-it-was-already"
@@ -114,7 +114,7 @@ It's that *the moment has a chart*. Any moment. Your Tuesday at 10:06 AM is not 
 
 That's what we're going to do together on August 13th — the inaugural New-Moon Reading for paying members of The Deck and The Construct. New moon in Leo, 7:00 PM Central, live. We cast the moment of the lunation and read it against what's actually moving in the room — the mountains and the weather, the knot and the hidden cup — because the moment you're standing in is never empty, and it's never generic.
 
-What you just read is the demo. If it worked on you — if some cup on your own periphery came into focus around the second nesting — the [founding-member door](https://feralarchitecture.com/subscribe) is open through August 13th. Come sit in the room where we cast the moment.
+What you just read is the demo. If it worked on you — if some cup on your own periphery came into focus around the second nesting — the founding-member door is open through August 13th. Come sit in the room where we cast the moment.
 
 The moment, it turns out, was already inside me. Yours is already inside you.
 

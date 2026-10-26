@@ -1,6 +1,6 @@
 ---
 title: "The New Moon Reading I — Leo, Eclipsed"
-subtitle: "The seed plants itself at the top of the chart, and the only way up is through"
+subtitle: "The seed plants itself at the top of the chart, and the only way up is through the underworld."
 date: "2026-08-15"
 slug: "the-new-moon-reading-i-leo-eclipsed"
 legacy_url: "https://feralarchitecture.com/p/the-new-moon-reading-i-leo-eclipsed"

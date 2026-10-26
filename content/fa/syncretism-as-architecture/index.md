@@ -16,7 +16,7 @@ It goes like this. I grew up Southern Baptist. Jackson, Tennessee. Bible clown a
 
 And then, over the course of about a decade, I was not inside. The scaffolding failed, and I fell out, and by the time I could breathe again I was a practicing witch who celebrates the Wheel of the Year, keeps a devotional relationship with an Irish war goddess, does weekly tarot readings professionally, practices chaos magick, is enrolled in Jungian individuation training, and holds a theology best described as Hermetic panentheism.
 
-That's a long walk. If you want the full version of it, I've [written about it](/fa/the-hierophant-lied/) [elsewhere](/fa/your-architecture-is-a-spell/). Today I want to talk about one specific part: *every single practice I assembled my current spirituality from was stolen from somewhere.*
+That's a long walk. If you want the full version of it, I've [written about it](/fa/the-hierophant-lied/) [elsewhere](/fa/your-architecture-is-a-spell-youre/). Today I want to talk about one specific part: *every single practice I assembled my current spirituality from was stolen from somewhere.*
 
 Or borrowed. Or adapted. Or rebuilt in my own image. Or — and this is the language that keeps me up — appropriated.
 

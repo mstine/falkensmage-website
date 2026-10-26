@@ -1,6 +1,6 @@
 ---
 title: "The Kindred Who Locked the Door"
-subtitle: "A love letter to Blindboy — who is my people, and who used the wiring we"
+subtitle: "A love letter to Blindboy — who is my people, and who used the wiring we share to lock the door."
 date: "2026-06-29T18:03:11.584Z"
 slug: "the-kindred-who-locked-the-door"
 legacy_url: "https://feralarchitecture.com/p/the-kindred-who-locked-the-door"

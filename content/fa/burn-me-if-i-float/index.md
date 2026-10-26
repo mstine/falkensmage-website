@@ -1,6 +1,6 @@
 ---
 title: "Burn Me If I Float"
-subtitle: "Substack handed every reader a dunking stool and called it transparency."
+subtitle: "Substack handed every reader a dunking stool and called it transparency. Either verdict wrongs me. So let me answer the question they actually asked."
 date: "2026-08-17T18:04:48.074Z"
 slug: "burn-me-if-i-float"
 legacy_url: "https://feralarchitecture.com/p/burn-me-if-i-float"

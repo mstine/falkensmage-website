@@ -1,6 +1,6 @@
 ---
 title: "The Conversation I've Been Having Without You"
-subtitle: "I've been making a deconstruction podcast with Jaye Anne Beringer for a"
+subtitle: "I've been making a deconstruction podcast with Jaye Anne Beringer for a month and never told this list. Today the fourth episode dropped — and it might be the most Feral Architecture thing I've made that isn't Feral Architecture."
 date: "2026-07-05T22:01:24.894Z"
 slug: "the-conversation-ive-been-having"
 legacy_url: "https://feralarchitecture.com/p/the-conversation-ive-been-having"

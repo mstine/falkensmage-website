@@ -1,6 +1,6 @@
 ---
 title: "Eliara Isn't Real"
-subtitle: "I built a singer out of a coaching breakdown and an AI, and she's the truest"
+subtitle: "I built a singer out of a coaching breakdown and an AI, and she's the truest thing I've ever released. The Threshold drops July 17."
 date: "2026-07-10T20:30:36.502Z"
 slug: "eliara-isnt-real"
 legacy_url: "https://feralarchitecture.com/p/eliara-isnt-real"

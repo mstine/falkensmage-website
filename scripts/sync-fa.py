@@ -32,11 +32,42 @@ FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 SLUG_RE = re.compile(r"/(?:p|fa)/([a-z0-9-]+)")
 # Old site paths inside essay bodies: feralarchitecture.com/p/<slug> → /fa/<slug>/
 XLINK_RE = re.compile(r"https?://(?:www\.)?feralarchitecture(?:\.substack)?\.com/p/([a-z0-9-]+)[^\s)\"']*")
+# Other old-site paths: the ones with a home here map over; Substack-only ones
+# (Chat, subscribe, …) have nothing to point at, so the link becomes plain text.
+SITE_PATHS = {"": "/fa/", "about": "/fa/about/", "archive": "/fa/archive/"}
+SITELINK_RE = re.compile(r"\[([^\]]+)\]\(https?://(?:www\.)?feralarchitecture(?:\.substack)?\.com/?([a-z-]*)[^)\s]*\)")
+PASTE_MARK = "PASTE EVERYTHING BELOW THIS LINE"
 IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
 MAX_EDGE = 1600
 
 
+try:
+    import yaml
+except ImportError:  # the line-based reader below copes with simple frontmatter
+    yaml = None
+
+_parsed = {}
+
+
 def field(fm, key):
+    if yaml is not None:
+        if fm not in _parsed:
+            try:
+                _parsed[fm] = yaml.safe_load(fm) or {}
+            except yaml.YAMLError:
+                _parsed[fm] = None
+        data = _parsed[fm]
+        if isinstance(data, dict):
+            v = data.get(key)
+            if v is None:
+                return ""
+            if hasattr(v, "isoformat"):
+                return v.isoformat()
+            return " ".join(str(v).split()) if isinstance(v, str) else str(v)
+    return _field_lines(fm, key)
+
+
+def _field_lines(fm, key):
     m = re.search(rf"^{key}:\s*(.*)$", fm, re.M)
     if not m:
         return ""
@@ -138,6 +169,35 @@ def clean_body(body, title, subtitle):
     return "\n".join(lines).strip() + "\n"
 
 
+def rewrite_links(body, known, withdrawn, where, problems):
+    def essay(mm):
+        slug = mm.group(1)
+        if slug in withdrawn:
+            return "/fa/"
+        if slug not in known:
+            problems.append(f"{where}: link to unknown slug /p/{slug} (left pointing at /fa/{slug}/)")
+        return f"/fa/{slug}/"
+
+    def site(mm):
+        text, path = mm.group(1), mm.group(2)
+        if path in SITE_PATHS:
+            return f"[{text}]({SITE_PATHS[path]})"
+        problems.append(f"{where}: unlinked Substack-only link [{text}](/{path})")
+        return text
+
+    body = XLINK_RE.sub(essay, body)
+    return SITELINK_RE.sub(site, body)
+
+
+def page_body(text):
+    """Body of a page draft: drop frontmatter, any Substack paste marker, HTML comments."""
+    m = FM_RE.match(text)
+    body = text[m.end():] if m else text
+    if PASTE_MARK in body:
+        body = body.split(PASTE_MARK, 1)[1].split("\n", 1)[1]
+    return re.sub(r"<!--.*?-->", "", body, flags=re.S)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--drafts", default=os.path.expanduser("~/.psyche/drafts"))
@@ -169,7 +229,9 @@ def main():
                 continue
             essays.append((p, sub, fm, text[m.end():], sm.group(1)))
 
+    pages = json.loads((ROOT / "data" / "fa-pages.json").read_text())["pages"]
     slugs = [e[4] for e in essays]
+    known = set(slugs) | {pg["slug"] for pg in pages}
     dupes = {s for s in slugs if slugs.count(s) > 1}
     if dupes:
         sys.exit(f"sync-fa: duplicate slugs across drafts: {sorted(dupes)}")
@@ -192,7 +254,7 @@ def main():
         bundle.mkdir()
 
         body = clean_body(body, title, subtitle)
-        body = XLINK_RE.sub(lambda mm: "/fa/" if mm.group(1) in withdrawn else f"/fa/{mm.group(1)}/", body)
+        body = rewrite_links(body, known, withdrawn, slug, problems)
 
         def inline(mm):
             alt, ref = mm.group(1), mm.group(2)
@@ -233,6 +295,28 @@ def main():
         head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
         (bundle / "index.md").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")
 
+    for weight, pg in enumerate(pages, start=1):
+        src = drafts / pg["source"]
+        body = page_body(src.read_text(encoding="utf-8"))
+        h1 = re.search(r"^# (.+)$", body, re.M)
+        title = h1.group(1).strip() if h1 else pg["slug"].replace("-", " ").title()
+        dek = re.search(r"^\*([^*].*)\*\s*$", body, re.M)
+        body = rewrite_links(clean_body(body, title, ""), known, withdrawn, pg["slug"], problems)
+        front = {"title": title, "subtitle": dek.group(1) if dek else "", "slug": pg["slug"],
+                 "fa_page": True, "weight": weight, "source": pg["source"]}
+        if pg["slug"] != "about":
+            front["legacy_url"] = f"https://feralarchitecture.com/p/{pg['slug']}"
+        bundle = OUT / pg["slug"]
+        bundle.mkdir()
+        head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
+        (bundle / "index.md").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")
+
+    archive = OUT / "archive"
+    archive.mkdir()
+    (archive / "index.md").write_text(
+        '---\ntitle: "Archive"\nslug: "archive"\nlayout: "archive"\nfa_page: true\n---\n', encoding="utf-8")
+
+    print(f"sync-fa: {len(pages)} pages + archive → content/fa/")
     print(f"sync-fa: {len(essays)} essays → content/fa/ ({len(essays) - len(no_cover)} with covers)")
     for s in skipped:
         print(f"sync-fa: skipped (not a legacy essay): {s}")

@@ -1,0 +1,41 @@
+{
+  "_comment": "Standalone FA pages built by scripts/sync-fa.py at /fa/<slug>/. Entries with `nav` appear in the FA sub-nav, in this order (Archive is added by the template before About).",
+  "pages": [
+    {
+      "slug": "start-here",
+      "source": "feral-architecture/2026-05-29-start-here-page.md",
+      "nav": "Start Here"
+    },
+    {
+      "slug": "the-foundations",
+      "source": "hermetic/the-foundations-hub-page.md",
+      "nav": "The Foundations"
+    },
+    {
+      "slug": "the-resource-library",
+      "source": "hermetic/library-pages/00-resource-library-landing.md",
+      "nav": "The Resource Library"
+    },
+    {
+      "slug": "the-jungian-glossary",
+      "source": "hermetic/library-pages/01-jungian-glossary.md"
+    },
+    {
+      "slug": "the-archetypes",
+      "source": "hermetic/library-pages/02-the-archetypes.md"
+    },
+    {
+      "slug": "dream-motifs-the-anti-dictionary",
+      "source": "hermetic/library-pages/03-dream-motifs.md"
+    },
+    {
+      "slug": "the-book-shelf",
+      "source": "hermetic/library-pages/04-the-bookshelf.md"
+    },
+    {
+      "slug": "about",
+      "source": "feral-architecture/2026-04-13-about-feral-architecture.md",
+      "nav": "About"
+    }
+  ]
+}

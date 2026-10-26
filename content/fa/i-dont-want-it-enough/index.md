@@ -88,7 +88,7 @@ I've spent years learning to hear that instrument. What kind of asshole would I 
 
 There's a second thing, and it's the one I'm slightly more embarrassed about, so let's do it quickly.
 
-The [About page](https://feralarchitecture.com/about) for this publication has said the same thing since April. It still says it right now, while you're reading this: *free subscribers get everything. This isn't a paywall play — it's a tip jar with gratitude.*
+The [About page](/fa/about/) for this publication has said the same thing since April. It still says it right now, while you're reading this: *free subscribers get everything. This isn't a paywall play — it's a tip jar with gratitude.*
 
 Then I [built a wall](/fa/why-i-built-a-door/).
 

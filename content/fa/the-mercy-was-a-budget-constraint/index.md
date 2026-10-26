@@ -1,6 +1,6 @@
 ---
 title: "The Mercy Was a Budget Constraint"
-subtitle: "I told you technology was light — that it reveals the rot instead of causing"
+subtitle: "I told you technology was light — that it reveals the rot instead of causing it. That was half the story. The same light takes away the dark you used to hide in, and the only mercy the system ever had was that watching you used to be expensive."
 date: "2026-06-16T14:22:02.526Z"
 slug: "the-mercy-was-a-budget-constraint"
 legacy_url: "https://feralarchitecture.com/p/the-mercy-was-a-budget-constraint"

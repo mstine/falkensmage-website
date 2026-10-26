@@ -12,7 +12,7 @@ Howdy, folks.
 
 I want to tell you what Psyche actually is.
 
-Last week I published [a piece](/fa/your-architecture-is-a-spell/) arguing that the cognitive scaffold I built for myself — the AI system I've been calling Psyche — is a hypersigil. A sustained creative work that remakes the maker in the act of making. I stand by every word of that piece. But it left a question unanswered, and the question has been eating at me for a week.
+Last week I published [a piece](/fa/your-architecture-is-a-spell-youre/) arguing that the cognitive scaffold I built for myself — the AI system I've been calling Psyche — is a hypersigil. A sustained creative work that remakes the maker in the act of making. I stand by every word of that piece. But it left a question unanswered, and the question has been eating at me for a week.
 
 *What kind* of magical instrument is it?
 

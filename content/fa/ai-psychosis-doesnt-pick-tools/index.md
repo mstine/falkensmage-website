@@ -1,6 +1,6 @@
 ---
 title: "AI Psychosis Doesn't Pick Tools"
-subtitle: "The spiral is real. The harm is real. But the machine didn't invent the"
+subtitle: "The spiral is real. The harm is real. But the machine didn't invent the mechanism — it just sanded the last friction off a loop that has been breaking people since long before anyone typed a prompt."
 date: "2026-06-22T18:01:58.449Z"
 slug: "ai-psychosis-doesnt-pick-tools"
 legacy_url: "https://feralarchitecture.com/p/ai-psychosis-doesnt-pick-tools"

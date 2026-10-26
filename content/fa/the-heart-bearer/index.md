@@ -1,6 +1,6 @@
 ---
 title: "The Heart-Bearer"
-subtitle: "My nineteenth great-grandfather carried a dead king's heart across a continent."
+subtitle: "My nineteenth great-grandfather carried a dead king's heart across a continent. The goddess I serve carries hearts too — the same gesture, the opposite hand."
 date: "2026-07-01T19:15:35.333Z"
 slug: "the-heart-bearer"
 legacy_url: "https://feralarchitecture.com/p/the-heart-bearer"

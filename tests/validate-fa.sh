@@ -34,6 +34,16 @@ else
   fail "legacy slugs with no page: $(echo "$missing" | tr '\n' ' ')"
 fi
 
+missing_pages=$(python3 -I - "$PROJECT_ROOT/data/fa-legacy.json" "$PUBLIC" <<'PY'
+import json, os, sys
+legacy = json.load(open(sys.argv[1]))
+for slug in legacy["pages"] + ["about", "archive"]:
+    if not os.path.isfile(os.path.join(sys.argv[2], "fa", slug, "index.html")):
+        print(slug)
+PY
+)
+[ -z "$missing_pages" ] && pass "all legacy pages + about + archive exist under /fa/" || fail "pages with no /fa/ page: $(echo "$missing_pages" | tr '\n' ' ')"
+
 leaked=$(python3 -I - "$PROJECT_ROOT/data/fa-legacy.json" "$PUBLIC" <<'PY'
 import json, os, sys
 for slug in json.load(open(sys.argv[1]))["withdrawn"]:
@@ -51,7 +61,8 @@ else
 fi
 
 no_og=0
-for page in "$PUBLIC"/fa/*/index.html; do
+for slug in $(python3 -I -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["essays"]))' "$PROJECT_ROOT/data/fa-legacy.json"); do
+  page="$PUBLIC/fa/$slug/index.html"
   grep -Eq 'property="?og:type"? content="?article' "$page" && grep -Eq 'property="?og:image"?' "$page" || { no_og=$((no_og + 1)); echo "        no article OG: ${page#$PUBLIC}"; }
 done
 [ "$no_og" -eq 0 ] && pass "every essay has article Open Graph tags with an image" || fail "$no_og essays missing article OG tags"

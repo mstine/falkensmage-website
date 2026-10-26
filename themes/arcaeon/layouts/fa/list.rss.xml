@@ -1,6 +1,6 @@
 {{- /* Full-content RSS for /fa/ — Buttondown's RSS-to-email reads this, so items
        carry the whole essay (cover first), not a summary. */ -}}
-{{- $pages := first 30 .Pages.ByDate.Reverse -}}
+{{- $pages := first 30 (partial "fa/essays.html" .) -}}
 {{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>

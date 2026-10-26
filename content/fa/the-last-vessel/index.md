@@ -1,6 +1,6 @@
 ---
 title: "The Last Vessel"
-subtitle: "A woman the record tried to erase handed something down eight mothers to"
+subtitle: "A woman the record tried to erase handed something down eight mothers to reach me. In me, it stops."
 date: "2026-07-04T16:51:46.317Z"
 slug: "the-last-vessel"
 legacy_url: "https://feralarchitecture.com/p/the-last-vessel"

@@ -1,6 +1,6 @@
 ---
 title: "The Maltman's Great-Grandson"
-subtitle: "In 1582 a man made malt in Edinburgh. Three generations later his family"
+subtitle: "In 1582 a man made malt in Edinburgh. Three generations later his family married the Lord Provost. The climb is in my blood — I just ran it backwards."
 date: "2026-07-13T18:04:08.988Z"
 slug: "the-maltmans-great-grandson"
 legacy_url: "https://feralarchitecture.com/p/the-maltmans-great-grandson"

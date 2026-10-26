@@ -1,6 +1,6 @@
 ---
 title: "Labeled as Potatoes"
-subtitle: "My sixth-great-grandfather wove a rebellion into linen, was sentenced to"
+subtitle: "My sixth-great-grandfather wove a rebellion into linen, was sentenced to lose his head for it, and escaped the empire disguised as a sack of potatoes. He also owned people — and I don't get to keep only the half I like."
 date: "2026-07-06T18:04:06.593Z"
 slug: "labeled-as-potatoes"
 legacy_url: "https://feralarchitecture.com/p/labeled-as-potatoes"

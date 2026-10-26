@@ -1,6 +1,6 @@
 ---
 title: "The Hand on the Lion"
-subtitle: "Purity is flight. Hype is being devoured. Control is a cage that rattles."
+subtitle: "Purity is flight. Hype is being devoured. Control is a cage that rattles. The only posture that has ever worked — in code or in soul — is the hand on the lion."
 date: "2026-06-30T23:02:00.150Z"
 slug: "the-hand-on-the-lion"
 legacy_url: "https://feralarchitecture.com/p/the-hand-on-the-lion"

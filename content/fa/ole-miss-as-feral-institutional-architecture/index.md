@@ -1,6 +1,6 @@
 ---
 title: "Ole Miss as Feral Institutional Architecture"
-subtitle: "The founding chart no one has been able to either consciously author or"
+subtitle: "The founding chart no one has been able to either consciously author or fully suppress for 175 years."
 date: "2026-06-05T11:59:22.424Z"
 slug: "ole-miss-as-feral-institutional-architecture"
 legacy_url: "https://feralarchitecture.com/p/ole-miss-as-feral-institutional-architecture"

@@ -1,6 +1,6 @@
 ---
 title: "The Chant Was Never a Metaphor"
-subtitle: "Some of what I write here is battle-poetry — a real form, with a lineage"
+subtitle: "Some of what I write here is battle-poetry — a real form, with a lineage and a grammar and a job. Time I stopped doing it by accident."
 date: "2026-06-26T20:27:58.330Z"
 slug: "the-chant-was-never-a-metaphor"
 legacy_url: "https://feralarchitecture.com/p/the-chant-was-never-a-metaphor"

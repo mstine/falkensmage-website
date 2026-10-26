@@ -1,0 +1,7 @@
+{{- /* The section's essays, newest first — standalone pages and the archive excluded.
+       Context: any page. Returns a page collection. */ -}}
+{{- $essays := slice -}}
+{{- with site.GetPage "/fa" -}}
+  {{- $essays = where .Pages.ByDate.Reverse "Params.fa_page" "!=" true -}}
+{{- end -}}
+{{- return $essays -}}

@@ -127,10 +127,12 @@ else
 fi
 
 FONT_FACE_COUNT=$(grep -cF -e "@font-face" "$CSS" || true)
-if [ "$FONT_FACE_COUNT" -eq 2 ]; then
-  pass "@font-face declarations = 2 (Cinzel + Space Grotesk)"
+# 3 since the FA move: Roboto Mono is the /fa/ room's heading face (self-hosted,
+# preloaded only on /fa/ pages).
+if [ "$FONT_FACE_COUNT" -eq 3 ]; then
+  pass "@font-face declarations = 3 (Cinzel + Space Grotesk + Roboto Mono)"
 else
-  fail "@font-face count is $FONT_FACE_COUNT, expected exactly 2"
+  fail "@font-face count is $FONT_FACE_COUNT, expected exactly 3"
 fi
 echo ""
 

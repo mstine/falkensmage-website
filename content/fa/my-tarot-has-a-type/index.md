@@ -1,6 +1,6 @@
 ---
 title: "My Tarot Has a Type"
-subtitle: "I exported two and a half years of my own tarot practice into a database"
+subtitle: "I exported two and a half years of my own tarot practice into a database to prove the cards had been picking my cards. They hadn't — I could disprove it with my own data, and I did. But something quieter was true underneath, and it survived the test that killed the rest."
 date: "2026-07-17T12:45:54.216Z"
 slug: "my-tarot-has-a-type"
 legacy_url: "https://feralarchitecture.com/p/my-tarot-has-a-type"

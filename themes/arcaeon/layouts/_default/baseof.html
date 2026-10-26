@@ -10,7 +10,7 @@
   {{ $ogTitle := "Falken's Mage — Matt Stine" }}
   {{ $ogType := "website" }}
   {{ $ogImgSrc := resources.Get "images/magus-hero.jpg" }}
-  {{ $isEssay := and (eq .Section "fa") .IsPage }}
+  {{ $isEssay := and (eq .Section "fa") .IsPage (not .Params.fa_page) }}
   {{ if $isEssay }}
     {{ $ogType = "article" }}
     {{ $ogTitle = .Title }}
@@ -26,6 +26,7 @@
   {{ $cssOpts := dict "externals" (slice
     "/fonts/cinzel-latin-wght-normal.woff2"
     "/fonts/space-grotesk-latin-wght-normal.woff2"
+    "/fonts/roboto-mono-latin-wght-normal.woff2"
   ) }}
   {{ $css := resources.Get "css/main.css" | css.Build $cssOpts | minify | fingerprint }}
 
@@ -34,6 +35,10 @@
         as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/space-grotesk-latin-wght-normal.woff2"
         as="font" type="font/woff2" crossorigin>
+  {{ if eq .Section "fa" }}
+  <link rel="preload" href="/fonts/roboto-mono-latin-wght-normal.woff2"
+        as="font" type="font/woff2" crossorigin>
+  {{ end }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 
   {{/* Open Graph (SEO-01, D-15, D-16) */}}
@@ -79,9 +84,10 @@
     <script type="application/ld+json">{{ $person | jsonify | safeJS }}</script>
   {{ end }}
 
-  {{/* Favicon — SVG modern, ICO legacy (INFRA-05, D-01, D-03) */}}
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  {{/* Favicon — the FA crow reduction (line crow reads at 16px; the full mark doesn't) */}}
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   {{/* Plausible analytics — privacy-first, UTM-aware (business-card attribution). Emits only when params.plausible is set. */}}
   {{ with site.Params.plausible }}

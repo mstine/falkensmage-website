@@ -24,11 +24,11 @@
     </picture>
   </div>
   <div class="section-content hero-text">
-    {{ with resources.Get "images/pentacle-mark.png" }}
-      {{ $sig := .Resize "400x png" }}
+    {{ with resources.Get "images/crow-mark.png" }}
+      {{ $sig := .Resize "400x webp q85" }}
       <img src="{{ $sig.RelPermalink }}"
            width="{{ $sig.Width }}" height="{{ $sig.Height }}"
-           alt="Falken's Mage sigil — a dissolved-boundary pentagram of code and root"
+           alt="Falken's Mage — a crow perched on a pentacle of code and root"
            loading="eager"
            class="hero-sigil">
     {{ end }}

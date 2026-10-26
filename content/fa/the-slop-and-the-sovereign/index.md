@@ -1,6 +1,6 @@
 ---
 title: "The Slop and the Sovereign"
-subtitle: "Erik Davis is lost at sea and he's not wrong. I write with a machine and"
+subtitle: "Erik Davis is lost at sea and he's not wrong. I write with a machine and I've never been more myself. The difference was never the machine — it's whose soul is driving."
 date: "2026-08-05T19:31:21.037Z"
 slug: "the-slop-and-the-sovereign"
 legacy_url: "https://feralarchitecture.com/p/the-slop-and-the-sovereign"

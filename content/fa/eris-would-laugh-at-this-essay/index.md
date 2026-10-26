@@ -1,6 +1,6 @@
 ---
 title: "Eris Would Laugh at This Essay"
-subtitle: "I cast a rigorous, ephemeris-verified reading of my own chart and found"
+subtitle: "I cast a rigorous, ephemeris-verified reading of my own chart and found the goddess of chaos sitting on my warrior-god. Taking it seriously is the joke — and the joke is the point."
 date: "2026-07-24T20:31:17.455Z"
 slug: "eris-would-laugh-at-this-essay"
 legacy_url: "https://feralarchitecture.com/p/eris-would-laugh-at-this-essay"

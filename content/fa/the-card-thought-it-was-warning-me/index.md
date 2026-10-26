@@ -1,6 +1,6 @@
 ---
 title: "The Card Thought It Was Warning Me"
-subtitle: "My deck kept flagging the dark feminine as a danger. The danger was only"
+subtitle: "My deck kept flagging the dark feminine as a danger. The danger was only ever real to people who don't live there. I live there."
 date: "2026-08-19T19:30:40.169Z"
 slug: "the-card-thought-it-was-warning-me"
 legacy_url: "https://feralarchitecture.com/p/the-card-thought-it-was-warning-me"

@@ -1,6 +1,6 @@
 ---
 title: "The Voice That Kills"
-subtitle: "A chaos witch and a scholar taught me the banshee the same month. They'd"
+subtitle: "A chaos witch and a scholar taught me the banshee the same month. They'd take each other's methods apart. I needed both — and the loose one handed me the rigorous one through my own mouth."
 date: "2026-07-03T20:30:24.202Z"
 slug: "the-voice-that-kills"
 legacy_url: "https://feralarchitecture.com/p/the-voice-that-kills"

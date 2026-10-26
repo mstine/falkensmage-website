@@ -1,6 +1,6 @@
 ---
 title: "I Turned Replies Off at 432"
-subtitle: "A testimonial for Mandi Em — who named the fear in March, two months before"
+subtitle: "A testimonial for Mandi Em — who named the fear in March, two months before four hundred strangers made it flesh."
 date: "2026-06-13T16:47:23.738Z"
 slug: "i-turned-replies-off-at-432"
 legacy_url: "https://feralarchitecture.com/p/i-turned-replies-off-at-432"

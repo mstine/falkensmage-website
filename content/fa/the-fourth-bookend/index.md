@@ -1,6 +1,6 @@
 ---
 title: "The Fourth Bookend"
-subtitle: "For four and a half centuries my family handed the faith down, minister"
+subtitle: "For four and a half centuries my family handed the faith down, minister to minister. I'm the one who walked out — and it turns out that was the most ancestral thing I've ever done."
 date: "2026-07-08T19:16:50.613Z"
 slug: "the-fourth-bookend"
 legacy_url: "https://feralarchitecture.com/p/the-fourth-bookend"

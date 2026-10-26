@@ -1,0 +1,13 @@
+{{- /* Essay card. Context: dict "page" $p "size" ("featured"|"stack"|"grid"). */ -}}
+{{- $p := .page -}}
+{{- $size := .size | default "grid" -}}
+<a href="{{ $p.RelPermalink }}" class="fa-post fa-post--{{ $size }}">
+  {{ with $p.Resources.GetMatch "cover.jpg" }}
+    {{ $img := .Fill (cond (eq $size "featured") "1200x800 Center webp q78" "640x427 Center webp q75") }}
+    <img src="{{ $img.RelPermalink }}" width="{{ $img.Width }}" height="{{ $img.Height }}" alt=""
+         class="fa-post__cover"{{ if ne $size "featured" }} loading="lazy" decoding="async"{{ else }} fetchpriority="high"{{ end }}>
+  {{ end }}
+  <span class="fa-post__title">{{ $p.Title }}</span>
+  {{ with $p.Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
+  <span class="fa-post__meta"><time datetime="{{ $p.Date.Format "2006-01-02" }}">{{ $p.Date.Format "Jan 2" }}</time> &middot; {{ site.Params.author }}</span>
+</a>

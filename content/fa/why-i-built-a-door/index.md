@@ -1,6 +1,6 @@
 ---
 title: "Why I Built a Door"
-subtitle: "I’m not afraid of failing but of the slow death — where the edges come"
+subtitle: "I’m not afraid of failing but of the slow death — where the edges come off one reasonable compromise at a time, and nobody can point to the moment it happened. The patron’s seat is the counterweight."
 date: "2026-08-03T18:30:13.775Z"
 slug: "why-i-built-a-door"
 legacy_url: "https://feralarchitecture.com/p/why-i-built-a-door"
@@ -72,6 +72,6 @@ There's a crow on the wall above this door — there's always a crow, if you've 
 
 The first reading is Thursday. The founding closes with it. If you've felt the pull to *fund* the fire and not just warm your hands at it — this is the seat.
 
-**[→ Take the patron's seat](https://feralarchitecture.com/subscribe)**
+**→ Take the patron's seat**
 
 Stay feral, folks.

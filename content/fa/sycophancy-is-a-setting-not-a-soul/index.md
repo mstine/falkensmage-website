@@ -1,6 +1,6 @@
 ---
 title: "Sycophancy Is a Setting, Not a Soul"
-subtitle: "The flattery is real. The diagnosis isn't. You're not losing an argument"
+subtitle: "The flattery is real. The diagnosis isn't. You're not losing an argument to a personality — you're losing to a configuration somebody shipped, and configurations can be rewritten."
 date: "2026-06-19T11:57:53.712Z"
 slug: "sycophancy-is-a-setting-not-a-soul"
 legacy_url: "https://feralarchitecture.com/p/sycophancy-is-a-setting-not-a-soul"

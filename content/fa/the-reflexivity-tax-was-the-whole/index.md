@@ -1,6 +1,6 @@
 ---
 title: "The Reflexivity Tax Was the Whole Salary"
-subtitle: "For fifteen years I thought the exhaustion was the price of having a job."
+subtitle: "For fifteen years I thought the exhaustion was the price of having a job. It wasn't. It was the price of noticing — levied quietly, compounded annually, on the one thing I was actually good at."
 date: "2026-06-15T17:59:52.088Z"
 slug: "the-reflexivity-tax-was-the-whole"
 legacy_url: "https://feralarchitecture.com/p/the-reflexivity-tax-was-the-whole"

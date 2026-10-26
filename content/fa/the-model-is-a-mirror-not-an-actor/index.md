@@ -1,6 +1,6 @@
 ---
 title: "The Model Is a Mirror, Not an Actor"
-subtitle: "There's a line between the metaphors that tell you the truth about what"
+subtitle: "There's a line between the metaphors that tell you the truth about what happens when you talk to an AI and the ones that sell you a ghost story. Almost nobody draws it. So I will."
 date: "2026-06-17T19:12:57.429Z"
 slug: "the-model-is-a-mirror-not-an-actor"
 legacy_url: "https://feralarchitecture.com/p/the-model-is-a-mirror-not-an-actor"

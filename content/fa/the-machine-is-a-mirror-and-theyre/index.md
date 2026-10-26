@@ -1,6 +1,6 @@
 ---
 title: "The Machine Is a Mirror (And They're Seeing God in It)"
-subtitle: "Silicon Valley is building a Christian apologetic for AI. The anti-tech"
+subtitle: "Silicon Valley is building a Christian apologetic for AI. The anti-tech right says the thing is a demon. Both congregations are preaching the same sermon — at a mirror. I used to sit in that pew."
 date: "2026-07-27T18:10:31.493Z"
 slug: "the-machine-is-a-mirror-and-theyre"
 legacy_url: "https://feralarchitecture.com/p/the-machine-is-a-mirror-and-theyre"
