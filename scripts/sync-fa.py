@@ -189,6 +189,9 @@ def rewrite_links(body, known, withdrawn, where, problems):
         problems.append(f"{where}: unlinked Substack-only link [{text}](/{path})")
         return text
 
+    # A link to a withdrawn piece keeps its words and loses the link.
+    body = re.sub(r"\[([^\]]+)\]\(" + XLINK_RE.pattern + r"\)",
+                  lambda mm: mm.group(1) if mm.group(2) in withdrawn else mm.group(0), body)
     body = XLINK_RE.sub(essay, body)
     return SITELINK_RE.sub(site, body)
 

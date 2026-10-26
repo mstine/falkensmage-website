@@ -90,7 +90,7 @@ There's a second thing, and it's the one I'm slightly more embarrassed about, so
 
 The [About page](/fa/about/) for this publication has said the same thing since April. It still says it right now, while you're reading this: *free subscribers get everything. This isn't a paywall play — it's a tip jar with gratitude.*
 
-Then I [built a wall](/fa/why-i-built-a-door/).
+Then I built a wall.
 
 I read my own founding email again three days ago, for the first time since I sent it. I'd described the paid tier as a room the rest of the internet doesn't get into.
 
