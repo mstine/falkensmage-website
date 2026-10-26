@@ -5,7 +5,7 @@
     <div class="fa-wide">
       {{ partial "fa/masthead.html" (dict "page" .) }}
 
-      {{/* ===== HERO — two stacked, newest featured, Most Popular rail ===== */}}
+      {{/* ===== HERO — two stacked, newest featured, curated Start With These rail ===== */}}
       <div class="fa-hero">
         <div class="fa-hero__stack">
           {{ range after 1 (first 3 $essays) }}{{ partial "fa/card.html" (dict "page" . "size" "stack") }}{{ end }}
@@ -13,10 +13,10 @@
         <div class="fa-hero__featured">
           {{ range first 1 $essays }}{{ partial "fa/card.html" (dict "page" . "size" "featured") }}{{ end }}
         </div>
-        <aside class="fa-hero__popular" aria-labelledby="fa-popular-heading">
-          <h2 id="fa-popular-heading" class="fa-rail-heading">Most Popular</h2>
+        <aside class="fa-hero__popular" aria-labelledby="fa-start-heading">
+          <h2 id="fa-start-heading" class="fa-rail-heading">Start With These</h2>
           <ol class="fa-popular">
-            {{ range (index hugo.Data "fa-popular").slugs }}
+            {{ range (index hugo.Data "fa-start-with").slugs }}
               {{ with site.GetPage (printf "/fa/%s" .) }}
               <li>
                 <a href="{{ .RelPermalink }}" class="fa-popular__item">

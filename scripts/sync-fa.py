@@ -37,6 +37,10 @@ XLINK_RE = re.compile(r"https?://(?:www\.)?feralarchitecture(?:\.substack)?\.com
 SITE_PATHS = {"": "/fa/", "about": "/fa/about/", "archive": "/fa/archive/"}
 SITELINK_RE = re.compile(r"\[([^\]]+)\]\(https?://(?:www\.)?feralarchitecture(?:\.substack)?\.com/?([a-z-]*)[^)\s]*\)")
 PASTE_MARK = "PASTE EVERYTHING BELOW THIS LINE"
+# Substack-era paste instruction: "[insert cover: foundation-1-the-morrigan-and-grep]"
+# names an essay by its draft filename (minus the date). Becomes that essay's
+# cover, linked to the essay.
+INSERT_COVER_RE = re.compile(r"\[insert cover:\s*([a-z0-9-]+)\s*\]", re.I)
 IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
 MAX_EDGE = 1600
 
@@ -244,6 +248,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
     no_cover = []
+    by_stem = {}  # draft stem minus date → (slug, title, cover path)
     for p, sub, fm, body, slug in essays:
         title = field(fm, "title")
         subtitle = field(fm, "subtitle")
@@ -275,6 +280,7 @@ def main():
         body = IMG_RE.sub(inline, body)
 
         cover = resolve_cover(p, fm, covers)
+        by_stem[re.sub(r"^\d{4}-\d{2}-\d{2}-", "", p.stem)] = (slug, title, cover)
         if cover:
             put_image(cover, bundle / "cover.jpg")
         else:
@@ -302,12 +308,24 @@ def main():
         title = h1.group(1).strip() if h1 else pg["slug"].replace("-", " ").title()
         dek = re.search(r"^\*([^*].*)\*\s*$", body, re.M)
         body = rewrite_links(clean_body(body, title, ""), known, withdrawn, pg["slug"], problems)
+        bundle = OUT / pg["slug"]
+        bundle.mkdir()
+
+        def insert_cover(mm, where=pg["slug"], bundle=bundle):
+            name = mm.group(1).lower()
+            hit = by_stem.get(name)
+            if not hit or not hit[2]:
+                problems.append(f"{where}: dropped unresolvable placeholder {mm.group(0)}")
+                return ""
+            eslug, etitle, ecover = hit
+            put_image(ecover, bundle / f"cover-{name}.jpg")
+            return f"[![{etitle}](cover-{name}.jpg)](/fa/{eslug}/)"
+
+        body = INSERT_COVER_RE.sub(insert_cover, body)
         front = {"title": title, "subtitle": dek.group(1) if dek else "", "slug": pg["slug"],
                  "fa_page": True, "weight": weight, "source": pg["source"]}
         if pg["slug"] != "about":
             front["legacy_url"] = f"https://feralarchitecture.com/p/{pg['slug']}"
-        bundle = OUT / pg["slug"]
-        bundle.mkdir()
         head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
         (bundle / "index.md").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")
 

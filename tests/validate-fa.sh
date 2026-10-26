@@ -70,6 +70,9 @@ done
 stale=$(grep -l "feralarchitecture.com/p/" "$PUBLIC"/fa/*/index.html 2>/dev/null | wc -l | tr -d ' ')
 [ "$stale" -eq 0 ] && pass "no essay links back to feralarchitecture.com/p/" || fail "$stale essays still link to feralarchitecture.com/p/"
 
+leftover=$(grep -l -E '\[(insert|INSERT|TODO|TK)[^]]*\]' "$PUBLIC"/fa/*/index.html 2>/dev/null | wc -l | tr -d ' ')
+[ "$leftover" -eq 0 ] && pass "no drafting placeholders ([insert …], [TODO], [TK]) in published pages" || fail "$leftover pages still contain drafting placeholders"
+
 if grep -Eq 'href="?/fa/"?' "$PUBLIC/index.html"; then
   pass "home page links to /fa/"
 else
