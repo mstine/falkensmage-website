@@ -1,0 +1,64 @@
+{{ define "main" }}
+{{- $essays := partial "fa/essays.html" . -}}
+<main class="fa-room">
+  <section class="section section-void fa-band">
+    <div class="fa-wide">
+      {{ partial "fa/masthead.html" (dict "page" .) }}
+
+      {{/* ===== HERO — two stacked, newest featured, curated Start With These rail ===== */}}
+      <div class="fa-hero">
+        <div class="fa-hero__stack">
+          {{ range after 1 (first 3 $essays) }}{{ partial "fa/card.html" (dict "page" . "size" "stack") }}{{ end }}
+        </div>
+        <div class="fa-hero__featured">
+          {{ range first 1 $essays }}{{ partial "fa/card.html" (dict "page" . "size" "featured") }}{{ end }}
+        </div>
+        <aside class="fa-hero__popular" aria-labelledby="fa-start-heading">
+          <h2 id="fa-start-heading" class="fa-rail-heading">Start With These</h2>
+          <ol class="fa-popular">
+            {{ range (index hugo.Data "fa-start-with").slugs }}
+              {{ with site.GetPage (printf "/fa/%s" .) }}
+              <li>
+                <a href="{{ .RelPermalink }}" class="fa-popular__item">
+                  <span class="fa-popular__text">
+                    <span class="fa-post__title">{{ .Title }}</span>
+                    <span class="fa-post__meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time> &middot; {{ site.Params.author }}</span>
+                  </span>
+                  {{ with .Resources.GetMatch "cover.jpg" }}
+                    {{ $t := .Fill "160x160 Center webp q72" }}
+                    <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb">
+                  {{ end }}
+                </a>
+              </li>
+              {{ end }}
+            {{ end }}
+          </ol>
+        </aside>
+      </div>
+
+      {{/* ===== LATEST — grid + sidebar ===== */}}
+      <div class="fa-latest">
+        <div>
+          <h2 class="fa-rail-heading">Latest</h2>
+          <div class="fa-grid">
+            {{ range first 12 (after 3 $essays) }}{{ partial "fa/card.html" (dict "page" . "size" "grid") }}{{ end }}
+          </div>
+          <p class="fa-more"><a href="/fa/archive/">All {{ len $essays }} essays in the archive &rarr;</a></p>
+        </div>
+        <aside class="fa-sidebar">
+          {{ with resources.Get "images/crow-mark.png" }}
+            {{ $m := .Resize "120x webp q85" }}
+            <img src="{{ $m.RelPermalink }}" width="{{ $m.Width }}" height="{{ $m.Height }}" alt="" class="fa-sidebar__crow">
+          {{ end }}
+          <h2 class="fa-sidebar__title">{{ .Title }}</h2>
+          {{ with .Params.tagline }}<p class="fa-sidebar__tagline">{{ . }}</p>{{ end }}
+          {{ with site.Params.fa_newsletter_url }}
+            <a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Get it by email &rarr;</a>
+          {{ end }}
+          {{ with .OutputFormats.Get "rss" }}<p class="fa-sidebar__feed"><a href="{{ .RelPermalink }}">RSS feed</a></p>{{ end }}
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+{{ end }}

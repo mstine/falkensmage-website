@@ -1,0 +1,27 @@
+{{- /* Full-content RSS for /fa/ — Buttondown's RSS-to-email reads this, so items
+       carry the whole essay (cover first), not a summary. */ -}}
+{{- $pages := first 30 (partial "fa/essays.html" .) -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Feral Architecture</title>
+    <link>{{ .Permalink }}</link>
+    <description>{{ .Params.lede }}</description>
+    <language>{{ site.Language.Lang }}</language>
+    <managingEditor>{{ site.Params.author }}</managingEditor>
+    {{ with $pages }}{{ with index . 0 }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}{{ end }}
+    {{ with .OutputFormats.Get "rss" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+    {{- range $pages }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <guid isPermaLink="true">{{ .Permalink }}</guid>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      <description>{{ .Params.subtitle }}</description>
+      {{- $cover := "" }}
+      {{- with .Resources.GetMatch "cover.jpg" }}{{ $cover = printf "<p><img src=\"%s\" alt=\"\"></p>" (.Resize "1200x jpg q80").Permalink }}{{ end }}
+      <content:encoded>{{ printf "<![CDATA[%s%s]]>" $cover (.Content | absURL) | safeHTML }}</content:encoded>
+    </item>
+    {{- end }}
+  </channel>
+</rss>

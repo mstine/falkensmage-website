@@ -1,0 +1,56 @@
+{{ define "main" }}
+{{- $isPage := .Params.fa_page -}}
+<main class="fa-room">
+  <section class="section section-void fa-band">
+    <div class="fa-wide">
+      {{ partial "fa/masthead.html" (dict "page" . "compact" true) }}
+    </div>
+  </section>
+
+  <article>
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <header class="section-content fa-essay-header">
+      <h1 class="fa-essay-title">{{ .Title }}</h1>
+      {{ with .Params.subtitle }}<p class="offer-lede">{{ . }}</p>{{ end }}
+      {{ if not $isPage }}
+        <p class="fa-essay-byline">
+          {{ site.Params.author }} &middot;
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+          {{- with .Params.series }} &middot; {{ . }}{{ end }}
+        </p>
+        {{ with .Resources.GetMatch "cover.jpg" }}
+          {{ $c := .Resize "1200x webp q80" }}
+          <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
+               alt="" class="fa-essay-cover" fetchpriority="high">
+        {{ end }}
+      {{ end }}
+    </header>
+  </section>
+
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content offer-body page-body fa-prose{{ if .Params.grid }} fa-prose--grid{{ end }}">
+      {{ .Content }}
+    </div>
+  </section>
+  </article>
+
+  {{ if not $isPage }}
+  {{/* ===== AFTER — email signup (when configured), neighbors, back to index ===== */}}
+  {{- $essays := partial "fa/essays.html" . -}}
+  {{- $older := "" }}{{ $newer := "" }}{{ $seen := false -}}
+  {{- range $essays }}{{ if $seen }}{{ if not $older }}{{ $older = . }}{{ end }}{{ else if eq .RelPermalink $.RelPermalink }}{{ $seen = true }}{{ else }}{{ $newer = . }}{{ end }}{{ end -}}
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <nav class="section-content fa-after" aria-label="More essays">
+      {{ with site.Params.fa_newsletter_url }}
+        <p class="fa-after__email"><a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Get the next one by email &rarr;</a></p>
+      {{ end }}
+      <div class="fa-after__neighbors">
+        {{ with $older }}<a href="{{ .RelPermalink }}" class="fa-after__link"><span class="fa-post__meta">Older</span><span>{{ .Title }}</span></a>{{ end }}
+        {{ with $newer }}<a href="{{ .RelPermalink }}" class="fa-after__link fa-after__link--newer"><span class="fa-post__meta">Newer</span><span>{{ .Title }}</span></a>{{ end }}
+      </div>
+      <p><a href="/fa/archive/">The whole archive &rarr;</a></p>
+    </nav>
+  </section>
+  {{ end }}
+</main>
+{{ end }}

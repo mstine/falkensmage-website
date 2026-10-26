@@ -4,33 +4,57 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
-  <meta name="description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
+  {{/* Per-page social metadata. FA essays share as articles with their own title,
+       dek and cover; every other page keeps the site-wide Falken's Mage card. */}}
+  {{ $desc := "Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft." }}
+  {{ $ogTitle := "Falken's Mage — Matt Stine" }}
+  {{ $ogType := "website" }}
+  {{ $ogImgSrc := resources.Get "images/magus-hero.jpg" }}
+  {{ $isEssay := and (eq .Section "fa") .IsPage (not .Params.fa_page) }}
+  {{ if $isEssay }}
+    {{ $ogType = "article" }}
+    {{ $ogTitle = .Title }}
+    {{ with .Params.subtitle }}{{ $desc = . }}{{ end }}
+    {{ with .Resources.GetMatch "cover.jpg" }}{{ $ogImgSrc = . }}{{ end }}
+  {{ else if and (eq .Section "fa") .IsSection }}
+    {{ $ogTitle = "Feral Architecture — essays by Matt Stine" }}
+    {{ with .Params.lede }}{{ $desc = . }}{{ end }}
+  {{ end }}
+  <meta name="description" content="{{ $desc }}">
+
+  {{/* externals: exact font paths preserved as-is so preload href matches @font-face src (PERF-03) */}}
+  {{ $cssOpts := dict "externals" (slice
+    "/fonts/cinzel-latin-wght-normal.woff2"
+    "/fonts/space-grotesk-latin-wght-normal.woff2"
+    "/fonts/roboto-mono-latin-wght-normal.woff2"
+  ) }}
+  {{ $css := resources.Get "css/main.css" | css.Build $cssOpts | minify | fingerprint }}
 
   {{/* Font preload — stable static paths, crossorigin required (PERF-03, D-07) */}}
   <link rel="preload" href="/fonts/cinzel-latin-wght-normal.woff2"
         as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/space-grotesk-latin-wght-normal.woff2"
         as="font" type="font/woff2" crossorigin>
-
-  {{/* externals: exact font paths preserved as-is so preload href matches @font-face src (PERF-03) */}}
-  {{ $cssOpts := dict "externals" (slice
-    "/fonts/cinzel-latin-wght-normal.woff2"
-    "/fonts/space-grotesk-latin-wght-normal.woff2"
-  ) }}
-  {{ $css := resources.Get "css/main.css" | css.Build $cssOpts | minify | fingerprint }}
+  {{ if eq .Section "fa" }}
+  <link rel="preload" href="/fonts/roboto-mono-latin-wght-normal.woff2"
+        as="font" type="font/woff2" crossorigin>
+  {{ end }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 
   {{/* Open Graph (SEO-01, D-15, D-16) */}}
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{{ $ogType }}">
   <meta property="og:site_name" content="Falken's Mage">
-  <meta property="og:title" content="Falken's Mage — Matt Stine">
-  <meta property="og:description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
+  <meta property="og:title" content="{{ $ogTitle }}">
+  <meta property="og:description" content="{{ $desc }}">
   <meta property="og:url" content="{{ .Permalink }}">
+  {{ if $isEssay }}
+  <meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+  <meta property="article:author" content="{{ site.Params.author }}">
+  {{ end }}
 
-  {{/* OG image — 1200x630 JPEG crop of Magus (D-15) */}}
-  {{ $heroSrc := resources.Get "images/magus-hero.jpg" }}
-  {{ with $heroSrc }}
-    {{ $ogImg := .Fill "1200x630 Center" }}
+  {{/* OG image — 1200x630 JPEG crop (D-15): essay cover, else the Magus */}}
+  {{ with $ogImgSrc }}
+    {{ $ogImg := .Fill "1200x630 Center jpg" }}
     <meta property="og:image" content="{{ $ogImg.Permalink }}">
     <meta property="og:image:width" content="{{ $ogImg.Width }}">
     <meta property="og:image:height" content="{{ $ogImg.Height }}">
@@ -39,8 +63,16 @@
 
   {{/* Twitter Card (SEO-02, D-13) */}}
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Falken's Mage — Matt Stine">
-  <meta name="twitter:description" content="Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft.">
+  <meta name="twitter:title" content="{{ $ogTitle }}">
+  <meta name="twitter:description" content="{{ $desc }}">
+
+  {{/* Mastodon profile verification — the profile's link back here shows as verified */}}
+  <link rel="me" href="https://mastodon.social/@falkensmage">
+
+  {{/* FA feed discovery — readers and Buttondown find /fa/index.xml from any page */}}
+  {{ with site.GetPage "/fa" }}{{ with .OutputFormats.Get "rss" }}
+  <link rel="alternate" type="application/rss+xml" title="Feral Architecture" href="{{ .Permalink }}">
+  {{ end }}{{ end }}
 
   {{/* Canonical URL (SEO-03, D-17) */}}
   <link rel="canonical" href="{{ .Permalink }}">
@@ -55,9 +87,10 @@
     <script type="application/ld+json">{{ $person | jsonify | safeJS }}</script>
   {{ end }}
 
-  {{/* Favicon — SVG modern, ICO legacy (INFRA-05, D-01, D-03) */}}
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  {{/* Favicon — the FA crow reduction (line crow reads at 16px; the full mark doesn't) */}}
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   {{/* Plausible analytics — privacy-first, UTM-aware (business-card attribution). Emits only when params.plausible is set. */}}
   {{ with site.Params.plausible }}

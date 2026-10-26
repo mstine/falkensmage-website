@@ -13,6 +13,10 @@ theme = "arcaeon"
 # values here, nowhere else. Templates dereference site.Params.booking
 # by each offer page's booking_key; never hardcode a Cal.com URL in a
 # template.
+# Feral Architecture email signup (Buttondown). Empty = the essay footer hides the
+# "Get the next one by email" link. Set once Buttondown is live.
+  fa_newsletter_url = ""
+
 [params.booking]
   "the-query" = "https://cal.com/falkensmage/the-query"
   "the-cast" = "https://cal.com/falkensmage/the-cast"

@@ -1,0 +1,33 @@
+{{ define "main" }}
+{{- $essays := partial "fa/essays.html" . -}}
+<main class="fa-room">
+  <section class="section section-void fa-band">
+    <div class="fa-wide">
+      {{ partial "fa/masthead.html" (dict "page" . "compact" true) }}
+      <div class="fa-archive">
+        <h1 class="fa-rail-heading">Archive <span class="fa-post__meta">{{ len $essays }} essays</span></h1>
+        {{ range $essays.GroupByDate "January 2006" }}
+          <h2 class="fa-archive__month">{{ .Key }}</h2>
+          <ol class="fa-archive__list">
+            {{ range .Pages }}
+            <li>
+              <a href="{{ .RelPermalink }}" class="fa-popular__item">
+                <span class="fa-popular__text">
+                  <span class="fa-post__title">{{ .Title }}</span>
+                  {{ with .Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
+                  <span class="fa-post__meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time>{{ with .Params.series }} &middot; {{ . }}{{ end }}</span>
+                </span>
+                {{ with .Resources.GetMatch "cover.jpg" }}
+                  {{ $t := .Fill "160x160 Center webp q72" }}
+                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb">
+                {{ end }}
+              </a>
+            </li>
+            {{ end }}
+          </ol>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+</main>
+{{ end }}

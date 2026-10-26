@@ -1,0 +1,8 @@
+{{- /* Bundle images → resized WebP, lazy-loaded. Anything else renders untouched. */ -}}
+{{- with .PageInner.Resources.Get .Destination -}}
+  {{- $i := . -}}
+  {{- if gt .Width 1200 }}{{ $i = .Resize "1200x webp q80" }}{{ else }}{{ $i = .Process "webp q80" }}{{ end -}}
+  <img src="{{ $i.RelPermalink }}" width="{{ $i.Width }}" height="{{ $i.Height }}" alt="{{ $.PlainText }}" loading="lazy" decoding="async">
+{{- else -}}
+  <img src="{{ .Destination | safeURL }}" alt="{{ .PlainText }}" loading="lazy" decoding="async">
+{{- end -}}

@@ -1,0 +1,26 @@
+{{- /* FA masthead + sub-nav. Context: dict "page" $page "compact" bool.
+       Compact (essays, pages) keeps the crow and wordmark smaller so the essay leads. */ -}}
+{{- $p := .page -}}
+{{- $compact := .compact | default false -}}
+<div class="fa-masthead{{ if $compact }} fa-masthead--compact{{ end }}">
+  <a href="/fa/" class="fa-masthead__brand" aria-label="Feral Architecture — home">
+    {{ with resources.Get "images/crow-mark.png" }}
+      {{ $m := .Resize (cond $compact "160x webp q85" "320x webp q85") }}
+      <img src="{{ $m.RelPermalink }}" width="{{ $m.Width }}" height="{{ $m.Height }}" alt="" class="fa-masthead__crow">
+    {{ end }}
+    {{ with resources.Get "images/fa-wordmark.png" }}
+      {{ $wm := .Resize "640x webp" }}
+      <img src="{{ $wm.RelPermalink }}" width="{{ $wm.Width }}" height="{{ $wm.Height }}" alt="Feral Architecture" class="fa-masthead__wordmark">
+    {{ end }}
+  </a>
+</div>
+<nav class="fa-subnav" aria-label="Feral Architecture">
+  {{- $here := $p.RelPermalink -}}
+  <a href="/fa/"{{ if eq $here "/fa/" }} aria-current="page"{{ end }}>Home</a>
+  {{- $pages := (index hugo.Data "fa-pages").pages -}}
+  {{- range $pages }}{{ if and .nav (ne .slug "about") }}
+  <a href="/fa/{{ .slug }}/"{{ if eq $here (printf "/fa/%s/" .slug) }} aria-current="page"{{ end }}>{{ .nav }}</a>
+  {{- end }}{{ end }}
+  <a href="/fa/archive/"{{ if eq $here "/fa/archive/" }} aria-current="page"{{ end }}>Archive</a>
+  <a href="/fa/about/"{{ if eq $here "/fa/about/" }} aria-current="page"{{ end }}>About</a>
+</nav>
