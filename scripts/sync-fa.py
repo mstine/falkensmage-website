@@ -167,9 +167,16 @@ def clean_body(body, title, subtitle):
         lines = lines[1:]
     while lines and not lines[0].strip():
         lines = lines[1:]
-    # The italic dek line duplicates `subtitle`; the template renders that.
-    if lines and re.fullmatch(r"\*[^*].*\*", lines[0].strip()):
+    # The italic dek line (bare, or labeled "**Subtitle:**") duplicates `subtitle`;
+    # the template renders that. A divider right under it is draft scaffolding too.
+    if lines and re.fullmatch(r"(?:\*\*Subtitle:\*\*\s*)?\*[^*].*\*", lines[0].strip()):
         lines = lines[1:]
+        while lines and not lines[0].strip():
+            lines = lines[1:]
+        if lines and re.fullmatch(r"---[ \t]*", lines[0]):
+            lines = lines[1:]
+        while lines and not lines[0].strip():
+            lines = lines[1:]
     body = "\n".join(lines).strip() + "\n"
     # Back-to-back dividers (a removed Substack widget leaves one on each side) → one.
     return re.sub(r"(?m)^---[ \t]*\n(?:[ \t]*\n)*---[ \t]*$", "---", body)

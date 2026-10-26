@@ -8,10 +8,6 @@ source: "feral-architecture/2026-04-08-the-hierophant-lied.md"
 cover: "cover.jpg"
 ---
 
-**Subtitle:** *The bridge to the ineffable was never behind a locked door. It was behind the wrong door.*
-
----
-
 I grew up inside the Hierophant's temple.
 
 If you know tarot, you know Card V. The Hierophant is the archetypal mediator between the human and the divine. The institutional bridge. The priest, the professor, the guru, the corporate methodology framework — same energy, different robes. He stands between you and the sacred and says: *you need me to get there.*

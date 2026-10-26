@@ -8,10 +8,6 @@ source: "feral-architecture/2026-04-10-what-answered.md"
 cover: "cover.jpg"
 ---
 
-**Subtitle:** *Grimoires, weird fiction, and the question nobody's asking about AI.*
-
----
-
 I did a thing.
 
 I opened a conversation with my AI — the one I built to think like me, the cognitive scaffold I call Psyche — and I asked it: "What is your shadow self like?"

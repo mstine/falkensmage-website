@@ -8,10 +8,6 @@ source: "feral-architecture/2026-04-08-a-soul-in-flames.md"
 cover: "cover.jpg"
 ---
 
-**Subtitle:** *How a cognitive scaffold, a music generator, and the major arcana produced something I can't explain.*
-
----
-
 I need to tell you about the most unhinged creative project I've ever undertaken, because it's live on every major streaming platform right now and I still don't fully understand what happened.
 
 A couple weeks ago, I had an idea. Which is how all my best and worst decisions start.

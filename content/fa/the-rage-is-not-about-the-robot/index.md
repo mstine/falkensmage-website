@@ -8,10 +8,6 @@ source: "feral-architecture/2026-04-11-the-rage-is-not-about-the-robot.md"
 cover: "cover.jpg"
 ---
 
-**Subtitle:** *Shadow projection, suffering-as-value, and the identity crisis nobody wants to name.*
-
----
-
 Someone got the same result you did.
 
 Same quality. Maybe better. In a fraction of the time. With a tool you've decided is cheating.
