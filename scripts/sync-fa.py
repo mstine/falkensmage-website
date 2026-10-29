@@ -341,7 +341,7 @@ def main():
                  "fa_page": True, "weight": weight, "source": pg["source"]}
         if pg.get("grid"):
             front["grid"] = True
-        if pg["slug"] != "about":
+        if pg["slug"] != "about" and pg.get("legacy", True):
             front["legacy_url"] = f"https://feralarchitecture.com/p/{pg['slug']}"
         head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
         (bundle / "index.md").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")

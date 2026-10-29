@@ -8,8 +8,6 @@ source: "hermetic/library-pages/01-jungian-glossary.md"
 legacy_url: "https://feralarchitecture.com/p/the-jungian-glossary"
 ---
 
----
-
 **Active Imagination** · *(Found. [IV](/fa/tarot-as-pattern-tech/), [VI](/fa/dreamwork/))* — Engaging a symbol, figure, or dream-image while awake and letting it move and speak on its own — a tarot figure, a dream pursuer, an inner advisor. Not daydreaming (you steer that); active imagination *surprises* you, and the surprise is the tell that it's real. Jung's core method for talking to the unconscious.
 
 **Albedo** · *(Found. [III](/fa/alchemy/))* — The "whitening," the second alchemical stage. After the rot of the nigredo: the washing, the first clarity, sobriety returning. Its danger is mistaking *rinsed* for *finished.*

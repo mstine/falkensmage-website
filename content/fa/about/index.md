@@ -3,7 +3,7 @@ title: "About Feral Architecture"
 subtitle: ""
 slug: "about"
 fa_page: true
-weight: 8
+weight: 9
 source: "feral-architecture/2026-04-13-about-feral-architecture.md"
 ---
 

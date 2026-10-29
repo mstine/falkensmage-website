@@ -8,8 +8,6 @@ source: "hermetic/library-pages/02-the-archetypes.md"
 legacy_url: "https://feralarchitecture.com/p/the-archetypes"
 ---
 
----
-
 ## The structural four (the architecture of every psyche)
 
 *These aren't optional characters — they're the load-bearing structure from [Foundation II](/fa/archetype/).*
