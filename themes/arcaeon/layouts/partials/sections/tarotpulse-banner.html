@@ -1,0 +1,33 @@
+{{/* TarotPulse card — a PERMANENT product promo sitting just above the Rewired
+     card, as its own band. Unlike the ARCÆON-styled cards it wears TarotPulse's
+     own brand (night navy, gold, lavender, Cinzel), so it reads as the product,
+     not as another Falken's Mage section. Controlled by the `tarotpulse_launch`
+     front-matter block; `active: false` hides it and the bands below re-stripe. */}}
+{{ with $.Params.tarotpulse_launch }}
+  {{ if .active }}
+  <section class="section {{ partial "helpers/band-tone.html" $ }} tarotpulse-banner-section" aria-labelledby="tarotpulse-banner-heading">
+    <div class="section-content">
+      <div class="launch-banner launch-banner--tarotpulse">
+        {{ with resources.Get "images/tarotpulse-mark.png" }}
+          {{ $mark := .Resize "200x png" }}
+          {{ $markWebP := $mark.Process "webp" }}
+          <picture>
+            <source type="image/webp" srcset="{{ $markWebP.RelPermalink }}">
+            <img src="{{ $mark.RelPermalink }}" width="{{ $mark.Width }}" height="{{ $mark.Height }}"
+                 alt="" loading="lazy" class="launch-banner__mark">
+          </picture>
+        {{ end }}
+        {{ with .eyebrow }}<span class="launch-banner__eyebrow">{{ . }}</span>{{ end }}
+        <h2 id="tarotpulse-banner-heading" class="launch-banner__title">{{ .title | default "TarotPulse" }}</h2>
+        {{ with .tagline }}<p class="tarotpulse-banner__tagline">{{ . }}</p>{{ end }}
+        {{ with .body }}<p class="launch-banner__body">{{ . | safeHTML }}</p>{{ end }}
+        <a class="launch-banner__cta tarotpulse-banner__cta"
+           href="{{ .cta_url }}" target="_blank" rel="noopener noreferrer">
+          {{ .cta_text | default "See your patterns →" }}
+        </a>
+        {{ with .fineprint }}<p class="tarotpulse-banner__fineprint">{{ . }}</p>{{ end }}
+      </div>
+    </div>
+  </section>
+  {{ end }}
+{{ end }}

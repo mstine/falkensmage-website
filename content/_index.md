@@ -12,6 +12,17 @@ talk_launch:
   body: "Tracking your tarot patterns through the lens of personal cycles — a 90-minute hands-on workshop. Bring a deck, leave with a method. <strong>Friday, July 17 · 12:30 PM · Ravinia C.</strong>"
   cta_text: "Get the details →"
   cta_url: "https://timeasoracle.mytarotpulse.com/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=time-as-oracle"
+# TarotPulse card — PERMANENT product promo above the Rewired card (see tarotpulse-banner.html).
+# Wears TarotPulse's own brand, not ARCÆON. Copy mirrors mytarotpulse.com.
+tarotpulse_launch:
+  active: true
+  eyebrow: "Tarot journal & pattern tracker"
+  title: "TarotPulse"
+  tagline: "You bring the meaning. TarotPulse brings the receipts."
+  body: "The tarot journal I build. Log every pull and it shows you the patterns your intuition has been picking up all along: your most-pulled cards, recurring suits, your whole reading history."
+  cta_text: "See your patterns →"
+  cta_url: "https://mytarotpulse.com/?utm_source=falkensmage.com&utm_medium=link-in-bio&utm_campaign=tarotpulse"
+  fineprint: "Works on iPhone, Android and desktop. From $10 a month."
 # Rewired card — PERMANENT, feed-driven latest-episode card (see launch-banner.html).
 # Pulls the newest episode live from rewired.show/episodes.xml at build time; the
 # latest_episode_* fields below are only a static fallback if that fetch ever fails.

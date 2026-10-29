@@ -2170,3 +2170,70 @@ a:hover {
   list-style: decimal;
   padding-left: 1.75rem;
 }
+
+/* ============================================
+   TAROTPULSE card (above Rewired, see tarotpulse-banner.html)
+   Wears TarotPulse's brand, not ARCÆON: night navy card, gold rule and
+   button, lavender eyebrow. Colors from the TarotPulse brand kit.
+   ============================================ */
+.launch-banner--tarotpulse {
+  --tp-night: #0f1633;
+  --tp-navy: #15204a;
+  --tp-gold: #caa45a;
+  --tp-goldsoft: #e8cf8a;
+  --tp-cream: #efe6cf;
+  --tp-lav: #b9a3e3;
+  background: linear-gradient(180deg, var(--tp-navy) 0%, var(--tp-night) 100%);
+  border-color: rgba(202, 164, 90, 0.45);
+  color: var(--tp-cream);
+}
+
+.launch-banner--tarotpulse:hover,
+.launch-banner--tarotpulse:focus-within {
+  border-color: var(--tp-gold);
+}
+
+.launch-banner--tarotpulse .launch-banner__eyebrow {
+  color: var(--tp-lav);
+}
+
+.launch-banner--tarotpulse .launch-banner__title {
+  color: var(--tp-gold);
+}
+
+.launch-banner--tarotpulse .launch-banner__mark {
+  height: 4.5rem;
+}
+
+.tarotpulse-banner__tagline {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  color: var(--tp-goldsoft);
+  margin-bottom: 0.9rem;
+}
+
+.tarotpulse-banner__cta {
+  background: var(--tp-gold);
+  color: var(--tp-night);
+  font-family: var(--font-body);
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.tarotpulse-banner__cta:hover,
+.tarotpulse-banner__cta:focus-visible {
+  background: var(--tp-goldsoft);
+}
+
+.tarotpulse-banner__fineprint {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 1rem;
+}
