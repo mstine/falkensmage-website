@@ -1,5 +1,5 @@
 {
-  "_comment": "Standalone FA pages built by scripts/sync-fa.py at /fa/<slug>/. Entries with `nav` appear in the FA sub-nav, in this order (Archive is added by the template before About). `grid: true` lays a page's cover-entry paragraphs out as a card grid.",
+  "_comment": "Standalone FA pages built by scripts/sync-fa.py at /fa/<slug>/. Entries with `nav` appear in the FA sub-nav, in this order (Archive is added by the template before About). `grid: true` lays a page's cover-entry paragraphs out as a card grid. `legacy: false` marks a page that never existed on Substack (no legacy_url).",
   "pages": [
     {
       "slug": "start-here",
@@ -32,6 +32,11 @@
     {
       "slug": "the-book-shelf",
       "source": "hermetic/library-pages/04-the-bookshelf.md"
+    },
+    {
+      "slug": "welcome",
+      "source": "feral-architecture/2026-10-29-welcome-page.md",
+      "legacy": false
     },
     {
       "slug": "about",
