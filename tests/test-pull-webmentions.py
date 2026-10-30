@@ -42,6 +42,7 @@ sender = load("send_webmentions", "send-webmentions.py")
 
 ESSAY = "https://falkensmage.com/fa/youve-been-heard/"
 ESSAY_PATH = "/fa/youve-been-heard/"
+OWN_SOURCE = "https://falkensmage.com/fa/both-hands/"
 
 
 class Stub:
@@ -207,6 +208,9 @@ class Tracer(unittest.TestCase):
             child(3, "in-reply-to", "Cy", content={"text": "hello <b>x</b> there",
                                                    "html": "<p>hello</p>"}),
             child(4, "like-of", "Dee", target="https://falkensmage.com/fa/about/"),
+            child(5, "mention-of", "Eve"),
+            child(6, "mention-of", "Own", target="https://falkensmage.com/fa/labeled-as-potatoes/",
+                  **{"wm-source": OWN_SOURCE, "url": OWN_SOURCE}),
         ]))
         cls.data = cls.tmp / "data"
         with mock.patch.object(m, "API", cls.stub.api), mock.patch.object(m, "DATA",
@@ -230,6 +234,8 @@ class Tracer(unittest.TestCase):
         self.assertIn(ESSAY_PATH, doc["pages"])
         self.assertEqual([r["name"] for r in doc["pages"][ESSAY_PATH]["likes"]], ["Ada"])
         self.assertIn("/fa/about/", doc["pages"])
+        self.assertEqual([r["name"] for r in doc["pages"][ESSAY_PATH]["mentions"]], ["Eve"])
+        self.assertNotIn("/fa/labeled-as-potatoes/", doc["pages"])
 
     def test_token_is_a_header_not_a_url(self):
         req = [r for r in self.stub.log if r[1].startswith("/api/mentions.jf2")][0]
@@ -240,8 +246,14 @@ class Tracer(unittest.TestCase):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
         self.assertEqual(sec.sections, 1)
         names = [a[2] for a in sec.anchors]
-        self.assertEqual(names, ["Ada", "Bo", "Cy"])
-        self.assertIn("hello <b>x</b> there", "".join(sec.text))
+        self.assertEqual(names, ["Ada", "Bo", "Eve", "Cy"])
+        text = "".join(sec.text)
+        self.assertIn("hello <b>x</b> there", text)
+        self.assertIn("Mentioned by", text)
+        self.assertLess(text.index("Reposted by"), text.index("Mentioned by"))
+        self.assertLess(text.index("Mentioned by"), text.index("Replies"))
+        for href, _, _ in sec.anchors:
+            self.assertFalse(href.startswith(OWN_SOURCE), href)
 
     def test_reply_markup_is_text_not_elements(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
@@ -442,7 +454,9 @@ class Normalize(unittest.TestCase):
         pages, counts = m.normalize(EXAMPLE["children"])
         p = pages[ESSAY_PATH]
         self.assertEqual((len(p["likes"]), len(p["reposts"]), len(p["replies"])), (1, 1, 4))
-        self.assertEqual(counts["other"], 14)
+        self.assertEqual(counts["other"], 5)
+        self.assertEqual(len(p["mentions"]), 9)
+        self.assertEqual(counts["own"], 0)
         self.assertEqual(counts["private"], 1)
         blob = json.dumps(pages)
         self.assertNotIn("lunarheron.example/private/reply", blob)  # id 1018, the private one
@@ -504,6 +518,99 @@ class Normalize(unittest.TestCase):
         self.assertEqual(m.clean_text(None, 5), "")
         self.assertEqual(m.clean_text("one two three", 8), "one two…")
         self.assertEqual(m.clean_text("x" * 20, 8), "x" * 8 + "…")
+
+
+OWN_HOSTS = ("https://falkensmage.com/fa/both-hands/", "https://www.falkensmage.com/x/",
+             "https://rewired.show/e/1", "https://feralarchitecture.com/p/1",
+             "https://arcaeon.rocks/a", "https://mytarotpulse.com/b", "https://psyche.sh/c",
+             "https://blog.psyche.sh/d", "https://FALKENSMAGE.COM./fa/both-hands/")
+LOOKALIKES = ("https://falkensmage.com.evil.example/1", "https://notpsyche.sh/2",
+              "https://psyche.sh.evil.example/3", "https://evil.example/falkensmage.com/",
+              "https://falkensmage.com@evil.example/4")
+
+
+class MentionOf(PullCase):
+    def mention(self, wm_id=1, **kw):
+        return child(wm_id, "mention-of", "Eve", **kw)
+
+    def test_a_strangers_mention_is_a_names_only_record(self):
+        pages, counts = m.normalize([self.mention()])
+        recs = pages[ESSAY_PATH]["mentions"]
+        self.assertEqual(len(recs), 1)
+        self.assertEqual(set(recs[0]), {"name", "url", "source", "author_url"})
+        self.assertEqual(recs[0]["name"], "Eve")
+        self.assertEqual(counts["other"], 0)
+        self.assertEqual(counts["own"], 0)
+
+    def test_the_name_falls_back_author_url_host_url_host_then_someone(self):
+        cases = [({"author": {"url": "https://au.example/me"}}, "au.example"),
+                 ({"author": {}}, "eve.example"),
+                 ({"author": {}, "wm-source": "https://s.example/1", "url": ""}, "s.example")]
+        for extra, want in cases:
+            with self.subTest(want=want):
+                pages, _ = m.normalize([self.mention(**extra)])
+                self.assertEqual(pages[ESSAY_PATH]["mentions"][0]["name"], want)
+
+    def test_own_site_sources_are_dropped_and_counted_whatever_the_kind(self):
+        for src in OWN_HOSTS:
+            for prop in ("mention-of", "like-of", "in-reply-to"):
+                with self.subTest(source=src, kind=prop):
+                    c = child(1, prop, "Own", **{"wm-source": src, "url": src})
+                    pages, counts = m.normalize([c])
+                    self.assertEqual(pages, {})
+                    self.assertEqual(counts["own"], 1)
+                    self.assertEqual(counts["other"], 0)
+
+    def test_the_real_both_hands_to_labeled_as_potatoes_mention_stays_off(self):
+        c = child(1, "mention-of", "Matt", target="https://falkensmage.com/fa/labeled-as-potatoes/",
+                  **{"wm-source": "https://falkensmage.com/fa/both-hands/",
+                     "url": "https://falkensmage.com/fa/both-hands/"})
+        pages, counts = m.normalize([c])
+        self.assertEqual((pages, counts["own"]), ({}, 1))
+
+    def test_lookalike_hosts_are_not_own_and_still_render(self):
+        for src in LOOKALIKES:
+            with self.subTest(source=src):
+                self.assertFalse(m.is_own(src))
+                pages, counts = m.normalize([self.mention(**{"wm-source": src, "url": src})])
+                self.assertEqual(len(pages[ESSAY_PATH]["mentions"]), 1)
+                self.assertEqual(counts["own"], 0)
+
+    def test_private_is_counted_as_private_not_own(self):
+        c = self.mention(**{"wm-private": True, "wm-source": OWN_SOURCE, "url": OWN_SOURCE})
+        pages, counts = m.normalize([c])
+        self.assertEqual((pages, counts["private"], counts["own"]), ({}, 1, 0))
+
+    def test_main_keeps_the_stranger_drops_the_own_site_and_logs_counts_only(self):
+        self.stub.json("/api/mentions.jf2", feed([
+            self.mention(1), child(2, "like-of", "Ada"),
+            child(3, "mention-of", "Own", target="https://falkensmage.com/fa/labeled-as-potatoes/",
+                  **{"wm-source": OWN_SOURCE, "url": OWN_SOURCE})]))
+        rc, out = self.run_main()
+        self.assertEqual(rc, 0)
+        pages = self.disk()["pages"]
+        self.assertEqual(list(pages), [ESSAY_PATH])
+        self.assertEqual(len(pages[ESSAY_PATH]["mentions"]), 1)
+        self.assertIn("1 mentions", out)
+        self.assertIn("1 own-site", out)
+        for stranger in ("Eve", "Own", "eve.example", "both-hands"):
+            self.assertNotIn(stranger, out)
+
+    def test_a_cache_from_before_this_change_loads_and_survives(self):
+        self.seed(LAST_GOOD)
+        pages, _ = m.load_last_good(self.data)
+        self.assertEqual(pages, LAST_GOOD)
+        with mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": ""}):
+            self.assertEqual(self.run_main()[0], 0)
+        self.assertEqual(self.disk()["pages"], LAST_GOOD)
+        self.stub.routes["/api/mentions.jf2"] = (503, [], b"down")
+        self.assertEqual(self.run_main()[0], FAILED)
+        self.assertEqual(self.disk()["pages"], LAST_GOOD)
+
+    def test_a_cache_holding_mentions_loads(self):
+        seeded = {ESSAY_PATH: {"mentions": [rec("Eve", "https://eve.example/1")]}}
+        self.seed(seeded)
+        self.assertEqual(m.load_last_good(self.data)[0], seeded)
 
 
 class Blocklist(PullCase):
@@ -846,6 +953,10 @@ class ProbeMutations(unittest.TestCase):
         self.assertRegex(out, r"PASS  webmention endpoint advertised on \d+ pages")
         self.assertRegex(out, r"PASS  mention sections match the pulled data on \d+ essays")
         self.assertIn("PASS  webmention blocklist is well formed", out)
+        # not vacuous: the mentions kind is really on the page the probe compares
+        mentions = [a for t, a in section_of(self.page).attrs
+                    if "fa-mention--mention" in a.get("class", "").split()]
+        self.assertEqual(len(mentions), 9)
 
     def test_the_section_holds_only_inert_markup(self):
         sec = section_of(self.page)
@@ -909,6 +1020,18 @@ class ProbeMutations(unittest.TestCase):
         self.mutate(self.page, lambda h: h.replace("fa-mention--like", "fa-mention--lik", 1))
         out = self.assert_red(YBH)
         self.assertIn("likes", out)
+
+    def test_mentioned_by_row_removed(self):
+        def cut(h):
+            a, b = section_span(h)
+            sec = h[a:b]
+            label = sec.index("Mentioned by")
+            start = sec.rindex("<p", 0, label)
+            ends = [i for i in (sec.find("<p", label), sec.find("</div>", label)) if i != -1]
+            return h[:a] + sec[:start] + sec[min(ends):] + h[b:]
+        self.mutate(self.page, cut)
+        out = self.assert_red(YBH)
+        self.assertIn("mentions", out)
 
     def test_blocklist_reshaped_to_a_bare_list(self):
         self.mutate(self.data / "webmention-blocklist.json", lambda s: "[]")
