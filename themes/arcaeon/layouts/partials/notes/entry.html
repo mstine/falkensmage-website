@@ -1,30 +1,59 @@
 {{- /*
-  notes/entry.html — the one h-entry for a note. Context: the Page.
+  notes/entry.html — the one h-entry for a note, drawn as a post card. Context: the Page.
 
   Used by the note's own page and by the /notes/ index, so the markup cannot drift between
   them. There is deliberately NO entry-level p-name: a title-less entry is what makes it a
   note to every microformats consumer, and Bridgy treats a named entry as an article.
+  Everything with p-name, p-nickname or u-photo lives inside the one author h-card element in
+  the header, so none of it can become an entry-level property. The timestamp anchor is a
+  sibling of that card, after it closes: it is the entry's own u-url.
   Responses (fa/mentions.html) are rendered by the caller, after this article closes.
+
+  The avatar is first-party and Hugo-processed (a site-relative src), so a reader's browser
+  never calls a third-party host.
+
+  Footer counts come from data/webmentions.json the way fa/mentions.html reads it (the pages
+  dict keyed by .RelPermalink, defaulting to empty at each step): a missing record or a
+  missing list is 0, never a template error. They are len integers, never stranger text.
 */ -}}
+{{- $handle := "@falkensmage.com" -}}
+{{- $rec := index ((hugo.Data.webmentions | default dict).pages | default dict) .RelPermalink | default dict -}}
+{{- /*
+  Where this note was syndicated (data/syndication.json, written by scripts/syndicate-notes.py),
+  keyed by the path Hugo returns as .RelPermalink. u-syndication inside the h-entry is what lets
+  Bridgy and webmention consumers tie the copies back to this original. Plain {{ .url }}, no
+  safe-marking pipe: the value came from an API response, so html/template's URL filter is the check.
+*/ -}}
+{{- $syn := index ((hugo.Data.syndication | default dict).notes | default dict) .RelPermalink | default dict -}}
 <article class="h-entry note">
-  <div class="offer-body page-body fa-prose e-content">
+  <header class="note__header">
+    <a class="p-author h-card note__author" href="{{ site.BaseURL }}">
+      {{- with resources.Get "images/matt-stine.jpg" }}
+      <img class="u-photo note__avatar" src="{{ (.Fill "96x96 Center").RelPermalink }}" width="48" height="48" loading="lazy" alt="Matt Stine in a black wide-brimmed hat and black shirt against a violet-to-blue gradient">
+      {{- end }}
+      <span class="note__who"><span class="p-name note__name">{{ site.Title }}</span> <span class="p-nickname note__handle">{{ $handle }}</span></span>
+      <data class="u-url" value="{{ site.BaseURL }}"></data>
+    </a>
+    <a class="u-url note__time" href="{{ .Permalink }}"><time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006, 3:04 PM" }}</time></a>
+  </header>
+  <div class="note__body e-content">
     {{ .Content }}
   </div>
-  <p class="note__meta">
-    <span class="p-author h-card"><span class="p-name">{{ site.Params.author }}</span><data class="u-url" value="{{ site.BaseURL }}"></data>{{ with resources.Get "images/matt-stine.jpg" }}<data class="u-photo" value="{{ (.Fill "800x800 Center").Permalink }}"></data>{{ end }}</span> &middot;
-    <a class="u-url" href="{{ .Permalink }}"><time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006, 3:04 PM" }}</time></a>
-  </p>
-  {{- /*
-    Where this note was syndicated (data/syndication.json, written by scripts/syndicate-notes.py),
-    keyed by the path Hugo returns as .RelPermalink. u-syndication inside the h-entry is what lets
-    Bridgy and webmention consumers tie the copies back to this original. Plain {{ .url }}, no
-    safe-marking pipe: the value came from an API response, so html/template's URL filter is the check.
-  */ -}}
-  {{- $syn := index ((hugo.Data.syndication | default dict).notes | default dict) .RelPermalink | default dict }}
-  {{- if or $syn.mastodon $syn.bluesky }}
-  <p class="note__syndication">Also on
-    {{- with $syn.mastodon }} <a class="u-syndication" rel="syndication" href="{{ .url }}">Mastodon</a>{{ end }}
-    {{- with $syn.bluesky }} <a class="u-syndication" rel="syndication" href="{{ .url }}">Bluesky</a>{{ end }}
-  </p>
-  {{- end }}
+  <footer class="note__actions">
+    <ul class="note__counts">
+      <li class="note__count note__count--replies">{{ partial "icons/reply.html" . }} <span class="visually-hidden">Replies</span> <span class="note__n">{{ len ($rec.replies | default slice) }}</span></li>
+      <li class="note__count note__count--likes">{{ partial "icons/like.html" . }} <span class="visually-hidden">Likes</span> <span class="note__n">{{ len ($rec.likes | default slice) }}</span></li>
+      <li class="note__count note__count--reposts">{{ partial "icons/repost.html" . }} <span class="visually-hidden">Reposts</span> <span class="note__n">{{ len ($rec.reposts | default slice) }}</span></li>
+    </ul>
+    {{- if or $syn.mastodon $syn.bluesky }}
+    <div class="note__copies">
+      {{- with $syn.mastodon }}
+      <a class="u-syndication note__copy" rel="syndication" href="{{ .url }}"><span class="note__icon" aria-hidden="true">{{ partial "icons/mastodon.html" . }}</span> <span>Mastodon</span></a>
+      {{- end }}
+      {{- with $syn.bluesky }}
+      <a class="u-syndication note__copy" rel="syndication" href="{{ .url }}"><span class="note__icon" aria-hidden="true">{{ partial "icons/bluesky.html" . }}</span> <span>Bluesky</span></a>
+      {{- end }}
+    </div>
+    {{- end }}
+  </footer>
 </article>
