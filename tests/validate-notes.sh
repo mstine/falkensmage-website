@@ -40,7 +40,7 @@ fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
 
 echo "Notes (/notes/)"
 
-notes_out=$(python3 -I - "$PUBLIC" "$DATA" "$CONTENT" "$PROJECT_ROOT/scripts/syndicate-notes.py" "$NOW" <<'PY'
+notes_out=$(python3 -I -B - "$PUBLIC" "$DATA" "$CONTENT" "$PROJECT_ROOT/scripts/syndicate-notes.py" "$NOW" <<'PY'
 import datetime, glob, importlib.util, os, sys
 from html.parser import HTMLParser
 
