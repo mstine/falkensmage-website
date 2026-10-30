@@ -104,6 +104,13 @@ jobs:
       - name: Validate Feral Architecture section
         run: bash tests/validate-fa.sh
 
+      # Local-only tests let a failure ship on 2026-10-30, so they gate the deploy here.
+      - name: Run Python test suites
+        run: |
+          python3 -I -S -B tests/test-send-webmentions.py
+          python3 -I -S -B tests/test-pull-webmentions.py
+          python3 -I -S -B tests/test-send-fa-email.py
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
