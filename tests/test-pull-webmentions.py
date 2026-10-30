@@ -681,8 +681,12 @@ class Blocklist(PullCase):
         self.assertEqual(self.data.read_bytes(), before)
         self.assertEqual(self.api_requests(), [])
 
-    def test_the_real_blocklist_loads_empty(self):
-        self.assertEqual(m.load_blocklist(ROOT / "data" / "webmention-blocklist.json"), ([], []))
+    def test_the_real_blocklist_loads_with_own_accounts(self):
+        # Bridgy reports the site owner's own thread replies as replies to the essay.
+        domains, authors = m.load_blocklist(ROOT / "data" / "webmention-blocklist.json")
+        self.assertEqual(domains, [])
+        self.assertIn("bsky.app/profile/falkensmage.com", authors)
+        self.assertIn("mastodon.social/@falkensmage", authors)
 
 
 class Outage(PullCase):
