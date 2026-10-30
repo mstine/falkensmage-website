@@ -129,6 +129,9 @@ SYN_NOTES = {"alpha": ALPHA, "beta": BETA, "gamma": GAMMA}
 ALPHA_TEXT = ("Alpha note with a link (https://example.com/a), “quotes” and "
               "https://example.com/bare.\n\nSecond paragraph.")
 FAKE_TOKEN = "tok-SECRET-0123456789"
+FAKE_PASSWORD = "pw-SECRET-abcd-efgh-ijkl"
+FAKE_JWT = "jwt-SECRET-session-token-0123456789"
+TID_RE = re.compile(r"[234567abcdefghij][234567abcdefghijklmnopqrstuvwxyz]{12}")
 
 # Notes straddling the instant, in several offsets, for the parity test against hugo --clock.
 PARITY_NOW = "2026-03-01T12:00:00Z"
@@ -884,11 +887,16 @@ class _Server(http.server.ThreadingHTTPServer):
 
 
 class Stub:
-    """A loopback server standing in for the live site (it serves a built public/ directory) and
-    for Mastodon (POST /api/v1/statuses, with Mastodon's Idempotency-Key behavior). Every request
-    is logged. `mastodon` is a script of actions consumed one per POST, default "ok":
-    "ok", "lose" (create the status, then drop the connection), ("status", code),
-    ("redirect", location). `on_post` runs after a status is accepted, before it is answered."""
+    """A loopback server standing in for the live site (it serves a built public/ directory), for
+    Mastodon (POST /api/v1/statuses, with Mastodon's Idempotency-Key behavior) and for Bluesky's
+    PDS (createSession, getRecord, createRecord, with records held by key and a repeat
+    createRecord refused, as the PDS does). Every request is logged. `mastodon` is a script of
+    actions consumed one per POST, default "ok": "ok", "lose" (create the status, then drop the
+    connection), ("status", code), ("redirect", location). `on_post` runs after a status is
+    accepted, before it is answered. `bsky_session`, `bsky_get` and `bsky_create` are the same
+    kind of script for the three Bluesky calls: "ok", ("status", code), ("status", code, error),
+    and for createSession ("did", other), for createRecord "lose" (create the record, then drop
+    the connection). `on_create` runs after a record is stored."""
 
     def __init__(self, site=None):
         self.site = Path(site) if site else None
@@ -897,6 +905,11 @@ class Stub:
         self.statuses = []
         self.by_key = {}
         self.on_post = None
+        self.bsky_session = []
+        self.bsky_get = []
+        self.bsky_create = []
+        self.records = {}
+        self.on_create = None
         outer = self
 
         class Handler(http.server.BaseHTTPRequestHandler):
@@ -919,9 +932,32 @@ class Stub:
                 self.end_headers()
                 self.wfile.write(body)
 
+            def _authorized(self):
+                if self.headers.get("Authorization") == f"Bearer {FAKE_JWT}":
+                    return True
+                self._send(401, b'{"error": "AuthenticationRequired"}')
+                return False
+
+            def _bsky_get(self):
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                action = outer.bsky_get.pop(0) if outer.bsky_get else "ok"
+                if isinstance(action, tuple) and action[0] == "status":
+                    err = action[2] if len(action) > 2 else "StubError"
+                    return self._send(action[1], json.dumps({"error": err}).encode())
+                if not self._authorized():
+                    return
+                rkey = (query.get("rkey") or [""])[0]
+                if rkey in outer.records:
+                    return self._send(200, json.dumps({
+                        "uri": outer.records[rkey]["uri"], "cid": "bafystub",
+                        "value": outer.records[rkey]["record"]}).encode())
+                self._send(400, b'{"error": "RecordNotFound", "message": "Could not locate record"}')
+
             def do_GET(self):
                 self._log()
                 path = urllib.parse.urlsplit(self.path).path
+                if path == "/xrpc/com.atproto.repo.getRecord":
+                    return self._bsky_get()
                 target = None
                 if outer.site is not None:
                     target = (outer.site / path.lstrip("/")).resolve()
@@ -934,8 +970,44 @@ class Stub:
                     return self._send(404, b"not found", "text/plain")
                 self._send(200, target.read_bytes(), "text/html; charset=utf-8")
 
+            def _bsky_session(self, body):
+                action = outer.bsky_session.pop(0) if outer.bsky_session else "ok"
+                if isinstance(action, tuple) and action[0] == "status":
+                    err = action[2] if len(action) > 2 else "StubError"
+                    return self._send(action[1], json.dumps({"error": err}).encode())
+                did = action[1] if isinstance(action, tuple) and action[0] == "did" else m.BLUESKY_DID
+                self._send(200, json.dumps({"accessJwt": FAKE_JWT, "refreshJwt": "refresh-stub",
+                                            "did": did, "handle": "falkensmage.com"}).encode())
+
+            def _bsky_create(self, body):
+                action = outer.bsky_create.pop(0) if outer.bsky_create else "ok"
+                if isinstance(action, tuple) and action[0] == "status":
+                    err = action[2] if len(action) > 2 else "StubError"
+                    return self._send(action[1], json.dumps({"error": err}).encode())
+                if not self._authorized():
+                    return
+                doc = json.loads(body)
+                rkey = doc["rkey"]
+                if not TID_RE.fullmatch(rkey):
+                    return self._send(400, b'{"error": "InvalidRequest", "message": "bad rkey"}')
+                if rkey in outer.records:
+                    return self._send(400, b'{"error": "InvalidRequest", "message": "Record already exists"}')
+                uri = f"at://{doc['repo']}/{doc['collection']}/{rkey}"
+                outer.records[rkey] = {"uri": uri, "record": doc["record"], "doc": doc}
+                if outer.on_create:
+                    outer.on_create()
+                if action == "lose":
+                    self.close_connection = True
+                    return
+                self._send(200, json.dumps({"uri": uri, "cid": "bafystub"}).encode())
+
             def do_POST(self):
                 body = self._log()
+                path = urllib.parse.urlsplit(self.path).path
+                if path == "/xrpc/com.atproto.server.createSession":
+                    return self._bsky_session(body)
+                if path == "/xrpc/com.atproto.repo.createRecord":
+                    return self._bsky_create(body)
                 if self.path != "/api/v1/statuses":
                     return self._send(404, b"{}")
                 action = outer.mastodon.pop(0) if outer.mastodon else "ok"
@@ -974,7 +1046,21 @@ class Stub:
         self.thread.join(5)
 
     def posts(self):
-        return [r for r in self.requests if r["method"] == "POST"]
+        """The Mastodon status POSTs."""
+        return [r for r in self.requests if r["method"] == "POST" and r["path"] == "/api/v1/statuses"]
+
+    def xrpc(self, name):
+        """Every request to one Bluesky method, in order."""
+        return [r for r in self.requests if r["path"].split("?")[0] == f"/xrpc/{name}"]
+
+    def sessions(self):
+        return self.xrpc("com.atproto.server.createSession")
+
+    def creates(self):
+        return self.xrpc("com.atproto.repo.createRecord")
+
+    def getrecords(self):
+        return self.xrpc("com.atproto.repo.getRecord")
 
     def gets(self, path):
         return [r for r in self.requests if r["method"] == "GET" and r["path"] == path]
@@ -989,6 +1075,7 @@ class SyndicationCase(unittest.TestCase):
 
     NOTES = {"alpha": ALPHA, "beta": BETA}
     STATE = EMPTY_STATE
+    NETWORKS = ("mastodon", "bluesky")   # the posters registered for the test
 
     def setUp(self):
         env = mock.patch.dict(os.environ)
@@ -1005,18 +1092,27 @@ class SyndicationCase(unittest.TestCase):
         self.origin, self.clone = git_remote(self.tmp, self.NOTES, self.STATE)
         patches = dict(ROOT=self.clone, STATE=self.clone / "data" / "syndication.json",
                        NOTES=self.clone / "content" / "notes", SITE=self.stub.base,
-                       MASTODON=self.stub.base + "/api/v1/statuses", WAIT=0, LIVE_WAIT=0,
-                       PUSH_WAIT=0, LIVE_TRIES=2, utcnow=lambda: NOW)
+                       MASTODON=self.stub.base + "/api/v1/statuses", BLUESKY=self.stub.base,
+                       WAIT=0, LIVE_WAIT=0, PUSH_WAIT=0, LIVE_TRIES=2, utcnow=lambda: NOW,
+                       POSTERS={k: v for k, v in m.POSTERS.items() if k in self.NETWORKS})
         for name, value in patches.items():
             p = mock.patch.object(m, name, value)
             p.start()
             self.addCleanup(p.stop)
+        m.reset_session()
+        self.addCleanup(m.reset_session)
         r = subprocess.run(["git", "-C", str(m.ROOT), "remote", "get-url", "origin"],
                            capture_output=True, text=True)
         self.assertTrue(r.stdout.startswith("file://"), f"origin is not a file:// path: {r.stdout!r}")
 
     def token(self):
-        return mock.patch.dict(os.environ, {"MASTODON_ACCESS_TOKEN": FAKE_TOKEN})
+        """Both fake secrets, set for one block through patch.dict, never from the real env."""
+        return mock.patch.dict(os.environ, {"MASTODON_ACCESS_TOKEN": FAKE_TOKEN,
+                                            "BLUESKY_APP_PASSWORD": FAKE_PASSWORD})
+
+    def assertNoSecrets(self, out):
+        for secret in (FAKE_TOKEN, FAKE_PASSWORD, FAKE_JWT):
+            self.assertNotIn(secret, out)
 
     def output_file(self):
         path = self.tmp / "github-output"
@@ -1119,6 +1215,9 @@ class BaseSetUp(SyndicationCase):
         with self.token(), mock.patch.object(m, "MASTODON", "https://mastodon.social/api/v1/statuses"):
             with self.assertRaises(OutboundBlocked):
                 m.post_mastodon(m.read_note(m.NOTES / "alpha.md"), "text")
+        with self.token(), mock.patch.object(m, "BLUESKY", "https://bsky.social"):
+            with self.assertRaises(OutboundBlocked):
+                m.post_bluesky(m.read_note(m.NOTES / "alpha.md"), "text")
 
 
 # =========================================================================================
@@ -1246,12 +1345,13 @@ class DueParity(unittest.TestCase):
     def test_a_recorded_note_a_draft_and_a_future_note_are_not_pending(self):
         Builds.get("parity")
         notes = m.load_notes(Builds.tmp / "parity" / "notes")
-        state = {"notes": {"/notes/before/": {"mastodon": {"url": "https://mastodon.social/@falkensmage/1"}}}}
+        done = {"url": "https://example.test/1"}
+        state = {"notes": {"/notes/before/": {"mastodon": done, "bluesky": done}}}
         got = {n.slug: p for n, p in m.pending(notes, state, NOW)}
         self.assertNotIn("before", got)
         self.assertNotIn("draftpast", got)
         self.assertNotIn("after", got)
-        self.assertEqual(got["equal"], ["mastodon"])
+        self.assertEqual(got["equal"], ["mastodon", "bluesky"])
 
     def test_pending_is_oldest_first(self):
         Builds.get("syn")
@@ -1350,16 +1450,44 @@ class PageText(unittest.TestCase):
 
 
 class Tracer(SyndicationCase):
-    """One note travels from its live page, through a stub Mastodon, to a pushed record and a
-    u-syndication link on the rebuilt page."""
+    """One note travels from its live page, through a stub Mastodon and a stub Bluesky, to two
+    pushed records and two u-syndication links on the rebuilt page."""
 
     NOTES = {"alpha": ALPHA}
 
-    def test_a_due_note_reaches_the_stub_is_recorded_and_pushed_then_shows_as_u_syndication(self):
+    def test_a_due_note_reaches_both_stubs_is_recorded_and_pushed_then_shows_as_u_syndication(self):
         output = self.output_file()
         with self.token():
             rc, out = self.run_main("post")
         self.assertEqual(rc, 0, out)
+        self.assertNoSecrets(out)
+        # Bluesky: a session, one getRecord, then one createRecord with the deterministic key
+        note = m.read_note(m.NOTES / "alpha.md")
+        rkey = m.tid(note)
+        self.assertEqual(len(self.stub.sessions()), 1)
+        login = json.loads(self.stub.sessions()[0]["body"])
+        self.assertEqual(login, {"identifier": "falkensmage.com", "password": FAKE_PASSWORD})
+        self.assertEqual(len(self.stub.getrecords()), 1)
+        self.assertEqual(len(self.stub.creates()), 1)
+        create = self.stub.creates()[0]
+        self.assertEqual(create["headers"]["authorization"], f"Bearer {FAKE_JWT}")
+        doc = json.loads(create["body"])
+        self.assertEqual(set(doc), {"repo", "collection", "rkey", "record"})
+        self.assertEqual((doc["repo"], doc["collection"], doc["rkey"]),
+                         (m.BLUESKY_DID, "app.bsky.feed.post", rkey))
+        record = doc["record"]
+        self.assertEqual(record["$type"], "app.bsky.feed.post")
+        self.assertEqual(record["text"], ALPHA_TEXT)
+        self.assertEqual(record["langs"], ["en"])
+        self.assertEqual(record["createdAt"], "2026-03-01T12:00:00.000Z")
+        self.assertEqual([f["features"][0]["uri"] for f in record["facets"]],
+                         ["https://example.com/a", "https://example.com/bare"])
+        bsky_rec = self.local_state()["notes"][ALPHA_PATH]["bluesky"]
+        self.assertEqual(bsky_rec, {"url": m.BLUESKY_WEB + rkey, "uri": self.stub.records[rkey]["uri"],
+                                    "posted": "2026-03-01T12:00:00Z"})
+        self.assertEqual(self.origin_state()["notes"][ALPHA_PATH]["bluesky"], bsky_rec)
+        self.assertEqual(vcs(self.origin, "rev-list", "--count", "main").stdout.strip(), "3",
+                         "the seed and one pushed commit per platform")
         # one POST, holding the page's text, explicit visibility, the bearer header and a key
         posts = self.stub.posts()
         self.assertEqual(len(posts), 1)
@@ -1376,8 +1504,7 @@ class Tracer(SyndicationCase):
         self.assertEqual(self.origin_commit_files(), ["data/syndication.json"])
         self.assertEqual(self.origin_head(), vcs(m.ROOT, "rev-parse", "HEAD").stdout.strip())
         self.assertIn("recorded=true", output.read_text())
-        self.assertNotIn(FAKE_TOKEN, out)
-        # a rebuild with the record shows the link, inside the h-entry, with the exact URL
+        # a rebuild with the records shows both links, inside the h-entry, with the exact URLs
         data = self.tmp / "data"
         data.mkdir()
         shutil.copy(m.STATE, data / "syndication.json")
@@ -1385,15 +1512,16 @@ class Tracer(SyndicationCase):
         work.mkdir()
         public = self.tmp / "public"
         build_site(public, m.NOTES, data_dir=data, work=work, clock=SYN_NOW)
-        self.assertEqual(syndication_anchors(public / "notes" / "alpha" / "index.html"),
-                         [(status["url"], "syndication")])
-        self.assertEqual(syndication_anchors(public / "notes" / "index.html"),
-                         [(status["url"], "syndication")])
-        # and a second run sends nothing
+        both = [(status["url"], "syndication"), (m.BLUESKY_WEB + rkey, "syndication")]
+        self.assertEqual(syndication_anchors(public / "notes" / "alpha" / "index.html"), both)
+        self.assertEqual(syndication_anchors(public / "notes" / "index.html"), both)
+        # and a second run sends nothing, to either network
         with self.token():
             rc, out = self.run_main("post")
         self.assertEqual(rc, 0, out)
         self.assertEqual(len(self.stub.posts()), 1)
+        self.assertEqual(len(self.stub.creates()), 1)
+        self.assertEqual(len(self.stub.sessions()), 1, "no session when nothing is pending")
 
     def test_a_page_without_a_record_has_no_u_syndication_link(self):
         self.assertEqual(syndication_anchors(Builds.get("syn") / "notes" / "alpha" / "index.html"), [])
@@ -1426,12 +1554,15 @@ def rec(n):
 
 
 class PostCase(SyndicationCase):
-    """Helpers for tests that run `post`. Not a test itself."""
+    """Helpers for tests that run `post`. Not a test itself. Mastodon only by default, which is
+    the protocol the at-most-once tests were written against; Bluesky cases opt in."""
+
+    NETWORKS = ("mastodon",)
 
     def run_post(self, *, expect_rc=None):
         with self.token():
             rc, out = self.run_main("post")
-        self.assertNotIn(FAKE_TOKEN, out)
+        self.assertNoSecrets(out)
         if expect_rc is not None:
             self.assertEqual(rc, expect_rc, out)
         return rc, out
@@ -1632,6 +1763,275 @@ class AtMostOnce(PostCase):
         self.assertEqual(self.origin_head(), before)
 
 
+class FacetTests(unittest.TestCase):
+    def slices(self, text):
+        raw = text.encode("utf-8")
+        return [(raw[f["index"]["byteStart"]:f["index"]["byteEnd"]].decode("utf-8"), f["features"][0])
+                for f in m.facets(text)]
+
+    def test_offsets_are_utf8_bytes_so_an_emoji_before_a_link_does_not_shift_the_slice(self):
+        text = "🎉🎉 héllo — see https://example.com/a?x=1 #wow"
+        got = self.slices(text)
+        self.assertEqual([s for s, _ in got], ["https://example.com/a?x=1", "#wow"])
+        link = m.facets(text)[0]["index"]
+        self.assertNotEqual(link["byteStart"], text.index("https"), "code points and bytes differ here")
+        self.assertEqual(link["byteStart"], len(text[:text.index("https")].encode("utf-8")))
+
+    def test_feature_shapes_a_link_holds_the_uri_and_a_tag_holds_no_hash(self):
+        got = dict((s, f) for s, f in self.slices("a https://x.io/p and #Tag"))
+        self.assertEqual(got["https://x.io/p"], {"$type": "app.bsky.richtext.facet#link", "uri": "https://x.io/p"})
+        self.assertEqual(got["#Tag"], {"$type": "app.bsky.richtext.facet#tag", "tag": "Tag"})
+
+    def test_trailing_punctuation_is_stripped_from_links_and_tags(self):
+        text = "Read https://x.io/a. Then (https://y.io/b) and https://z.io/c! #tag! #fin;"
+        self.assertEqual([s for s, _ in self.slices(text)],
+                         ["https://x.io/a", "https://y.io/b", "https://z.io/c", "#tag", "#fin"])
+
+    def test_a_link_that_holds_a_paren_keeps_its_closing_paren(self):
+        self.assertEqual([s for s, _ in self.slices("see https://en.wikipedia.org/wiki/A_(b)")],
+                         ["https://en.wikipedia.org/wiki/A_(b)"])
+
+    def test_no_tag_for_digits_for_a_fragment_inside_a_link_or_a_hash_mid_word(self):
+        text = "item #123 and #1_2 at https://x.io/p#frag, but x#nope and # alone"
+        self.assertEqual([s for s, _ in self.slices(text)], ["https://x.io/p#frag"])
+
+    def test_a_tag_over_64_code_points_has_no_facet_and_64_does(self):
+        self.assertEqual(self.slices("#" + "a" * 65), [])
+        self.assertEqual([f["tag"] for _, f in self.slices("#" + "a" * 64)], ["a" * 64])
+
+    def test_a_tag_may_start_the_text_and_a_link_may_start_the_text(self):
+        self.assertEqual([s for s, _ in self.slices("#start https://x.io")], ["#start", "https://x.io"])
+        self.assertEqual([s for s, _ in self.slices("https://x.io #end")], ["https://x.io", "#end"])
+
+    def test_unicode_tags_and_sorting_by_byte_start(self):
+        facets = m.facets("#日本語 then https://x.io then #z")
+        starts = [f["index"]["byteStart"] for f in facets]
+        self.assertEqual(starts, sorted(starts))
+        self.assertEqual([f["features"][0].get("tag") or f["features"][0]["uri"] for f in facets],
+                         ["日本語", "https://x.io", "z"])
+
+    def test_plain_text_has_no_facets_and_find_urls_gives_code_point_spans(self):
+        self.assertEqual(m.facets("nothing to link, not even example.com"), [])
+        text = "é https://x.io/a"
+        (start, end), = m.find_urls(text)
+        self.assertEqual(text[start:end], "https://x.io/a")
+
+
+class TidTests(unittest.TestCase):
+    def note(self, path, stamp="2026-11-01T09:00:00-05:00"):
+        return m.Note(path.strip("/").split("/")[-1], path, datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00")), False)
+
+    def decode(self, key):
+        value = 0
+        for ch in key:
+            value = value * 32 + m.B32.index(ch)
+        return value
+
+    def test_the_known_value_for_the_planned_note(self):
+        self.assertEqual(m.tid(self.note("/notes/2026-11-01-0900/")), "3mzaxt2cwok3b")
+
+    def test_deterministic_valid_tid_syntax_and_different_paths_differ(self):
+        a = self.note("/notes/alpha/")
+        self.assertEqual(m.tid(a), m.tid(self.note("/notes/alpha/")))
+        self.assertRegex(m.tid(a), TID_RE)
+        keys = {m.tid(self.note(f"/notes/n{i}/")) for i in range(200)}
+        self.assertEqual(len(keys), 200)
+        self.assertTrue(all(TID_RE.fullmatch(k) for k in keys))
+
+    def test_it_decodes_to_the_notes_own_second_and_the_top_bit_is_zero(self):
+        for stamp in ("2026-11-01T09:00:00-05:00", "2026-03-01T12:00:00Z", "2099-12-31T23:59:59+14:00"):
+            note = self.note("/notes/x/", stamp)
+            value = self.decode(m.tid(note))
+            self.assertEqual(value >> 63, 0)
+            self.assertEqual((value >> 10) // 1_000_000, int(note.date.timestamp()))
+
+    def test_it_does_not_depend_on_the_site_or_the_clock(self):
+        before = m.tid(self.note("/notes/alpha/"))
+        with mock.patch.object(m, "SITE", "http://elsewhere.invalid"), mock.patch.object(m, "utcnow", lambda: NOW):
+            self.assertEqual(m.tid(self.note("/notes/alpha/")), before)
+
+
+class BlueskyCase(PostCase):
+    """Both networks registered, ALPHA due. Not a test itself."""
+
+    NETWORKS = ("mastodon", "bluesky")
+    NOTES = {"alpha": ALPHA}
+
+    def rkey(self, slug="alpha"):
+        return m.tid(m.read_note(m.NOTES / f"{slug}.md"))
+
+    def recorded(self, path=ALPHA_PATH):
+        return sorted(self.origin_state()["notes"].get(path, {}))
+
+
+class BlueskyPosting(BlueskyCase):
+    def test_a_note_reaches_bluesky_directly_and_nothing_else_is_called(self):
+        self.run_post(expect_rc=0)
+        paths = {r["path"].split("?")[0] for r in self.stub.requests}
+        self.assertEqual(paths, {ALPHA_PATH, "/api/v1/statuses", "/xrpc/com.atproto.server.createSession",
+                                 "/xrpc/com.atproto.repo.getRecord", "/xrpc/com.atproto.repo.createRecord"})
+        source = (ROOT / "scripts" / "syndicate-notes.py").read_text().lower()
+        self.assertNotIn("buffer", source)
+
+    def test_the_password_goes_only_in_the_session_body_and_the_token_only_in_headers(self):
+        self.run_post(expect_rc=0)
+        for req in self.stub.requests:
+            is_login = req["path"].endswith("createSession")
+            self.assertEqual(FAKE_PASSWORD.encode() in req["body"], is_login, req["path"])
+            self.assertNotIn(FAKE_PASSWORD, req["path"])
+            self.assertNotIn(FAKE_JWT, req["path"])
+            self.assertNotIn(FAKE_JWT.encode(), req["body"])
+            self.assertNotIn(FAKE_PASSWORD, str(req["headers"]))
+
+    def test_mastodon_ok_then_bluesky_500_three_times_records_mastodon_and_the_next_run_posts_only_bluesky(self):
+        self.stub.bsky_create = [("status", 500)] * m.TRIES
+        output = self.output_file()
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.creates()), m.TRIES)
+        self.assertEqual(len(self.stub.getrecords()), m.TRIES, "getRecord is asked again before each create")
+        self.assertEqual(self.recorded(), ["mastodon"])
+        self.assertEqual(self.stub.records, {})
+        self.assertIn("recorded=true", output.read_text())
+        # the next run: the page is live, so there is nothing to deploy
+        output.write_text("")
+        self.assertEqual(self.run_main("check")[0], 0)
+        self.assertEqual(sorted(output.read_text().split()), ["deploy=false", "pending=true"])
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.posts()), 1, "no second Mastodon POST")
+        self.assertEqual(self.recorded(), ["bluesky", "mastodon"])
+        self.assertEqual(len(self.stub.records), 1)
+
+    def test_a_failed_bluesky_login_still_lets_mastodon_post(self):
+        self.stub.bsky_session = [("status", 500)]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.posts()), 1)
+        self.assertEqual(self.recorded(), ["mastodon"])
+        self.assertEqual(self.stub.getrecords() + self.stub.creates(), [])
+        self.assertIn("createSession failed", out)
+
+    def test_mastodon_failing_does_not_stop_bluesky_and_the_next_run_retries_only_mastodon(self):
+        self.stub.mastodon = [("status", 500)] * m.TRIES
+        self.run_post(expect_rc=1)
+        self.assertEqual(self.recorded(), ["bluesky"])
+        self.run_post(expect_rc=0)
+        self.assertEqual(self.recorded(), ["bluesky", "mastodon"])
+        self.assertEqual(len(self.stub.creates()), 1, "Bluesky was not posted again")
+        self.assertEqual(len(self.stub.statuses), 1)
+
+    def test_a_response_lost_after_the_record_was_made_is_adopted_by_getrecord_not_recreated(self):
+        self.stub.bsky_create = ["lose"]
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.records), 1)
+        self.assertEqual(len(self.stub.creates()), 1, "the retry found the record and created nothing")
+        self.assertEqual(len(self.stub.getrecords()), 2)
+        rec = self.local_state()["notes"][ALPHA_PATH]["bluesky"]
+        self.assertEqual(rec["uri"], self.stub.records[self.rkey()]["uri"])
+        self.assertEqual(rec["url"], m.BLUESKY_WEB + self.rkey())
+
+    def test_a_record_the_state_lost_is_adopted_at_any_later_time_without_a_second_post(self):
+        # A post exists on Bluesky but the state never heard of it (the residual window).
+        self.stub.records[self.rkey()] = {"uri": f"at://{m.BLUESKY_DID}/app.bsky.feed.post/{self.rkey()}",
+                                          "record": {}}
+        later = NOW + datetime.timedelta(hours=5)
+        with mock.patch.object(m, "utcnow", lambda: later):
+            self.run_post(expect_rc=0)
+        self.assertEqual(self.stub.creates(), [])
+        self.assertEqual(len(self.stub.records), 1)
+        self.assertEqual(self.local_state()["notes"][ALPHA_PATH]["bluesky"]["uri"],
+                         self.stub.records[self.rkey()]["uri"])
+
+    def test_the_key_is_never_random_two_runs_ask_for_the_same_record(self):
+        self.stub.bsky_create = [("status", 500)] * m.TRIES
+        self.run_post(expect_rc=1)
+        first = {json.loads(r["body"])["rkey"] for r in self.stub.creates()}
+        self.run_post(expect_rc=0)
+        second = {json.loads(r["body"])["rkey"] for r in self.stub.creates()}
+        self.assertEqual(first, {self.rkey()})
+        self.assertEqual(second, {self.rkey()})
+
+    def test_getrecord_500_three_times_sends_no_createrecord(self):
+        self.stub.bsky_get = [("status", 500)] * m.TRIES
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(self.stub.creates(), [])
+        self.assertEqual(len(self.stub.getrecords()), m.TRIES)
+        self.assertEqual(self.recorded(), ["mastodon"])
+
+    def test_getrecord_400_other_than_recordnotfound_sends_no_createrecord_and_is_not_retried(self):
+        self.stub.bsky_get = [("status", 400, "InvalidRequest")]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(self.stub.creates(), [])
+        self.assertEqual(len(self.stub.getrecords()), 1)
+        self.assertIn("getRecord HTTP 400: InvalidRequest", out)
+
+    def test_createrecord_4xx_is_not_retried(self):
+        self.stub.bsky_create = [("status", 400, "InvalidRequest")]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.creates()), 1)
+        self.assertEqual(self.recorded(), ["mastodon"])
+
+    def test_a_429_on_createrecord_is_retried(self):
+        self.stub.bsky_create = [("status", 429), "ok"]
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.creates()), 2)
+        self.assertEqual(len(self.stub.records), 1)
+
+    def test_a_uri_that_does_not_end_with_the_key_is_refused(self):
+        original = m._bsky
+
+        def wrong(method, name, **kw):
+            status, doc = original(method, name, **kw)
+            if name.endswith("createRecord") and doc:
+                doc["uri"] = doc["uri"] + "x"
+            return status, doc
+
+        with mock.patch.object(m, "_bsky", wrong):
+            rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(self.recorded(), ["mastodon"])
+        self.assertIn("no matching uri", out)
+
+    def test_a_session_for_another_account_posts_nothing_to_bluesky_and_is_tried_once_per_run(self):
+        self.add_beta()
+        self.stub.bsky_session = [("did", "did:plc:someoneelse")]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.sessions()), 1, "a broken login is not retried for the next note")
+        self.assertEqual(self.stub.getrecords() + self.stub.creates(), [])
+        self.assertEqual(len(self.stub.posts()), 2, "Mastodon still posted both")
+        self.assertIn("different account", out)
+
+    def test_a_rejected_login_is_tried_once_per_run(self):
+        self.add_beta()
+        self.stub.bsky_session = [("status", 401, "AuthenticationRequired")] * 5
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.sessions()), 1)
+        self.assertEqual(self.stub.creates(), [])
+
+    def test_the_password_absent_fails_bluesky_posts_mastodon_and_exits_1(self):
+        with mock.patch.dict(os.environ, {"MASTODON_ACCESS_TOKEN": FAKE_TOKEN}):
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(len(self.stub.posts()), 1)
+        self.assertEqual(self.stub.sessions(), [], "no login without a password")
+        self.assertIn("BLUESKY_APP_PASSWORD is not set", out)
+        self.assertEqual(self.recorded(), ["mastodon"])
+
+    def test_a_set_password_appears_in_no_output_even_when_every_call_fails(self):
+        self.stub.bsky_session = [("status", 500)]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertNotIn(FAKE_PASSWORD, out)
+
+    def test_no_session_is_made_when_nothing_is_pending(self):
+        self.run_post(expect_rc=0)
+        before = len(self.stub.requests)
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.sessions()), 1)
+        self.assertEqual([r for r in self.stub.requests[before:] if r["path"].startswith("/xrpc")], [])
+
+    def test_a_dry_run_makes_no_bluesky_call(self):
+        with mock.patch.dict(os.environ, {"DRY_RUN": "1"}):
+            self.run_post(expect_rc=0)
+        self.assertEqual([r for r in self.stub.requests if r["path"].startswith("/xrpc")], [])
+
+
 class MissingState(SyndicationCase):
     NOTES = {"alpha": ALPHA}
     STATE = None
@@ -1674,6 +2074,7 @@ class MalformedNote(SyndicationCase):
 
 
 class Window(SyndicationCase):
+    NETWORKS = ("mastodon",)
     NOTES = {"alpha": ALPHA, "beta": BETA, "gamma": GAMMA,
              "drafty": ("2026-02-20T09:00:00-06:00", "A draft.\n", "draft: true")}
 
@@ -1716,6 +2117,7 @@ class Window(SyndicationCase):
 
 
 class LivePage(SyndicationCase):
+    NETWORKS = ("mastodon",)
     NOTES = {"alpha": ALPHA, "beta": BETA}
 
     def test_a_page_that_never_goes_live_sends_no_post_and_a_later_note_gets_one_try(self):

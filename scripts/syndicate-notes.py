@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""syndicate-notes.py — send each due note to Mastodon, and record where it went.
+"""syndicate-notes.py — send each due note to Mastodon and Bluesky, and record where it went.
 
     python3 scripts/syndicate-notes.py check    # is anything due? (no network when nothing is)
     python3 scripts/syndicate-notes.py post     # post what is due, record each success
@@ -62,6 +62,17 @@ The at-most-once protocol
    gets a ::warning and exits 0. That bounds the damage of a bad revert, and it makes a
    backdated note a deliberate publish-here-only.
 
+ * Bluesky gets a record key derived only from the note (see tid). The key is the guarantee: a
+   second createRecord on a used key cannot create a second record, at any time, however the
+   first attempt ended. Before creating, getRecord asks whether the post already exists and
+   adopts its URI if so; createRecord runs only after a clean RecordNotFound, and any other
+   answer posts nothing. A lost response or a lost record therefore cannot make a second post.
+   The key is made from the note's path and date, so a date edited after a post whose record
+   was also lost would make a new key; the state file is what normally prevents that.
+ * Each platform is tried independently. If Mastodon fails, Bluesky is still tried, and the
+   reverse; only the platform that failed is retried next run, with no deploy, because the
+   page is already live.
+
 Residual risk, accepted: a Mastodon post succeeds, every push retry fails, and the next run is
 more than an hour later, so the key has expired. Then that one note double-posts on Mastodon.
 It needs GitHub's git service to fail at that exact moment and the schedule to then stall for
@@ -83,9 +94,16 @@ What each failure does
     Note malformed                          nothing posted, exit 1
     Secret absent                           that platform fails, exit 1 (a due note silently
                                             not going out is the failure)
+    Mastodon fails                          Bluesky is tried anyway; retried next run, same key
+    Bluesky fails after Mastodon succeeded  Mastodon recorded, exit 1; next run posts only Bluesky
+    Bluesky post made, response lost        exit 1; the next run adopts the post by getRecord
+    getRecord answers other than a record   nothing created, exit 1; red until it answers
+      or RecordNotFound
+    Session login fails or wrong DID        tried once per run, nothing posted to Bluesky, exit 1
     Note older than 7 days, not recorded    never posted, exit 0, ::warning
 
-Env: MASTODON_ACCESS_TOKEN (sent as a Bearer header only), GITHUB_OUTPUT (pending, deploy and
+Env: MASTODON_ACCESS_TOKEN (sent as a Bearer header only), BLUESKY_APP_PASSWORD (sent in the
+createSession body only; the session token it returns goes in a header only), GITHUB_OUTPUT (pending, deploy and
 recorded are written there when set), DRY_RUN=1 (fetch, compute and log sizes; no POST, no git).
 
 Mastodon coverage (opt out explicitly, never by omission)
@@ -100,7 +118,23 @@ the favourite, reblog, bookmark, pin, mute, translate and context methods (post 
 edit or engage; a correction is a human act); GET /api/v2/instance for limits (length rules
 are constants); reading one's own timeline to detect a prior post (see the residual risk).
 
-Logs carry slugs, platforms and counts, never a token and never note text.
+Bluesky coverage, AT Protocol (opt out explicitly, never by omission)
+---------------------------------------------------------------------
+In: com.atproto.server.createSession with the handle and an app password (one session per
+run, made only when a post is pending, the DID checked against BLUESKY_DID); getRecord (adopts a
+post whose record was lost); createRecord with repo, collection, a deterministic rkey and a
+record holding $type, text, createdAt, langs ["en"] and facets when there are any; facets
+#link and #tag with UTF-8 byte offsets.
+Out, on purpose: facet #mention (needs handle resolution; an @name stays plain text); bare
+domains as links (reference detection needs a TLD list; Hugo emits links with a scheme); embed
+(images, external cards, records, video) and uploadBlob (images are out of scope, and the link
+back is in the text); reply, labels, tags, entities, threadgate, postgate (not requested);
+putRecord, applyWrites, deleteRecord, listRecords, swapCommit and validate (post once;
+createRecord plus a deterministic key is enough, and putRecord would silently overwrite);
+refreshSession (a session lasts one run); PDS discovery from the DID document (bsky.social is the
+documented entryway).
+
+Logs carry slugs, platforms and counts, never a token, a password and never note text.
 """
 import collections
 import datetime
@@ -114,6 +148,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -125,6 +160,11 @@ STATE = ROOT / "data" / "syndication.json"
 SITE = "https://falkensmage.com"
 MASTODON = "https://mastodon.social/api/v1/statuses"
 MASTODON_POST_PREFIX = "https://mastodon.social/@falkensmage/"
+BLUESKY = "https://bsky.social"
+BLUESKY_HANDLE = "falkensmage.com"
+BLUESKY_DID = "did:plc:hrfsenvxai7pczill6ryqnky"
+BLUESKY_WEB = "https://bsky.app/profile/falkensmage.com/post/"
+COLLECTION = "app.bsky.feed.post"
 UA = "falkensmage-note-syndicator (+https://falkensmage.com/)"
 TIMEOUT = 20
 TRIES = 3
@@ -175,7 +215,7 @@ class RecordError(Exception):
 
 
 # No redirect handler: an Authorization header must never follow a redirect, so any 3xx raises.
-# No ProxyHandler: the token only ever goes to the host named in MASTODON. UnknownHandler is
+# No ProxyHandler: a token or password only ever goes to the host named in MASTODON or BLUESKY. UnknownHandler is
 # required, or an unknown scheme returns None silently.
 OPENER = urllib.request.OpenerDirector()
 for _h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandler(),
@@ -687,8 +727,214 @@ def post_mastodon(note, text):
             "posted": utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 
 
-# plan 03 registers bluesky
-POSTERS = {"mastodon": post_mastodon}
+# --- Bluesky: facets, the record key, the session ---------------------------------------
+
+_URL_RE = re.compile(r"(?:^|(?<=[\s(]))https?://\S+", re.IGNORECASE)
+_TAG_RE = re.compile(r"(?:^|(?<=\s))[#＃](\S+)")
+_ZERO_WIDTH = "­⁠ ​‌‍⃢"
+B32 = "234567abcdefghijklmnopqrstuvwxyz"
+TAG_MAX = 64
+
+
+def find_urls(text):
+    """[(start, end)] code-point spans of the links in `text`, ported from the reference detection
+    in the AT Protocol's rich-text package: a link starts at the start of the text or after
+    whitespace or `(`, runs to whitespace, drops one trailing . , ; : ! or ?, then drops a
+    trailing `)` when the link holds no `(`."""
+    spans = []
+    for found in _URL_RE.finditer(text):
+        start, end = found.span()
+        url = found.group(0)
+        if url[-1] in ".,;:!?":
+            url, end = url[:-1], end - 1
+        if url.endswith(")") and "(" not in url:
+            url, end = url[:-1], end - 1
+        if url.split("://", 1)[1]:
+            spans.append((start, end))
+    return spans
+
+
+def _tag_spans(text):
+    """[(start, end, tag)] for each hashtag: `#` at the start or after whitespace, trailing
+    punctuation (any Unicode category P*) dropped, and the tag refused when empty, longer than
+    64 code points, or made only of digits and punctuation."""
+    out = []
+    for found in _TAG_RE.finditer(text):
+        tag = found.group(1)
+        while tag and unicodedata.category(tag[-1]).startswith("P"):
+            tag = tag[:-1]
+        if not tag or len(tag) > TAG_MAX:
+            continue
+        if all(c.isdigit() or c in _ZERO_WIDTH or unicodedata.category(c).startswith("P") for c in tag):
+            continue
+        out.append((found.start(), found.start() + 1 + len(tag), tag))
+    return out
+
+
+def facets(text):
+    """Bluesky facets for `text`, sorted by byteStart. Offsets are UTF-8 BYTES, not code points:
+    text.encode("utf-8")[byteStart:byteEnd] is exactly the link or the #tag."""
+    def byte_at(i):
+        return len(text[:i].encode("utf-8"))
+
+    found = []
+    for start, end in find_urls(text):
+        found.append((byte_at(start), byte_at(end), {
+            "$type": "app.bsky.richtext.facet#link", "uri": text[start:end]}))
+    for start, end, tag in _tag_spans(text):
+        found.append((byte_at(start), byte_at(end), {
+            "$type": "app.bsky.richtext.facet#tag", "tag": tag}))
+    found.sort(key=lambda f: f[0])
+    return [{"index": {"byteStart": b, "byteEnd": e}, "features": [feature]}
+            for b, e, feature in found]
+
+
+def tid(note):
+    """The note's Bluesky record key, in TID syntax (13 base32-sortable characters, 64 bits: a
+    zero bit, 53 bits of microseconds, 10 bits of clock id), which the PDS validates for this
+    collection. Derived only from the note, so a retry, in this run or any later one, asks for
+    the same record and a second createRecord on it cannot make a second post. `h` is the first 8
+    bytes of sha256 of the note's path: its low digits fill the microseconds below the note's
+    second, and 10 more bits are the clock id, so two notes collide only if dated in the same
+    second and then at 1 in 2^30."""
+    h = int.from_bytes(hashlib.sha256(note.path.encode()).digest()[:8], "big")
+    micros = int(note.date.timestamp()) * 1_000_000 + h % 1_000_000
+    value = (micros << 10) | ((h >> 20) & 0x3FF)
+    return "".join(B32[(value >> (5 * (12 - i))) & 31] for i in range(13))
+
+
+_BSKY = {}   # the one session of this run: {"token": ...} or {"error": ...}
+
+
+def reset_session():
+    _BSKY.clear()
+
+
+def _code(doc):
+    """The short error identifier from an XRPC error body, safe to print."""
+    code = doc.get("error") if isinstance(doc, dict) else None
+    return f": {one_line(code, 60)}" if isinstance(code, str) and code else ""
+
+
+def _bsky(method, name, *, token=None, body=None, query=None):
+    """One attempt at one XRPC call. Returns (status, doc): the HTTP status, or 0 when the
+    server was unreachable, and the parsed JSON object or None. No redirect is followed, so the
+    Authorization header never leaves, and no body is ever printed."""
+    url = f"{BLUESKY}/xrpc/{name}"
+    if query:
+        url += "?" + urllib.parse.urlencode(query)
+    headers = {"User-Agent": UA, "Accept": "application/json"}
+    data = None
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if body is not None:
+        data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    try:
+        with OPENER.open(req, timeout=TIMEOUT) as r:
+            status, raw = r.status, r.read(MAX_BYTES + 1)
+    except urllib.error.HTTPError as e:
+        status = e.code
+        try:
+            raw = e.read(4096)
+        except (OSError, http.client.HTTPException):
+            raw = b""
+        finally:
+            e.close()
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException):
+        return 0, None
+    try:
+        doc = json.loads(raw) if len(raw) <= MAX_BYTES else None
+    except (ValueError, RecursionError):
+        doc = None
+    return status, doc if isinstance(doc, dict) else None
+
+
+def _login():
+    password = os.environ.get("BLUESKY_APP_PASSWORD", "").strip()
+    if not password:
+        raise PostError("BLUESKY_APP_PASSWORD is not set")
+    status, doc = _bsky("POST", "com.atproto.server.createSession",
+                        body={"identifier": BLUESKY_HANDLE, "password": password})
+    if status != 200:
+        raise PostError("bluesky: createSession failed ("
+                        + ("unreachable" if status == 0 else f"HTTP {status}{_code(doc)}") + ")")
+    jwt = doc.get("accessJwt") if doc else None
+    if not isinstance(jwt, str) or not TOKEN_RE.fullmatch(jwt):
+        raise PostError("bluesky: createSession returned no usable session")
+    if doc.get("did") != BLUESKY_DID:
+        raise PostError("bluesky: the session is for a different account than expected")
+    return jwt
+
+
+def bluesky_token():
+    """The run's session token. The first call logs in; a failure is cached, so a broken login
+    is tried once per run and cannot burn the rate limit."""
+    if "error" in _BSKY:
+        raise PostError(_BSKY["error"])
+    if "token" not in _BSKY:
+        try:
+            _BSKY["token"] = _login()
+        except PostError as e:
+            _BSKY["error"] = str(e)
+            raise
+    return _BSKY["token"]
+
+
+def _transient(status):
+    return status == 0 or status == 429 or status >= 500
+
+
+def post_bluesky(note, text):
+    """Make the note's one Bluesky post. Returns {url, uri, posted}. Each attempt asks getRecord
+    first: a 200 adopts that post's URI (a prior attempt, or a prior run, already made it, even
+    if its answer was lost), a 400 RecordNotFound lets createRecord run, and anything else posts
+    nothing. 5xx, 429 and connection errors are retried (TRIES, WAIT apart), and the retry asks
+    getRecord again before creating. The record key is the note's own, so no sequence of
+    failures can create a second record."""
+    token = bluesky_token()
+    rkey = tid(note)
+    params = {"repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey}
+    suffix = "/" + rkey
+    record = {"$type": COLLECTION, "text": text, "langs": ["en"]}
+    found = facets(text)
+    if found:
+        record["facets"] = found
+    why = "no attempt"
+    for attempt in range(TRIES):
+        status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
+        if status == 200:
+            uri = doc.get("uri") if doc else None
+            if not isinstance(uri, str) or not uri.endswith(suffix):
+                raise PostError("bluesky: getRecord returned no matching uri")
+            break
+        if status == 400 and doc and doc.get("error") == "RecordNotFound":
+            now = utcnow()
+            record["createdAt"] = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
+            status, doc = _bsky("POST", "com.atproto.repo.createRecord", token=token, body={
+                "repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey, "record": record})
+            if status == 200:
+                uri = doc.get("uri") if doc else None
+                if not isinstance(uri, str) or not uri.endswith(suffix):
+                    raise PostError("bluesky: createRecord returned no matching uri")
+                break
+            if not _transient(status):
+                raise PostError(f"bluesky: createRecord HTTP {status}{_code(doc)}")
+            why = "unreachable" if status == 0 else f"HTTP {status}"
+        elif _transient(status):
+            why = "getRecord " + ("unreachable" if status == 0 else f"HTTP {status}")
+        else:
+            raise PostError(f"bluesky: getRecord HTTP {status}{_code(doc)}")
+        if attempt < TRIES - 1:
+            time.sleep(WAIT)
+    else:
+        raise PostError(f"bluesky: failed ({why}) after {TRIES} tries")
+    return {"url": BLUESKY_WEB + rkey, "uri": uri,
+            "posted": utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+
+POSTERS = {"mastodon": post_mastodon, "bluesky": post_bluesky}
 
 
 def record(state, note, platform, rec):
@@ -762,6 +1008,7 @@ def cmd_check():
 
 def cmd_post():
     dry = os.environ.get("DRY_RUN") == "1"
+    reset_session()
     try:
         if not dry:
             pull_main()
