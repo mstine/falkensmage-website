@@ -48,6 +48,22 @@ parser (a second converter in Python would be a second, drifting opinion), and t
 proves the page is live, so "live before posting" cannot be skipped. A [text](url) link
 becomes `text (url)`; a bare URL stays bare.
 
+Length
+------
+A note that fits goes out whole. Over the limit (Bluesky 300 graphemes, Mastodon 500 characters)
+`fit` cuts it at a word boundary and ends it with an ellipsis, a space and the note's own URL, so
+the post links back to the full note.
+ * Graphemes: Python's stdlib has no grapheme segmentation, so Bluesky's length is the number of
+   code points. A grapheme holds at least one code point, so len() can only overcount: a note we
+   pass is never rejected by the 300-grapheme limit, and the 3000-byte limit (at most 1200 bytes
+   for 300 code points) cannot bind. The cost, accepted: an emoji-dense note near the limit is
+   cut a little early. "Fits" means fits by this measure. Cuts land on whitespace, so a cluster
+   is only split when a single word is longer than the room.
+ * Mastodon counts every link as 23 characters whatever its length, so a long link does not
+   cut a note that fits. The limit is a constant (500), not read from the instance.
+ * A single word longer than the room is cut hard, never inside a link (the link is dropped
+   whole instead), and a tag cut that way gets no facet.
+
 The at-most-once protocol
 -------------------------
  * Each success is committed and pushed before the next post, because a runner's disk is not
@@ -686,7 +702,8 @@ def post_mastodon(note, text):
         raise PostError("MASTODON_ACCESS_TOKEN is not set")
     if not TOKEN_RE.fullmatch(token):
         raise PostError("MASTODON_ACCESS_TOKEN holds characters that cannot be sent in a header")
-    data = urllib.parse.urlencode([("status", text), ("visibility", "public"),
+    status = fit(text, MASTODON_LIMIT, SITE + note.path, mastodon_length)
+    data = urllib.parse.urlencode([("status", status), ("visibility", "public"),
                                    ("language", "en")]).encode()
     req = urllib.request.Request(MASTODON, data=data, method="POST", headers={
         "Authorization": f"Bearer {token}", "Idempotency-Key": idempotency_key(note),
@@ -803,6 +820,57 @@ def tid(note):
     return "".join(B32[(value >> (5 * (12 - i))) & 31] for i in range(13))
 
 
+# --- length -----------------------------------------------------------------------------
+
+MASTODON_LIMIT = 500
+MASTODON_URL_CHARS = 23
+BLUESKY_LIMIT = 300
+ELLIPSIS = "…"
+
+
+def mastodon_length(text):
+    """Mastodon's count: every link is 23 characters, whatever its length."""
+    spans = find_urls(text)
+    return len(text) - sum(end - start for start, end in spans) + MASTODON_URL_CHARS * len(spans)
+
+
+def _fit(text, limit, url, measure):
+    """(fitted text, hard): the text itself if `measure` says it fits, else the longest run of
+    whole words that leaves room for an ellipsis, a space and `url`. `hard` is True when not even
+    the first word fits and it was cut inside the word. PostError if the result is still over
+    the limit, so an over-limit post fails here and never at the API."""
+    out, hard = _cut(text, limit, url, measure)
+    if measure(out) > limit:
+        raise PostError("the fitted text is over the limit")
+    return out, hard
+
+
+def _cut(text, limit, url, measure):
+    if measure(text) <= limit:
+        return text, False
+    suffix = f"{ELLIPSIS} {url}"
+    if measure(suffix) > limit:
+        raise PostError("the link back alone is over the limit")
+    for word in reversed(list(re.finditer(r"\S+", text))):
+        body = text[:word.end()]
+        if measure(body + suffix) <= limit:
+            return body + suffix, False
+    cut = min(len(text), limit)
+    while cut > 0 and measure(text[:cut].rstrip() + suffix) > limit:
+        cut -= 1
+    for start, end in find_urls(text):
+        if start < cut < end:
+            cut = start   # never end inside a link: drop the link whole
+    body = text[:cut].rstrip()
+    return (body + suffix if body else url), True
+
+
+def fit(text, limit, url, measure=len):
+    """`text` itself if it fits, else the text cut at a word boundary, ending in an ellipsis, a
+    space and `url`, within `limit` by `measure`."""
+    return _fit(text, limit, url, measure)[0]
+
+
 _BSKY = {}   # the one session of this run: {"token": ...} or {"error": ...}
 
 
@@ -897,8 +965,16 @@ def post_bluesky(note, text):
     rkey = tid(note)
     params = {"repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey}
     suffix = "/" + rkey
+    url = SITE + note.path
+    text, hard = _fit(text, BLUESKY_LIMIT, url, len)
     record = {"$type": COLLECTION, "text": text, "langs": ["en"]}
     found = facets(text)
+    suffix_len = len(f"{ELLIPSIS} {url}")
+    if hard and text.endswith(f"{ELLIPSIS} {url}"):
+        # A tag cut in half by a hard cut is not the tag the note meant: no facet for it.
+        stop = len(text[:-suffix_len].encode("utf-8"))
+        found = [f for f in found if not (f["features"][0]["$type"].endswith("#tag")
+                                          and f["index"]["byteEnd"] == stop)]
     if found:
         record["facets"] = found
     why = "no attempt"
@@ -935,6 +1011,7 @@ def post_bluesky(note, text):
 
 
 POSTERS = {"mastodon": post_mastodon, "bluesky": post_bluesky}
+LIMITS = {"mastodon": (MASTODON_LIMIT, mastodon_length), "bluesky": (BLUESKY_LIMIT, len)}
 
 
 def record(state, note, platform, rec):
@@ -1039,7 +1116,16 @@ def cmd_post():
             if platform in state["notes"].get(note.path, {}):
                 continue  # a rebase brought in another run's record for it
             if dry:
-                log(f"dry run: {note.slug} {platform}: would post {len(text)} characters")
+                limit, measure = LIMITS[platform]
+                try:
+                    fitted = fit(text, limit, SITE + note.path, measure)
+                except PostError as e:
+                    log(f"FAILED: {note.slug} {platform}: {e}")
+                    failed = True
+                    continue
+                log(f"dry run: {note.slug} {platform}: would post {len(fitted)} characters "
+                    f"({measure(fitted)} of {limit} counted, "
+                    f"{'cut with a link back' if fitted != text else 'whole'})")
                 continue
             try:
                 rec = POSTERS[platform](note, text)

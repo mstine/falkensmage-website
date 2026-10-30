@@ -2032,6 +2032,148 @@ class BlueskyPosting(BlueskyCase):
         self.assertEqual([r for r in self.stub.requests if r["path"].startswith("/xrpc")], [])
 
 
+class FitTests(unittest.TestCase):
+    URL = "https://falkensmage.com/notes/x/"
+    SUFFIX = "… " + URL
+
+    def test_text_at_exactly_the_limit_is_unchanged_and_one_over_is_cut(self):
+        at = "abc " * 74 + "abcd"
+        self.assertEqual(len(at), 300)
+        self.assertEqual(m.fit(at, 300, self.URL), at)
+        out = m.fit(at + "e", 300, self.URL)
+        self.assertNotEqual(out, at + "e")
+        self.assertLessEqual(len(out), 300)
+
+    def test_a_cut_lands_on_a_word_boundary_ends_in_ellipsis_space_url_and_keeps_as_much_as_fits(self):
+        words = ["w%08d" % i for i in range(60)]
+        text = " ".join(words)
+        out = m.fit(text, 300, self.URL)
+        self.assertTrue(out.endswith(self.SUFFIX))
+        body = out[:-len(self.SUFFIX)]
+        self.assertTrue(text.startswith(body))
+        self.assertEqual(text[len(body)], " ", "the cut is at the end of a word")
+        self.assertLessEqual(len(out), 300)
+        longer = text[:len(body) + 10]   # one more word
+        self.assertGreater(len(longer + self.SUFFIX), 300, "a longer cut would not have fit")
+
+    def test_a_single_word_longer_than_the_room_is_cut_hard_and_stays_within_the_limit(self):
+        out = m.fit("x" * 400, 300, self.URL)
+        self.assertTrue(out.endswith(self.SUFFIX))
+        self.assertLessEqual(len(out), 300)
+        self.assertEqual(set(out[:-len(self.SUFFIX)]), {"x"})
+        self.assertEqual(len(out), 300, "the hard cut uses all the room")
+
+    def test_a_hard_cut_never_ends_inside_a_link_the_link_is_dropped_whole(self):
+        text = "https://example.com/" + "a" * 400
+        self.assertEqual(m.fit(text, 300, self.URL), self.URL)
+        text = "hi " + "https://example.com/" + "a" * 400
+        out = m.fit(text, 300, self.URL)
+        self.assertEqual(out, "hi" + self.SUFFIX)
+
+    def test_a_link_in_the_kept_part_is_never_split(self):
+        text = "see https://example.com/page and " + "word " * 80
+        out = m.fit(text, 300, self.URL)
+        self.assertIn("https://example.com/page", out)
+
+    def test_300_single_code_point_characters_are_whole_for_bluesky_and_301_are_not(self):
+        self.assertEqual(m.fit("x" * 300, m.BLUESKY_LIMIT, self.URL), "x" * 300)
+        self.assertNotEqual(m.fit("x" * 301, m.BLUESKY_LIMIT, self.URL), "x" * 301)
+
+    def test_a_zwj_heavy_note_of_310_code_points_is_truncated_the_recorded_conservative_count(self):
+        family = "\U0001F468‍\U0001F469‍\U0001F467"   # one grapheme, five code points
+        text = " ".join([family] * 52)
+        self.assertEqual(len(text), 311)
+        out = m.fit(text, m.BLUESKY_LIMIT, self.URL)
+        self.assertNotEqual(out, text)
+        self.assertLessEqual(len(out), 300)
+        self.assertTrue(out.endswith(self.SUFFIX))
+
+    def test_a_510_character_note_holding_a_60_character_link_fits_mastodon_whole(self):
+        link = "https://example.com/" + "p" * 40
+        text = "abcd " * 90 + link
+        self.assertEqual((len(link), len(text)), (60, 510))
+        self.assertEqual(m.mastodon_length(text), 473)
+        self.assertEqual(m.fit(text, m.MASTODON_LIMIT, self.URL, m.mastodon_length), text)
+        self.assertNotEqual(m.fit(text, m.BLUESKY_LIMIT, self.URL), text)
+
+    def test_mastodon_cuts_by_its_own_count_and_stays_within_500(self):
+        text = "word " * 150 + "https://example.com/" + "p" * 40
+        out = m.fit(text, m.MASTODON_LIMIT, self.URL, m.mastodon_length)
+        self.assertLessEqual(m.mastodon_length(out), 500)
+        self.assertTrue(out.endswith(self.SUFFIX))
+
+    def test_a_link_back_that_cannot_fit_is_a_post_error_not_a_bad_post(self):
+        with self.assertRaises(m.PostError):
+            m.fit("word " * 100, 20, self.URL)
+
+
+class LengthPosting(BlueskyCase):
+    def note(self):
+        return m.read_note(m.NOTES / "alpha.md")
+
+    def bsky_record(self):
+        return self.stub.records[self.rkey()]["record"]
+
+    def test_a_note_of_300_characters_goes_to_bluesky_whole_with_no_link_back(self):
+        with self.token():
+            m.post_bluesky(self.note(), "x" * 300)
+        self.assertEqual(self.bsky_record()["text"], "x" * 300)
+        self.assertNotIn("facets", self.bsky_record())
+
+    def test_a_truncated_bluesky_post_links_back_to_the_note_with_an_exact_facet(self):
+        text = " ".join(["word"] * 100) + " #cuttag"
+        with self.token():
+            m.post_bluesky(self.note(), text)
+        record = self.bsky_record()
+        link = m.SITE + ALPHA_PATH
+        self.assertTrue(record["text"].endswith("… " + link))
+        self.assertLessEqual(len(record["text"]), 300)
+        facet = record["facets"][-1]
+        raw = record["text"].encode("utf-8")
+        self.assertEqual(raw[facet["index"]["byteStart"]:facet["index"]["byteEnd"]].decode(), link)
+        self.assertEqual(facet["features"][0]["uri"], link)
+        self.assertEqual([f for f in record["facets"] if f["features"][0]["$type"].endswith("#tag")], [],
+                         "the tag was cut off, so it has no facet")
+
+    def test_a_tag_split_by_a_hard_cut_has_no_facet_but_the_link_back_does(self):
+        with self.token():
+            m.post_bluesky(self.note(), "#" + "t" * 400)
+        record = self.bsky_record()
+        self.assertTrue(record["text"].startswith("#ttt"))
+        kinds = [f["features"][0]["$type"] for f in record["facets"]]
+        self.assertEqual(kinds, ["app.bsky.richtext.facet#link"])
+
+    def test_a_tag_that_survives_the_cut_keeps_its_facet(self):
+        text = "#early " + " ".join(["word"] * 100)
+        with self.token():
+            m.post_bluesky(self.note(), text)
+        tags = [f["features"][0].get("tag") for f in self.bsky_record()["facets"]]
+        self.assertEqual(tags[:1], ["early"])
+
+    def test_a_510_character_note_goes_to_mastodon_whole(self):
+        link = "https://example.com/" + "p" * 40
+        text = "abcd " * 90 + link
+        with self.token():
+            m.post_mastodon(self.note(), text)
+        form = urllib.parse.parse_qs(self.stub.posts()[0]["body"].decode("utf-8"))
+        self.assertEqual(form["status"], [text])
+
+    def test_a_long_note_goes_to_mastodon_cut_with_its_own_link_back(self):
+        with self.token():
+            m.post_mastodon(self.note(), "word " * 200)
+        status = urllib.parse.parse_qs(self.stub.posts()[0]["body"].decode("utf-8"))["status"][0]
+        self.assertTrue(status.endswith("… " + m.SITE + ALPHA_PATH))
+        self.assertLessEqual(m.mastodon_length(status), 500)
+
+    def test_a_dry_run_logs_how_each_network_counts_the_text(self):
+        with mock.patch.dict(os.environ, {"DRY_RUN": "1"}):
+            rc, out = self.run_post(expect_rc=0)
+        self.assertIn("mastodon: would post", out)
+        self.assertIn("of 500 counted, whole", out)
+        self.assertIn("of 300 counted, whole", out)
+        self.assertEqual(self.stub.posts() + self.stub.creates(), [])
+
+
 class MissingState(SyndicationCase):
     NOTES = {"alpha": ALPHA}
     STATE = None
