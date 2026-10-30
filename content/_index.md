@@ -72,6 +72,7 @@ link_groups:
         url: "https://linkedin.com/in/mattstine"
         label: "LinkedIn"
         icon: "linkedin"
+        rel_me: true
       - name: "Mastodon"
         url: "https://mastodon.social/@falkensmage"
         label: "Mastodon"
@@ -81,8 +82,10 @@ link_groups:
         url: "https://bsky.app/profile/falkensmage.com"
         label: "Bluesky"
         icon: "bluesky"
+        rel_me: true
       - name: "Instagram"
         url: "https://www.instagram.com/falkensmage"
         label: "Instagram"
         icon: "instagram"
+        rel_me: true
 ---
