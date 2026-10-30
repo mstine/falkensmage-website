@@ -67,6 +67,7 @@
 
   {{/* Mastodon profile verification — the profile's link back here shows as verified */}}
   <link rel="me" href="https://mastodon.social/@falkensmage">
+  <meta name="fediverse:creator" content="@falkensmage@mastodon.social">
 
   {{/* FA feed discovery — readers and Buttondown find /fa/index.xml from any page */}}
   {{ with site.GetPage "/fa" }}{{ with .OutputFormats.Get "rss" }}
