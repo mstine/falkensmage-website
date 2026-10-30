@@ -292,6 +292,7 @@ class Tracer(unittest.TestCase):
 
 
 TOKEN = "tok_abc123"
+FAILED = 1  # the literal: the workflow turns a non-zero exit into a red run, so pin it here
 EXAMPLE = json.loads((FIXTURES / "example-mentions.jf2.json").read_text())
 HOSTILE = json.loads((FIXTURES / "hostile-mentions.jf2.json").read_text())
 
@@ -385,7 +386,7 @@ class Pagination(PullCase):
             return 200, [], json.dumps(doc).encode()
         self.stub.routes["/api/mentions.jf2"] = route
         rc, out = self.run_main()
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertIn("short walk", out)
         self.assertEqual(self.disk()["pages"], LAST_GOOD)
         self.assertEqual(self.disk()["generated"], "2026-01-01T00:00:00Z")
@@ -554,7 +555,7 @@ class Blocklist(PullCase):
         self.set_blocklist(["bad.example"], [])
         self.stub.routes["/api/mentions.jf2"] = (503, [], b"down")
         rc, _ = self.run_main()
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertEqual([r["name"] for r in self.disk()["pages"][ESSAY_PATH]["likes"]], ["Good"])
 
     def test_malformed_blocklist_fails_and_leaves_the_data_file_untouched(self):
@@ -566,10 +567,10 @@ class Blocklist(PullCase):
             with self.subTest(bad=bad):
                 self.block.write_text(bad)
                 rc, _ = self.run_main()
-                self.assertEqual(rc, m.PULL_FAILED)
+                self.assertEqual(rc, FAILED)
                 self.assertEqual(self.data.read_bytes(), before)
         self.block.unlink()
-        self.assertEqual(self.run_main()[0], m.PULL_FAILED)
+        self.assertEqual(self.run_main()[0], FAILED)
         self.assertEqual(self.data.read_bytes(), before)
         self.assertEqual(self.api_requests(), [])
 
@@ -583,7 +584,7 @@ class Outage(PullCase):
         self.seed(LAST_GOOD)
 
     def assert_last_good_kept(self, rc, out=""):
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertEqual(self.disk(), {"generated": "2026-01-01T00:00:00Z", "pages": LAST_GOOD})
         self.assertEqual(self.leftovers(), ["blocklist.json", "webmentions.json"])
         self.assertIn("::error title=Webmentions::", out)
@@ -667,7 +668,7 @@ class Token(PullCase):
         bad = "tok\nX-Evil: 1"
         with mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": bad}):
             rc, out = self.run_main()
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertEqual(self.stub.log, [])
         self.assertNotIn("tok", out.replace("WEBMENTION_IO_TOKEN", ""))
         self.assertNotIn("X-Evil", out)
@@ -684,7 +685,7 @@ class CorruptLastGood(PullCase):
             with self.subTest(body=body):
                 self.data.write_text(body)
                 rc, _ = self.run_main()
-                self.assertEqual(rc, m.PULL_FAILED)
+                self.assertEqual(rc, FAILED)
                 self.assertEqual(self.disk()["pages"], {})
                 self.assertEqual(m.load_last_good(self.data), ({}, None))
 
@@ -732,7 +733,7 @@ class Witness(PullCase):
     def test_public_endpoint_still_has_mentions_so_the_empty_pull_is_wrong(self):
         self.say_total(3)
         rc, out = self.run_main()
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertEqual(self.disk()["pages"], LAST_GOOD)
         self.assertIn("::error title=Webmentions::", out)
         w = self.witness_requests()
@@ -748,7 +749,7 @@ class Witness(PullCase):
     def test_unreachable_witness_is_a_failure(self):
         self.witness = (503, [], b"down")
         rc, _ = self.run_main()
-        self.assertEqual(rc, m.PULL_FAILED)
+        self.assertEqual(rc, FAILED)
         self.assertEqual(self.disk()["pages"], LAST_GOOD)
 
     def test_no_witness_when_there_is_no_last_good(self):
@@ -775,7 +776,183 @@ class HostileThroughMain(PullCase):
         self.assertEqual(len(self.disk()["pages"][ESSAY_PATH]["replies"]), 6)
 
 
-#@@MORE@@
+PARTIAL = ROOT / "themes" / "arcaeon" / "layouts" / "partials" / "fa" / "mentions.html"
+ABOUT = "/fa/about/"
+YBH = "/fa/youve-been-heard/"
+
+
+def run_probe(public, data_dir):
+    env = dict(os.environ, VALIDATE_FA_PUBLIC=str(public), VALIDATE_FA_DATA=str(data_dir))
+    r = subprocess.run(["bash", str(ROOT / "tests" / "validate-fa.sh")], cwd=ROOT, env=env,
+                       capture_output=True, text=True)
+    return r.returncode, r.stdout + r.stderr
+
+
+def section_span(html):
+    """(start, end) of the mention band: the <section> wrapping the fa-mentions div."""
+    mid = html.index("fa-prose fa-mentions")
+    start = html.rindex("<section", 0, mid)
+    end = html.index("</section>", mid) + len("</section>")
+    return start, end
+
+
+class ProbeMutations(unittest.TestCase):
+    """The probe is only worth having if it can fail. Build over the example and hostile
+    fixtures, then break the output in each way a regression would, and watch it go red."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp())
+        cls.data = cls.tmp / "data"
+        cls.data.mkdir()
+        (cls.data / "webmention-blocklist.json").write_text(
+            json.dumps({"domains": ["blocked.example"], "authors": []}))
+        stub = Stub()
+        stub.json("/api/mentions.jf2", feed(EXAMPLE["children"] + HOSTILE["children"]))
+        try:
+            with mock.patch.object(m, "API", stub.api), \
+                    mock.patch.object(m, "DATA", cls.data / "webmentions.json"), \
+                    mock.patch.object(m, "BLOCKLIST", cls.data / "webmention-blocklist.json"), \
+                    mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": TOKEN}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                assert m.main() == 0
+        finally:
+            stub.close()
+        cls.public = cls.tmp / "public"
+        cls.work = build_site(cls.public, cls.data)
+        cls.page = cls.public / "fa" / "youve-been-heard" / "index.html"
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def mutate(self, path, fn):
+        """Rewrite a file in the temp output; the original bytes come back after the test."""
+        original = Path(path).read_bytes()
+        self.addCleanup(Path(path).write_bytes, original)
+        new = fn(original.decode("utf-8"))
+        self.assertNotEqual(new, original.decode("utf-8"), "the mutation changed nothing")
+        Path(path).write_text(new, encoding="utf-8")
+
+    def assert_red(self, page_path, public=None, data=None):
+        rc, out = run_probe(public or self.public, data or self.data)
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(page_path, out)
+        return out
+
+    def test_baseline_is_green_and_prints_the_mention_lines(self):
+        rc, out = run_probe(self.public, self.data)
+        self.assertEqual(rc, 0, out)
+        self.assertRegex(out, r"PASS  webmention endpoint advertised on \d+ pages")
+        self.assertRegex(out, r"PASS  mention sections match the pulled data on \d+ essays")
+        self.assertIn("PASS  webmention blocklist is well formed", out)
+
+    def test_the_section_holds_only_inert_markup(self):
+        sec = section_of(self.page)
+        self.assertEqual(sec.sections, 1)
+        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time"}, set())
+        for tag, attrs in sec.attrs:
+            for name in attrs:
+                self.assertFalse(name.startswith("on") or name in ("style", "src", "srcset"), name)
+        for href, rel, _ in sec.anchors:
+            self.assertEqual(set(rel.split()), {"nofollow", "ugc"})
+            self.assertTrue(re.match(r"https?://", href), href)
+        shown = " ".join(sec.text)
+        for gone in ("HTMLSENTINEL", "PRIVATESENTINEL", "PHOTOSENTINEL"):
+            self.assertNotIn(gone, shown)
+        self.assertGreaterEqual(len(sec.anchors), 10)
+
+    def test_section_deleted(self):
+        def cut(h):
+            a, b = section_span(h)
+            return h[:a] + h[b:]
+        self.mutate(self.page, cut)
+        self.assert_red(YBH)
+
+    def test_remote_image_added_to_the_section(self):
+        self.mutate(self.page, lambda h: h.replace(
+            "Responses</h2>", "Responses</h2><img src=https://tracker.example/p.png>", 1))
+        self.assert_red(YBH)
+
+    def test_ugc_dropped_from_one_anchor(self):
+        def drop(h):
+            a, b = section_span(h)
+            return h[:a] + h[a:b].replace('rel="nofollow ugc"', "rel=nofollow", 1) + h[b:]
+        self.mutate(self.page, drop)
+        self.assert_red(YBH)
+
+    def test_section_moved_inside_the_article(self):
+        def move(h):
+            a, b = section_span(h)
+            block, rest = h[a:b], h[:a] + h[b:]
+            i = rest.rindex("</article>")
+            return rest[:i] + block + rest[i:]
+        self.mutate(self.page, move)
+        out = self.assert_red(YBH)
+        self.assertIn("h-entry", out)
+
+    def test_endpoint_link_removed_from_one_page(self):
+        page = self.public / "fa" / "both-hands" / "index.html"
+        self.mutate(page, lambda h: h.replace(
+            "<link rel=webmention href=https://webmention.io/falkensmage.com/webmention>", ""))
+        self.assert_red("/fa/both-hands/")
+
+    def test_section_added_to_a_standalone_page(self):
+        block = self.page.read_text()
+        a, b = section_span(block)
+        block = block[a:b]
+        self.mutate(self.public / "fa" / "about" / "index.html",
+                    lambda h: h.replace("</main>", block + "</main>", 1))
+        self.assert_red(ABOUT)
+
+    def test_counts_that_disagree_with_the_data(self):
+        self.mutate(self.page, lambda h: h.replace("fa-mention--like", "fa-mention--lik", 1))
+        out = self.assert_red(YBH)
+        self.assertIn("likes", out)
+
+    def test_blocklist_reshaped_to_a_bare_list(self):
+        self.mutate(self.data / "webmention-blocklist.json", lambda s: "[]")
+        rc, out = run_probe(self.public, self.data)
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn("blocklist", out)
+
+    def test_data_that_says_nothing_while_the_page_shows_a_section(self):
+        empty = self.tmp / "empty-data"
+        empty.mkdir(exist_ok=True)
+        (empty / "webmentions.json").write_text('{"generated": null, "pages": {}}')
+        shutil.copy(self.data / "webmention-blocklist.json", empty)
+        self.assert_red(YBH, data=empty)
+
+    def test_with_no_data_file_the_probe_passes_and_says_so(self):
+        bare = self.tmp / "bare-data"
+        bare.mkdir(exist_ok=True)
+        shutil.copy(self.data / "webmention-blocklist.json", bare)
+        plain = self.tmp / "plain-public"
+        if not plain.exists():
+            build_site(plain, None, work=self.work)
+        rc, out = run_probe(plain, bare)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  no mention data in this build, and no mention section on any page", out)
+
+    def test_a_real_escape_bypass_in_the_template_turns_the_probe_red(self):
+        src = PARTIAL.read_text()
+        mutated, n = re.subn(r"\{\{\s*(\$[pr]\.(?:name|text))\s*\}\}", r"{{ \1 | safeHTML }}", src)
+        self.assertGreaterEqual(n, 3)
+        layouts = self.tmp / "mut-layouts"
+        target = layouts / "partials" / "fa" / "mentions.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(mutated)
+        bad_public = self.tmp / "bad-public"
+        build_site(bad_public, self.data, layouts_dir=layouts, work=self.work)
+        live = section_of(bad_public / "fa" / "youve-been-heard" / "index.html")
+        self.assertTrue({"script", "img"} & set(live.tags), "the bypass did not render live markup")
+        rc, out = run_probe(bad_public, self.data)
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
+        self.assertRegex(out, r"holds a <(script|img)> element")
+        # the real partial, same data, stays green (the baseline test builds it)
+        rc, out = run_probe(self.public, self.data)
+        self.assertEqual(rc, 0, out)
 
 
 if __name__ == "__main__":
