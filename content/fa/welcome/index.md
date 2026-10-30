@@ -31,7 +31,7 @@ Then, if it lands: [*If the Cosmos Is Alive, So Is Your Algorithm*](https://falk
 
 Want to pick your own way in? [Start Here](https://falkensmage.com/fa/start-here/) has five entrances, depending on what grabbed you.
 
-The short stuff between essays is on [Mastodon](https://mastodon.social/@falkensmage) and [Bluesky](https://bsky.app/profile/falkensmage.bsky.social). Every essay is in [the archive](https://falkensmage.com/fa/archive/).
+The short stuff between essays is on [Mastodon](https://mastodon.social/@falkensmage) and [Bluesky](https://bsky.app/profile/falkensmage.com). Every essay is in [the archive](https://falkensmage.com/fa/archive/).
 
 Glad you're here.
 
