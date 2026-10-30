@@ -1,5 +1,8 @@
 {
   "_comment": "Applied by scripts/pull-webmentions.py on every build, to fresh pulls and to last-good data alike, so a new entry takes effect even during a webmention.io outage. `domains`: bare host names; a mention is dropped when its url, source or author url is on that host or any subdomain. `authors`: author profile URLs; matched on host and path, ignoring scheme, case, query, fragment and a trailing slash. A malformed file fails the build gate (tests/validate-fa.sh) on purpose. Complements the blocking on the webmention.io dashboard.",
   "domains": [],
-  "authors": []
+  "authors": [
+    "https://bsky.app/profile/falkensmage.com",
+    "https://mastodon.social/@falkensmage"
+  ]
 }
