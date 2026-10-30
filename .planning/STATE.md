@@ -165,6 +165,7 @@ Carried forward to v1.1 scoping:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260416-rkc | Fix 3 UI review issues from phase 03 | 2026-04-17 | 97fd7d5 | [260416-rkc-fix-3-ui-review-issues-from-phase-03](./quick/260416-rkc-fix-3-ui-review-issues-from-phase-03/) |
+| 261030-fae | FA essay email step in deploy workflow | 2026-10-30 | pending | [261030-fae-fa-email-step](./quick/261030-fae-fa-email-step/) |
 
 ## Session Continuity
 
