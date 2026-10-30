@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.160.1
+    outputs:
+      mentions: ${{ steps.mentions.outcome }}
     steps:
       - name: Install Hugo CLI
         run: |
@@ -59,6 +61,34 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
+
+      # Received Webmentions are pulled before Hugo reads them. The data file is generated, not
+      # committed: last-good lives in the Actions cache, restored by prefix and saved only when
+      # the pull succeeded, so a failed run can never replace good data. The pull step uses
+      # continue-on-error so an outage never blocks the deploy (the essay publishes with
+      # last-good mentions); the red lives in the mentions-probe job after deploy. A missing
+      # secret is the one non-failure: green, with a log line and a notice.
+      - name: Restore last-good Webmentions
+        uses: actions/cache/restore@v6
+        with:
+          path: data/webmentions.json
+          key: webmentions-data-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: webmentions-data-
+
+      - name: Pull Webmentions
+        id: mentions
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          WEBMENTION_IO_TOKEN: ${{ secrets.WEBMENTION_IO_TOKEN }}
+        run: python3 scripts/pull-webmentions.py
+
+      - name: Save last-good Webmentions
+        if: steps.mentions.outcome == 'success'
+        uses: actions/cache/save@v6
+        with:
+          path: data/webmentions.json
+          key: webmentions-data-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Build with Hugo
         env:
@@ -139,3 +169,23 @@ jobs:
         with:
           path: .webmentions-sent
           key: webmentions-sent-${{ github.run_id }}-${{ github.run_attempt }}
+
+  # A red step inside `build` would block `deploy`, so the failure of the Webmentions pull is
+  # reported here, after the site is live. The essay published with last-good mentions; this
+  # job exists only to make the outage visible. An empty outcome fails too: a missing signal
+  # must not read as success. No `if: always()`: when deploy fails the run is already red.
+  mentions-probe:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Fail if the Webmentions pull failed
+        env:
+          OUTCOME: ${{ needs.build.outputs.mentions }}
+        run: |
+          echo "Pull Webmentions outcome: ${OUTCOME:-<empty>}"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "::error title=Webmentions::The Pull Webmentions step did not succeed (outcome: ${OUTCOME:-empty}). The site deployed with last-good mentions; see that step's log."
+            exit 1
+          fi
