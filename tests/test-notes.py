@@ -14,10 +14,12 @@ notes over content/notes, and the repo's own content/notes is excluded.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -26,7 +28,7 @@ REAL_INDEX = ROOT / "content" / "notes" / "_index.md"
 
 PAST_ONE = ("2026-01-05T09:30:00-06:00", "First note, with a 5 < 6 comparison and \"quotes\".\n\n"
             "A second paragraph links https://example.com/first for the curious.\n")
-PAST_TWO = ("2026-02-10T18:45:00-06:00", "Second note, newer than the first.\n")
+PAST_TWO = ("2026-02-10T18:45:00-06:00", "Second note, newer than the first, with [a relative link](/fa/archive/).\n")
 FUTURE = ("2099-06-01T12:00:00-05:00", "A note from the far future.\n")
 
 
@@ -234,12 +236,91 @@ class NotePage(unittest.TestCase):
         self.assertEqual(d.title, "Notes | Falken's Mage")
 
 
+class FeedAndNav(unittest.TestCase):
+    def feed_items(self, name):
+        root = ET.parse(Builds.get(name) / "notes" / "index.xml").getroot()
+        return root.findall("./channel/item")
+
+    def test_the_feed_has_one_titleless_item_per_published_note(self):
+        items = self.feed_items("published")
+        self.assertEqual(len(items), 2)
+        for item in items:
+            self.assertIsNone(item.find("title"))
+            for tag in ("link", "guid", "pubDate", "description"):
+                self.assertTrue((item.findtext(tag) or "").strip(), tag)
+        links = [i.findtext("link") for i in items]
+        self.assertEqual(links, ["https://falkensmage.com/notes/second/",
+                                 "https://falkensmage.com/notes/first/"])
+        self.assertEqual(items[0].find("guid").get("isPermaLink"), "true")
+
+    def test_a_relative_link_in_a_note_arrives_absolute(self):
+        desc = self.feed_items("published")[0].findtext("description")
+        self.assertIn('href="https://falkensmage.com/fa/archive/"', desc)
+        self.assertNotIn('href="/fa/', desc)
+
+    def test_a_future_note_has_no_feed_item_until_due(self):
+        self.assertEqual(len(self.feed_items("published")), 2)
+        self.assertEqual(len(self.feed_items("due")), 3)
+        self.assertEqual(self.feed_items("empty"), [])
+        self.assertEqual(self.feed_items("future-only"), [])
+
+    def test_with_a_published_note_every_page_links_to_notes_and_the_head_advertises_it(self):
+        public = Builds.get("published")
+        for page in (public / "index.html", public / "about" / "index.html",
+                     public / "notes" / "index.html", public / "notes" / "first" / "index.html"):
+            d = read(page)
+            self.assertIn("/notes/", [h for h, _ in d.nav], page)
+            rss = [l for l in d.links if l.get("type") == "application/rss+xml"
+                   and l.get("href", "").endswith("/notes/index.xml")]
+            self.assertEqual(len(rss), 1, page)
+            feeds = [l for l in d.links if l.get("rel") == "feed"]
+            self.assertEqual([f["href"] for f in feeds], ["https://falkensmage.com/notes/"], page)
+            self.assertEqual(feeds[0]["type"], "text/html")
+
+    def test_aria_current_is_on_the_notes_link_on_the_index_and_a_note_only(self):
+        public = Builds.get("published")
+        current = {}
+        for key, page in (("home", public / "index.html"),
+                          ("index", public / "notes" / "index.html"),
+                          ("note", public / "notes" / "first" / "index.html")):
+            current[key] = dict(read(page).nav)["/notes/"]
+        self.assertEqual(current, {"home": None, "index": "page", "note": "page"})
+
+    def test_with_no_note_published_nothing_links_to_notes_or_advertises_its_feed(self):
+        for name in ("empty", "future-only"):
+            public = Builds.get(name)
+            for page in (public / "index.html", public / "notes" / "index.html"):
+                d = read(page)
+                self.assertNotIn("/notes/", [h for h, _ in d.nav], (name, page))
+                for l in d.links:
+                    if l.get("rel") == "canonical":
+                        continue  # the notes index's own canonical URL
+                    self.assertNotIn("/notes/", l.get("href", ""), (name, page, l))
+                self.assertNotIn("/notes/index.xml", page.read_text(encoding="utf-8"))
+
+
+class Archetype(unittest.TestCase):
+    def test_hugo_new_writes_only_a_date_with_an_explicit_offset(self):
+        hugo = shutil.which("hugo")
+        self.assertIsNotNone(hugo, "hugo is not on PATH")
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        r = subprocess.run([hugo, "new", "content", "notes/x.md", "--contentDir", str(tmp)],
+                           cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        body = (tmp / "notes" / "x.md").read_text()
+        self.assertRegex(body, r"\A---\ndate: \d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:[+-]\d\d:\d\d|Z)\n---\n*\Z")
+
+
 class NotesProbe(unittest.TestCase):
     def test_the_probe_passes_on_every_build_and_prints_its_h_entry_line(self):
         for name, n in (("published", 2), ("due", 3), ("empty", 0), ("future-only", 0)):
             rc, out = run_probe(Builds.get(name))
             self.assertEqual(rc, 0, f"{name}\n{out}")
             self.assertIn(f"PASS  {n} notes carry complete h-entry markup", out)
+            self.assertIn(f"PASS  the /notes/ index and feed match {n} published notes", out)
+            self.assertIn("PASS  nav Notes link hidden, no note published" if n == 0
+                          else f"PASS  nav Notes link shown, {n} notes published", out)
 
 
 if __name__ == "__main__":

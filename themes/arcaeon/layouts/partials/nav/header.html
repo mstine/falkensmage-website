@@ -16,6 +16,8 @@
     </button>
     <nav class="site-nav" id="site-nav" aria-label="Primary">
       <a href="/fa/"{{ if hasPrefix .RelPermalink "/fa" }} aria-current="page"{{ end }}>Feral Architecture</a>
+      {{/* Notes appears with the first published note: nothing links to an empty room. */}}
+      {{ with site.GetPage "/notes" }}{{ if .RegularPages }}<a href="/notes/"{{ if hasPrefix $.RelPermalink "/notes" }} aria-current="page"{{ end }}>Notes</a>{{ end }}{{ end }}
       <a href="/about/"{{ if hasPrefix .RelPermalink "/about" }} aria-current="page"{{ end }}>About</a>
       <a href="/cv/"{{ if hasPrefix .RelPermalink "/cv" }} aria-current="page"{{ end }}>CV</a>
       <a href="/work/"{{ if hasPrefix .RelPermalink "/work" }} aria-current="page"{{ end }}>Work With Me</a>

@@ -87,6 +87,16 @@
   <link rel="alternate" type="application/rss+xml" title="Feral Architecture" href="{{ .Permalink }}">
   {{ end }}{{ end }}
 
+  {{/* Notes feed discovery, only once a note is published. rel=feed points at the h-feed:
+       Bridgy finds a note's u-syndication links, and so its original, through it. */}}
+  {{ $notesSection := site.GetPage "/notes" }}
+  {{ if and $notesSection $notesSection.RegularPages }}
+    {{ with $notesSection.OutputFormats.Get "rss" }}
+  <link rel="alternate" type="application/rss+xml" title="Notes" href="{{ .Permalink }}">
+    {{ end }}
+  <link rel="feed" type="text/html" href="{{ $notesSection.Permalink }}">
+  {{ end }}
+
   {{/* Canonical URL (SEO-03, D-17) */}}
   <link rel="canonical" href="{{ .Permalink }}">
 

@@ -138,6 +138,127 @@ for line in problems:
 if not problems:
     ok(f"{len(notes)} notes carry complete h-entry markup")
 
+published = {"/" + os.path.relpath(os.path.dirname(p), public) + "/" for p in notes}
+n = len(published)
+
+
+class Flat(HTMLParser):
+    """Class counts, the primary nav's links, and the head's alternate and feed links."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.count = {}
+        self.nav = []             # hrefs inside nav[aria-label=Primary]
+        self._nav = 0
+        self.rss_links = []       # <link rel=alternate type=application/rss+xml> hrefs
+        self.feed_links = []      # <link rel=feed> hrefs
+
+    def handle_starttag(self, tag, attrs):
+        a = {}
+        for k, v in attrs:
+            a.setdefault(k.lower(), v or "")
+        for tok in a.get("class", "").split():
+            self.count[tok] = self.count.get(tok, 0) + 1
+        if tag == "link":
+            rel = a.get("rel", "").lower().split()
+            if "alternate" in rel and a.get("type") == "application/rss+xml":
+                self.rss_links.append(a.get("href", ""))
+            if "feed" in rel:
+                self.feed_links.append(a.get("href", ""))
+        if tag == "nav" and a.get("aria-label") == "Primary":
+            self._nav = 1
+        elif self._nav:
+            if tag == "nav":
+                self._nav += 1
+            if tag == "a":
+                self.nav.append(a.get("href", ""))
+
+    def handle_endtag(self, tag):
+        if tag == "nav" and self._nav:
+            self._nav -= 1
+
+
+def flat(path):
+    f = Flat()
+    f.feed(open(path, encoding="utf-8", errors="replace").read())
+    f.close()
+    return f
+
+
+# 2. the /notes/ index and feed match the published notes
+import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
+
+index_problems = []
+index = os.path.join(public, "notes", "index.html")
+if not os.path.isfile(index):
+    index_problems.append("/notes/ has no index page")
+else:
+    f = flat(index)
+    if f.count.get("h-feed", 0) != 1:
+        index_problems.append(f"/notes/ has {f.count.get('h-feed', 0)} h-feed elements, expected 1")
+    if f.count.get("h-entry", 0) != n:
+        index_problems.append(f"/notes/ lists {f.count.get('h-entry', 0)} h-entry elements, expected {n}")
+    empty = f.count.get("notes-empty", 0)
+    if n == 0 and empty != 1:
+        index_problems.append(f"/notes/ has {empty} notes-empty elements, expected 1 with no notes")
+    if n > 0 and empty != 0:
+        index_problems.append(f"/notes/ shows the empty state although {n} notes are published")
+feed = os.path.join(public, "notes", "index.xml")
+if not os.path.isfile(feed):
+    index_problems.append("/notes/index.xml is missing")
+else:
+    try:
+        items = ET.parse(feed).getroot().findall("./channel/item")
+    except ET.ParseError:
+        items = None
+        index_problems.append("/notes/index.xml does not parse")
+    if items is not None:
+        want = min(n, 50)
+        if len(items) != want:
+            index_problems.append(f"/notes/index.xml has {len(items)} items, expected {want}")
+        for item in items:
+            link = (item.findtext("link") or "").strip()
+            path = urlsplit(link).path
+            if path not in published:
+                index_problems.append(f"/notes/index.xml has an item linking to {path or '(no link)'}, which is not a published note")
+for line in index_problems:
+    bad("index: " + line)
+if not index_problems:
+    ok(f"the /notes/ index and feed match {n} published notes")
+
+# 3. nothing links to an empty room: the nav and head agree with the published count
+home = os.path.join(public, "index.html")
+if not os.path.isfile(home):
+    bad("nav: missing built home page")
+else:
+    f = flat(home)
+    in_nav = "/notes/" in f.nav
+    in_rss = any(urlsplit(h).path == "/notes/index.xml" for h in f.rss_links)
+    in_feed = any(urlsplit(h).path == "/notes/" for h in f.feed_links)
+    nav_problems = []
+    if n == 0:
+        if in_nav:
+            nav_problems.append("the nav links to /notes/ although no note is published")
+        if in_rss:
+            nav_problems.append("the head advertises the notes feed although no note is published")
+        if in_feed:
+            nav_problems.append("the head carries rel=feed although no note is published")
+    else:
+        if not in_nav:
+            nav_problems.append(f"the nav has no /notes/ link although {n} notes are published")
+        if not in_rss:
+            nav_problems.append("the head has no alternate link to /notes/index.xml")
+        if not in_feed:
+            nav_problems.append("the head has no rel=feed link to /notes/")
+    for line in nav_problems:
+        bad("nav: " + line)
+    if not nav_problems:
+        if n == 0:
+            ok("nav Notes link hidden, no note published")
+        else:
+            ok(f"nav Notes link shown, {n} notes published")
+
 print("\n".join(out))
 print("DONE")
 PY
