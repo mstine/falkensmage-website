@@ -6,16 +6,45 @@ deployed feed, takes the newest essay, collects the external links inside its h-
 each target's Webmention endpoint (W3C Webmention §3.1.2) and POSTs source and target
 (§3.1.3). Stdlib only; DRY_RUN=1 skips every POST.
 
-Exit 1 if our own side is broken: the feed is unreachable or empty, or the essay page has no
-h-entry. A dead or hostile target never changes the exit code.
+Env: DRY_RUN ("1" to skip every POST), WEBMENTION_STATE (path of the sent-state file).
+Exit 1 if our own side is broken: the feed is unreachable or empty, or the essay page never
+gains an h-entry. A dead or hostile target never changes the exit code.
+
+Sent state: where it lives and why
+----------------------------------
+Webmention has no API to ask "did I already send this?", so the sender keeps its own record:
+one tab-separated `source<TAB>target` line per pair a receiver accepted (any 2xx), appended
+immediately so a killed job keeps earlier work. The workflow stores that file in the Actions
+cache (restore by key prefix, save under `if: always()`); the workflow's `concurrency: pages`
+serializes runs, so restore, send and save cannot interleave.
+
+Not a commit back to main: that needs `contents: write` on the job that parses untrusted HTML
+and leaves a bot commit per essay. Not a time window alone: that resends on every run inside
+it. Not a diff against the live feed: one transient failure would be lost for good.
+
+Failure direction: a lost or denied cache save costs a duplicate POST inside the window, which
+the spec (section 3.2.4) says receivers should tolerate. It can never cost a missed send. The
+window is MAX_AGE (7 days) from the essay's publish date; an essay past it never sends, so a
+lost cache cannot resend history. The cache entry stays younger than GitHub's 7-day eviction
+because the nightly rebuild restores and re-saves it. Only accepted pairs are recorded, so dead
+links and 5xx endpoints are retried nightly until the window closes, and each run logs how many
+pairs it loaded: zero after a successful send is the only visible sign of a denied cache save.
+
+Safety: targets are third-party pages, so every connection (GET, POST, each redirect hop)
+checks the connected peer address and refuses anything non-global before a request byte is
+written. Only http and https open; a redirect on a POST is a failure, never followed.
 """
 import email.utils
+import http.client
+import ipaddress
 import os
+import ssl
 import sys
-import urllib.error
+import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
 FEED = "https://falkensmage.com/fa/index.xml"
@@ -23,6 +52,8 @@ SITE_HOST = "falkensmage.com"
 UA = "falkensmage-webmention-sender (+https://falkensmage.com/)"
 TIMEOUT = 20
 MAX_BYTES = 2 * 1024 * 1024
+MAX_AGE = timedelta(days=7)
+STATE = os.environ.get("WEBMENTION_STATE", ".webmentions-sent")
 HTML_TYPES = ("text/html", "application/xhtml+xml")
 
 
@@ -103,6 +134,8 @@ def external_targets(links, source):
             continue
         if parts.scheme not in ("http", "https") or not host:
             continue
+        if any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in url):
+            continue  # not a valid URL, and tabs/newlines would corrupt the state file
         if host == SITE_HOST or host.endswith("." + SITE_HOST):
             continue
         if urllib.parse.urldefrag(url)[0] == own or url in out:
@@ -113,14 +146,71 @@ def external_targets(links, source):
 
 # --- HTTP -------------------------------------------------------------------------------
 
+class BlockedAddress(OSError):
+    """The connected peer is not a global unicast address."""
+
+
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+
+
+def peer_allowed(ip):
+    """True only for a global, non-multicast address. IPv4-mapped and NAT64 forms are unwrapped
+    by hand: `is_global` does not see through them on every supported Python."""
+    try:
+        addr = ipaddress.ip_address(str(ip).split("%", 1)[0])
+    except ValueError:
+        return False
+    if addr.version == 6:
+        if addr.ipv4_mapped is not None:
+            addr = addr.ipv4_mapped
+        elif addr in _NAT64:
+            addr = ipaddress.IPv4Address(int(addr) & 0xFFFFFFFF)
+    return addr.is_global and not addr.is_multicast
+
+
+def _check_peer(sock):
+    peer = sock.getpeername()[0]
+    if not peer_allowed(peer):
+        sock.close()
+        raise BlockedAddress(f"refusing to talk to non-global address {peer}")
+
+
+class GuardedHTTPConnection(http.client.HTTPConnection):
+    """Checks the connected peer before any request byte is written (connections are lazy)."""
+
+    def connect(self):
+        super().connect()
+        _check_peer(self.sock)
+
+
+class GuardedHTTPSConnection(http.client.HTTPSConnection):
+    def connect(self):
+        super().connect()
+        _check_peer(self.sock)
+
+
+_SSL = ssl.create_default_context()
+
+
+class GuardedHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(GuardedHTTPConnection, req)
+
+
+class GuardedHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(GuardedHTTPSConnection, req, context=_SSL)
+
+
 def _opener(*extra):
-    """An opener holding only http(s) handlers. Never build_opener/urlopen: those carry file:
-    and ftp: handlers, and a redirected POST becomes a GET that reports a false 200.
-    UnknownHandler is required, or an unknown scheme returns None silently."""
+    """The single chokepoint for every request this script makes. Holds only guarded http(s)
+    handlers. Never build_opener/urlopen: those carry file: and ftp: handlers, and a redirected
+    POST becomes a GET that reports a false 200. UnknownHandler is required, or an unknown
+    scheme returns None silently. No ProxyHandler: a proxy would become the checked peer."""
     op = urllib.request.OpenerDirector()
     for h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandler(),
-              urllib.request.HTTPErrorProcessor(), urllib.request.HTTPHandler(),
-              urllib.request.HTTPSHandler(), *extra):
+              urllib.request.HTTPErrorProcessor(), GuardedHTTPHandler(),
+              GuardedHTTPSHandler(), *extra):
         op.add_handler(h)
     return op
 
@@ -253,32 +343,103 @@ def notify(endpoint, source, target):
         return r.status
 
 
-# --- run --------------------------------------------------------------------------------
+# --- state and batch -------------------------------------------------------------------
 
-def main():
+def decide(published, now):
+    """'skip-old' once the essay is past MAX_AGE, else 'send'."""
+    return "skip-old" if now - published > MAX_AGE else "send"
+
+
+def load_sent(path):
+    """Set of (source, target) pairs a receiver already accepted."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            pairs = (line.rstrip("\n").split("\t") for line in f if line.strip())
+            return {tuple(p) for p in pairs if len(p) == 2}
+    except FileNotFoundError:
+        return set()
+
+
+def mark_sent(path, source, target):
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(f"{source}\t{target}\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def send_all(source, targets, state, dry=False):
+    """Send one Webmention per target. A target failing for any reason is one dead link: it is
+    logged and the batch continues. Returns the tally."""
+    done = load_sent(state)
+    log(f"{len(done)} pairs loaded from state")
+    tally = {"sent": 0, "already sent": 0, "no endpoint": 0, "failed": 0}
+    for target in targets:
+        if (source, target) in done:
+            tally["already sent"] += 1
+            log(f"already sent: {target}")
+            continue
+        try:
+            endpoint = discover(target)
+            if endpoint is None:
+                tally["no endpoint"] += 1
+                log(f"no endpoint: {target}")
+            elif dry:
+                log(f"would send: {target} -> {endpoint}")
+            else:
+                status = notify(endpoint, source, target)
+                mark_sent(state, source, target)
+                tally["sent"] += 1
+                log(f"sent {status}: {target} -> {endpoint}")
+        except Exception as e:  # deliberate: any hostile or dead target is just a dead link
+            tally["failed"] += 1
+            log(f"failed: {target}: {type(e).__name__}: {e}")
+    log(f"{len(done)} loaded, " + ", ".join(f"{v} {k}" for k, v in tally.items()))
+    return tally
+
+
+def load_entry(url, tries=10, wait=15):
+    """The essay's h-entry links, retrying while the deploy propagates. A 200 with no h-entry is
+    treated as not-up-yet (the CDN may still serve the old page); a page that never gains one
+    exits non-zero, because zero links and broken markup must not look the same."""
+    for n in range(tries):
+        try:
+            _, _, body = fetch(url)
+            links = entry_links(body or "")
+            if links is not None:
+                return links
+            log(f"{url} has no h-entry yet")
+        except Exception as e:
+            log(f"{url} not up yet ({type(e).__name__}: {e})")
+        if n < tries - 1:
+            time.sleep(wait)
+    sys.exit(f"send-webmentions: {url} never showed an h-entry; nothing sent")
+
+
+def main(entry_wait=15):
     dry = os.environ.get("DRY_RUN", "") == "1"
-    req = urllib.request.Request(FEED, headers={"User-Agent": UA})
-    with GET_OPENER.open(req, timeout=TIMEOUT) as r:
-        newest = newest_essay(r.read(MAX_BYTES).decode("utf-8"))
+    try:
+        req = urllib.request.Request(FEED, headers={"User-Agent": UA})
+        with GET_OPENER.open(req, timeout=TIMEOUT) as r:
+            newest = newest_essay(r.read(MAX_BYTES).decode("utf-8"))
+    except Exception as e:
+        sys.exit(f"send-webmentions: feed unreachable or unreadable ({type(e).__name__}: {e})")
     if newest is None:
         sys.exit("send-webmentions: feed has no items")
-    source, _published = newest
+    source, published = newest
+    if published.tzinfo is None:
+        published = published.replace(tzinfo=timezone.utc)
 
-    _, _, page = fetch(source)
-    links = entry_links(page or "")
-    if links is None:
-        sys.exit(f"send-webmentions: {source} has no h-entry")
+    if not dry:
+        open(STATE, "a").close()  # the cache save always has a path
+    action = decide(published, datetime.now(timezone.utc))
+    log(f"{action}: {source}{' (dry run)' if dry else ''}")
+    if action == "skip-old":
+        return
+
+    links = load_entry(source, wait=entry_wait)
     targets = external_targets(links, source)
-    log(f"{source}: {len(targets)} external targets{' (dry run)' if dry else ''}")
-    for target in targets:
-        endpoint = discover(target)
-        if endpoint is None:
-            log(f"no endpoint: {target}")
-            continue
-        if dry:
-            log(f"would send: {target} -> {endpoint}")
-            continue
-        log(f"sent {notify(endpoint, source, target)}: {target} -> {endpoint}")
+    log(f"{len(targets)} external targets")
+    send_all(source, targets, STATE, dry)
 
 
 if __name__ == "__main__":
