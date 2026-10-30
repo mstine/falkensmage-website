@@ -36,6 +36,7 @@
   </article>
 
   {{ if not $isPage }}
+  {{ partial "fa/mentions.html" . }}
   {{/* ===== AFTER — email signup (when configured), neighbors, back to index ===== */}}
   {{- $essays := partial "fa/essays.html" . -}}
   {{- $older := "" }}{{ $newer := "" }}{{ $seen := false -}}
