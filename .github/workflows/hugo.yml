@@ -78,6 +78,8 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./public
+          # Needed for public/.well-known/atproto-did (Bluesky domain handle).
+          include-hidden-files: true
 
   deploy:
     environment:

@@ -78,7 +78,7 @@ link_groups:
         icon: "mastodon"
         rel_me: true
       - name: "Bluesky"
-        url: "https://bsky.app/profile/falkensmage.bsky.social"
+        url: "https://bsky.app/profile/falkensmage.com"
         label: "Bluesky"
         icon: "bluesky"
       - name: "Instagram"
