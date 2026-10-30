@@ -14,4 +14,17 @@
     <span class="p-author h-card"><span class="p-name">{{ site.Params.author }}</span><data class="u-url" value="{{ site.BaseURL }}"></data>{{ with resources.Get "images/matt-stine.jpg" }}<data class="u-photo" value="{{ (.Fill "800x800 Center").Permalink }}"></data>{{ end }}</span> &middot;
     <a class="u-url" href="{{ .Permalink }}"><time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006, 3:04 PM" }}</time></a>
   </p>
+  {{- /*
+    Where this note was syndicated (data/syndication.json, written by scripts/syndicate-notes.py),
+    keyed by the path Hugo returns as .RelPermalink. u-syndication inside the h-entry is what lets
+    Bridgy and webmention consumers tie the copies back to this original. Plain {{ .url }}, no
+    safe-marking pipe: the value came from an API response, so html/template's URL filter is the check.
+  */ -}}
+  {{- $syn := index ((hugo.Data.syndication | default dict).notes | default dict) .RelPermalink | default dict }}
+  {{- if or $syn.mastodon $syn.bluesky }}
+  <p class="note__syndication">Also on
+    {{- with $syn.mastodon }} <a class="u-syndication" rel="syndication" href="{{ .url }}">Mastodon</a>{{ end }}
+    {{- with $syn.bluesky }} <a class="u-syndication" rel="syndication" href="{{ .url }}">Bluesky</a>{{ end }}
+  </p>
+  {{- end }}
 </article>
