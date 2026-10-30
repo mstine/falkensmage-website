@@ -293,7 +293,7 @@ public, data_dir = sys.argv[1], sys.argv[2]
 ENDPOINT = "https://webmention.io/falkensmage.com/webmention"
 ALLOWED = {"h2", "p", "ul", "li", "a", "span", "time"}
 KINDS = (("fa-mention--like", "likes"), ("fa-mention--repost", "reposts"),
-         ("fa-mention--reply", "replies"))
+         ("fa-mention--mention", "mentions"), ("fa-mention--reply", "replies"))
 out = []
 
 

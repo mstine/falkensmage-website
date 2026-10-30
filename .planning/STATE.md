@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-10-30T20:36:05.808Z"
+last_updated: "2026-10-30T20:57:03.806Z"
 last_activity: 2026-10-30
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: 423b5a3c7d153e5650b70495a9d0e20111cf3bc4
+state_head: 889122e429f5e6185c60ae90f261ffcf1d14e10b
 progress:
   total_phases: 1
   completed_phases: 1
@@ -169,6 +169,7 @@ Carried forward to v1.1 scoping:
 | 261030-fae | FA essay email step in deploy workflow | 2026-10-30 | 6f4d7db | [261030-fae-fa-email-step](./quick/261030-fae-fa-email-step/) |
 | 261030-k5d | IndieWeb run 1: microformats, probe, rel=me, webmention sender | 2026-10-30 | 6b1df87 | [261030-k5d-indieweb-run-1-publish-and-send-microfor](./quick/261030-k5d-indieweb-run-1-publish-and-send-microfor/) |
 | 261030-kwk | IndieWeb run 2: receive webmentions via webmention.io, render, blocklist, probe | 2026-10-30 | 423b5a3 | [261030-kwk-indieweb-run-2-receive-webmention-io-end](./quick/261030-kwk-indieweb-run-2-receive-webmention-io-end/) |
+| 261030-m09 | Render mention-of as Mentioned by, excluding own sites | 2026-10-30 | 889122e | [261030-m09-render-mention-of-webmentions-as-mention](./quick/261030-m09-render-mention-of-webmentions-as-mention/) |
 
 ## Session Continuity
 

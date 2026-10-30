@@ -2,7 +2,7 @@
 """pull-webmentions.py — pull the domain's received Webmentions into data/webmentions.json.
 
 Runs in the build job, after the last-good cache is restored and before `hugo`, on push and on
-the nightly cron. Hugo reads the file and renders replies, likes and reposts under each Feral
+the nightly cron. Hugo reads the file and renders replies, likes, reposts and mentions under each Feral
 Architecture essay (themes/arcaeon/layouts/partials/fa/mentions.html). Stdlib only, no JS on
 the page, no commit back to the repo.
 
@@ -64,8 +64,10 @@ webmention.io coverage (opt out explicitly, never by omission)
 --------------------------------------------------------------
 In: GET /api/mentions.jf2 with domain, per-page, page and sort-dir (Bearer header), and the
 same endpoint with target[] and no token (the witness); wm-property in-reply-to, like-of and
-repost-of are rendered. Out, on purpose: mention-of, bookmark-of and rsvp (counted in the log,
-not rendered; adding one is a KINDS entry and a template loop); wm-private mentions (dropped,
+repost-of and mention-of are rendered. Sources on the site's own domains (OWN_DOMAINS) are
+dropped and counted as own-site, whatever their kind, so the site's cross-links never render as
+responses from other people. Out, on purpose: bookmark-of and rsvp (counted in the log, not
+rendered; adding one is a KINDS entry and a template loop); wm-private mentions (dropped,
 never public); photo, video, audio and author photos (no third-party images); content.html;
 the `token` query parameter; since, since_id, the wm-property filter and sort-by; deleted.jf2
 and count (a full pull is authoritative); the legacy, atom, html and jsonp formats; export.jf2;
@@ -97,7 +99,11 @@ DATA = ROOT / "data" / "webmentions.json"
 BLOCKLIST = ROOT / "data" / "webmention-blocklist.json"
 NAME_CHARS = 80
 REPLY_CHARS = 600
-KINDS = {"like-of": "likes", "repost-of": "reposts", "in-reply-to": "replies"}
+KINDS = {"like-of": "likes", "repost-of": "reposts", "mention-of": "mentions",
+         "in-reply-to": "replies"}
+# Sources served from these hosts (or a subdomain) are the site's own pages, never a response.
+OWN_DOMAINS = ("falkensmage.com", "rewired.show", "feralarchitecture.com", "arcaeon.rocks",
+               "mytarotpulse.com", "psyche.sh")
 PULL_FAILED = 1
 MAX_PAGES = 100
 TRIES = 3
@@ -189,6 +195,14 @@ def _host(url):
         return (urllib.parse.urlsplit(url).hostname or "").lower().rstrip(".")
     except ValueError:
         return ""
+
+
+def is_own(url):
+    """True when the URL's parsed host is an own domain or a subdomain of one. The dot boundary
+    keeps falkensmage.com.evil.example and notpsyche.sh out; a host named only in the path or
+    userinfo is never read."""
+    host = _host(url)
+    return bool(host) and any(host == d or host.endswith("." + d) for d in OWN_DOMAINS)
 
 
 def _date(child):
@@ -311,13 +325,19 @@ def witness_total(paths):
 # --- normalize --------------------------------------------------------------------------
 
 def normalize(children):
-    """(pages, counts). pages maps '/fa/slug/' to {likes, reposts, replies} lists of records
+    """(pages, counts). pages maps '/fa/slug/' to {likes, reposts, mentions, replies} lists of records
     holding only name, url, source, author_url (and text, date, date_text on replies)."""
     pages, seen = {}, set()
-    counts = {"private": 0, "other": 0, "off_essay": 0, "unusable": 0}
+    counts = {"private": 0, "other": 0, "off_essay": 0, "unusable": 0,
+              "own": 0}
     for child in children:
         if child.get("wm-private"):
             counts["private"] += 1
+            continue
+        # A statement about the source, not the kind: the site linking to itself (both-hands to
+        # labeled-as-potatoes arrives as mention-of) is never a response from someone else.
+        if is_own(child.get("wm-source")):
+            counts["own"] += 1
             continue
         kind = KINDS.get(child.get("wm-property"))
         if kind is None:
@@ -502,10 +522,11 @@ def main():
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     write_data(DATA, pages, now)
     log(f"pulled {len(children)}: {_count(pages, ('likes',))} likes, "
-        f"{_count(pages, ('reposts',))} reposts, {_count(pages, ('replies',))} replies "
+        f"{_count(pages, ('reposts',))} reposts, {_count(pages, ('mentions',))} mentions, "
+        f"{_count(pages, ('replies',))} replies "
         f"on {len(pages)} essays; not rendered: {counts['private']} private, "
-        f"{counts['other']} other kinds, {counts['off_essay']} off-essay, {blocked} blocked, "
-        f"{counts['unusable']} unusable")
+        f"{counts['other']} other kinds, {counts['off_essay']} off-essay, "
+        f"{counts['own']} own-site, {blocked} blocked, {counts['unusable']} unusable")
     return 0
 
 

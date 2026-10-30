@@ -1,5 +1,5 @@
 {{- /*
-  fa/mentions.html — replies, likes and reposts received for an essay. Context: the Page.
+  fa/mentions.html — replies, mentions, likes and reposts received for an essay. Context: the Page.
 
   Three rules, each load-bearing:
   1. Rendered AFTER the closing article tag (see fa/single.html), so it sits outside the
@@ -28,6 +28,10 @@
     {{- with .reposts }}
     <p class="fa-mentions__row"><span class="fa-post__meta">Reposted by</span>
       {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--repost" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
+    {{- end }}
+    {{- with .mentions }}
+    <p class="fa-mentions__row"><span class="fa-post__meta">Mentioned by</span>
+      {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--mention" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
     {{- end }}
     {{- with .replies }}
     <p class="fa-mentions__row"><span class="fa-post__meta">Replies</span></p>
