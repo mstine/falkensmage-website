@@ -10,11 +10,20 @@
 # can fail: tests/test-notes.py breaks the output in each way a regression would and
 # watches this script go red.
 #
+# The record of where each note was syndicated (data/syndication.json) is held to the built
+# pages the same way: a dropped u-syndication link breaks backfeed with no visible sign, and a
+# note that is due but has no page, or scheduled but already built, is invisible until a reader
+# or a post finds it. The note format has one definition, scripts/syndicate-notes.py, which this
+# probe loads through importlib rather than restating.
+#
 # html.parser, never grep: `hugo --minify` writes unquoted attributes and shortens
 # entities. The python block prints PASS/FAIL lines and ends with DONE; a crash leaves DONE
 # out, which is a red, not a blank.
 #
-# VALIDATE_NOTES_PUBLIC overrides the build directory (the tests point it at temp builds).
+# Overrides (the tests point them at temp builds): VALIDATE_NOTES_PUBLIC the build directory,
+# VALIDATE_NOTES_DATA the directory holding syndication.json, VALIDATE_NOTES_CONTENT the notes
+# directory, VALIDATE_NOTES_NOW an RFC 3339 instant that pins "now" (a build made with
+# `hugo --clock` is judged at its own clock, not the wall clock).
 
 set -uo pipefail
 
@@ -22,17 +31,20 @@ PASS=0
 FAIL=0
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PUBLIC="${VALIDATE_NOTES_PUBLIC:-$PROJECT_ROOT/public}"
+DATA="${VALIDATE_NOTES_DATA:-$PROJECT_ROOT/data}"
+CONTENT="${VALIDATE_NOTES_CONTENT:-$PROJECT_ROOT/content/notes}"
+NOW="${VALIDATE_NOTES_NOW:-}"
 
 pass() { echo "  PASS  $1"; PASS=$((PASS + 1)); }
 fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
 
 echo "Notes (/notes/)"
 
-notes_out=$(python3 -I - "$PUBLIC" <<'PY'
-import glob, os, sys
+notes_out=$(python3 -I - "$PUBLIC" "$DATA" "$CONTENT" "$PROJECT_ROOT/scripts/syndicate-notes.py" "$NOW" <<'PY'
+import datetime, glob, importlib.util, os, sys
 from html.parser import HTMLParser
 
-public = sys.argv[1]
+public, data_dir, content_dir, script, now_override = sys.argv[1:6]
 out = []
 
 
@@ -259,6 +271,124 @@ else:
         else:
             ok(f"nav Notes link shown, {n} notes published")
 
+# --- the record, the content files and the built pages, held against each other
+
+spec = importlib.util.spec_from_file_location("syndicate_notes", script)
+sn = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sn)
+
+if now_override:
+    now = datetime.datetime.fromisoformat(now_override.replace("Z", "+00:00"))
+else:
+    now = datetime.datetime.now(datetime.timezone.utc)
+GRACE = datetime.timedelta(minutes=10)
+
+
+class Syn(HTMLParser):
+    """The u-syndication anchors inside the first h-entry: [(href, rel)]."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.anchors = []
+        self.entry = None
+
+    def handle_starttag(self, tag, attrs):
+        a = {}
+        for k, v in attrs:
+            a.setdefault(k.lower(), v or "")
+        toks = a.get("class", "").split()
+        if self.entry is False:
+            return
+        if self.entry is None:
+            if "h-entry" in toks:
+                self.entry = [tag, 1]
+            return
+        if tag == self.entry[0]:
+            self.entry[1] += 1
+        if tag == "a" and "u-syndication" in toks:
+            self.anchors.append((a.get("href", ""), a.get("rel", "")))
+
+    def handle_endtag(self, tag):
+        if self.entry and tag == self.entry[0]:
+            self.entry[1] -= 1
+            if self.entry[1] == 0:
+                self.entry = False
+
+
+def syndication(path):
+    p = Syn()
+    p.feed(open(path, encoding="utf-8", errors="replace").read())
+    p.close()
+    return p.anchors
+
+
+# 4. every note file follows the one format
+try:
+    note_files = sn.load_notes(content_dir)
+    ok(f"{len(note_files)} note files follow the format")
+except sn.NoteError as e:
+    note_files = None
+    bad(f"format: {e}")
+
+# 5. built pages and dates agree: due means a page, scheduled means none. A note that came due
+# in the last 10 minutes may simply not be deployed yet, which is a race and not a bug; a
+# date after now was also after the build, so the future case has no race.
+if note_files is not None:
+    due_problems = []
+    for note in note_files:
+        has_page = note.path in published
+        if note.draft or note.date > now:
+            if has_page:
+                due_problems.append(f"{note.path} is a draft or dated in the future but has a page")
+        elif note.date <= now - GRACE and not has_page:
+            due_problems.append(f"{note.path} came due more than 10 minutes ago but has no page")
+    for line in due_problems:
+        bad("due: " + line)
+    if not due_problems:
+        ok("every due note has a page and no scheduled note does")
+
+# 6. every syndicated note shows exactly its recorded u-syndication links
+HOSTS = {"mastodon": "mastodon.social", "bluesky": "bsky.app"}
+try:
+    state = sn.load_state(os.path.join(data_dir, "syndication.json"))
+except sn.StateError as e:
+    state = None
+    bad(f"state: {e}")
+if state is not None:
+    syn_problems = []
+    retired = 0
+    for key, platforms in sorted(state["notes"].items()):
+        for platform, rec in platforms.items():
+            u = urlsplit(rec["url"])
+            if u.scheme != "https" or u.hostname != HOSTS[platform] or u.username is not None:
+                syn_problems.append(f"{key} {platform} url is not https on {HOSTS[platform]}")
+    for key in sorted(published | set(state["notes"])):
+        slug = key.strip("/").split("/")[-1]
+        records = state["notes"].get(key, {})
+        if not os.path.isfile(os.path.join(content_dir, slug + ".md")):
+            if records:
+                retired += 1  # a deliberately retired note: its record stays, its page is gone
+            continue
+        want = sorted(r["url"] for r in records.values())
+        page = os.path.join(public, key.strip("/"), "index.html")
+        if not os.path.isfile(page):
+            if want:
+                syn_problems.append(f"{key} is recorded as syndicated but has no page")
+            continue
+        anchors = syndication(page)
+        got = sorted(href for href, _ in anchors)
+        if got != want:
+            syn_problems.append(f"{key} shows {len(got)} u-syndication links {got}, expected {len(want)} {want}")
+        for href, rel in anchors:
+            if "syndication" not in rel.split():
+                syn_problems.append(f"{key} u-syndication link to {href} lacks rel=syndication")
+    for line in syn_problems:
+        bad("syndication: " + line)
+    if not syn_problems:
+        ok("every syndicated note shows its u-syndication links")
+    if retired:
+        out.append(f"INFO {retired} recorded notes have no content file and were skipped as retired")
+
 print("\n".join(out))
 print("DONE")
 PY
@@ -268,6 +398,7 @@ while IFS= read -r line; do
   case "$line" in
     "PASS "*) pass "${line#PASS }" ;;
     "FAIL "*) fail "${line#FAIL }" ;;
+    "INFO "*) echo "  info  ${line#INFO }" ;;
     DONE) notes_done=1 ;;
   esac
 done <<< "$notes_out"

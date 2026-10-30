@@ -184,8 +184,17 @@ def build_site(dest, notes_dir, data_dir=None, work=None, clock=None):
     return work
 
 
-def run_probe(public):
-    env = dict(os.environ, VALIDATE_NOTES_PUBLIC=str(public))
+def run_probe(public, content=None, data=None, now=None):
+    """Run validate-notes.sh over a build. content defaults to the notes directory the build was
+    made from (Builds and ProbeMutations keep it next to public/), data to the repo's data/ (an
+    empty record), now to the wall clock."""
+    public = Path(public)
+    env = dict(os.environ, VALIDATE_NOTES_PUBLIC=str(public),
+               VALIDATE_NOTES_CONTENT=str(content if content is not None else public.parent / "notes"))
+    if data is not None:
+        env["VALIDATE_NOTES_DATA"] = str(data)
+    if now is not None:
+        env["VALIDATE_NOTES_NOW"] = now
     r = subprocess.run(["bash", str(ROOT / "tests" / "validate-notes.sh")], cwd=ROOT, env=env,
                        capture_output=True, text=True)
     return r.returncode, r.stdout + r.stderr
@@ -428,13 +437,35 @@ class Archetype(unittest.TestCase):
 
 class NotesProbe(unittest.TestCase):
     def test_the_probe_passes_on_every_build_and_prints_its_h_entry_line(self):
-        for name, n in (("published", 2), ("due", 3), ("empty", 0), ("future-only", 0)):
-            rc, out = run_probe(Builds.get(name))
+        # the "due" build was made at a pinned clock, so the probe is told the same instant
+        for name, n, files, now in (("published", 2, 3, None), ("due", 3, 3, "2100-01-01T00:00:00Z"),
+                                    ("empty", 0, 0, None), ("future-only", 0, 1, None)):
+            rc, out = run_probe(Builds.get(name), now=now)
             self.assertEqual(rc, 0, f"{name}\n{out}")
+            self.assertIn(f"PASS  {files} note files follow the format", out)
+            self.assertIn("PASS  every due note has a page and no scheduled note does", out)
+            self.assertIn("PASS  every syndicated note shows its u-syndication links", out)
             self.assertIn(f"PASS  {n} notes carry complete h-entry markup", out)
             self.assertIn(f"PASS  the /notes/ index and feed match {n} published notes", out)
             self.assertIn("PASS  nav Notes link hidden, no note published" if n == 0
                           else f"PASS  nav Notes link shown, {n} notes published", out)
+
+
+SYN_RECORDS = {
+    "/notes/first/": {
+        "mastodon": {"id": "101", "posted": "2026-01-05T16:00:00Z",
+                     "url": "https://mastodon.social/@falkensmage/101"},
+        "bluesky": {"id": "at://did:plc:x/app.bsky.feed.post/3abc", "posted": "2026-01-05T16:00:05Z",
+                    "url": "https://bsky.app/profile/falkensmage.bsky.social/post/3abc"}},
+    "/notes/second/": {
+        "mastodon": {"id": "102", "posted": "2026-02-11T00:45:00Z",
+                     "url": "https://mastodon.social/@falkensmage/102"}},
+}
+
+
+def syn_doc(notes=None):
+    return json.dumps({"_comment": "fixture", "notes": SYN_RECORDS if notes is None else notes},
+                      ensure_ascii=False, indent=1, sort_keys=True) + "\n"
 
 
 MENTIONS = {
@@ -477,6 +508,10 @@ class ProbeMutations(unittest.TestCase):
         cls.data = cls.tmp / "data"
         cls.data.mkdir()
         (cls.data / "webmentions.json").write_text(json.dumps(MENTIONS))
+        (cls.data / "syndication.json").write_text(syn_doc())
+        cls.empty_data = cls.tmp / "empty-data"
+        cls.empty_data.mkdir()
+        (cls.empty_data / "syndication.json").write_text(syn_doc({}))
         cls.fa_data = cls.tmp / "fa-data"
         cls.fa_data.mkdir()
         (cls.fa_data / "webmentions.json").write_text(json.dumps(MENTIONS))
@@ -494,7 +529,10 @@ class ProbeMutations(unittest.TestCase):
         cls.empty_public = cls.tmp / "empty-public"
         build_site(cls.empty_public, empty, work=cls.tmp / "work-empty")
         cls.page = cls.public / "notes" / "first" / "index.html"
+        cls.second = cls.public / "notes" / "second" / "index.html"
         cls.index = cls.public / "notes" / "index.html"
+        cls.content = cls.tmp / "notes"
+        cls.empty_content = cls.tmp / "empty-notes"
 
     @classmethod
     def tearDownClass(cls):
@@ -508,8 +546,34 @@ class ProbeMutations(unittest.TestCase):
         self.assertNotEqual(new, original.decode("utf-8"), "the mutation changed nothing")
         Path(path).write_text(new, encoding="utf-8")
 
-    def assert_notes_red(self, needle, public=None):
-        rc, out = run_probe(public or self.public)
+    def probe(self, public=None, content=None, data=None, now=None):
+        """The notes probe over the fixture build (or, given `public`, the empty-section build)."""
+        if public is None:
+            return run_probe(self.public, content or self.content, data or self.data, now)
+        return run_probe(public, content or self.empty_content, data or self.empty_data, now)
+
+    def temp_dir(self, name):
+        path = self.tmp / name
+        shutil.rmtree(path, ignore_errors=True)
+        path.mkdir()
+        return path
+
+    def data_with(self, text):
+        path = self.temp_dir("data-" + str(abs(hash(text))))
+        (path / "syndication.json").write_text(text)
+        return path
+
+    def content_with(self, **files):
+        """A copy of the fixture notes directory plus the given files (name -> text)."""
+        path = self.tmp / ("content-" + str(abs(hash(tuple(sorted(files.items()))))))
+        shutil.rmtree(path, ignore_errors=True)
+        shutil.copytree(self.content, path)
+        for name, text in files.items():
+            (path / name).write_text(text)
+        return path
+
+    def assert_notes_red(self, needle, public=None, **kw):
+        rc, out = self.probe(public, **kw)
         self.assertNotEqual(rc, 0, out)
         self.assertIn(needle, out)
         return out
@@ -523,8 +587,14 @@ class ProbeMutations(unittest.TestCase):
     # --- baselines: green first, and not vacuous
 
     def test_baselines_are_green(self):
-        rc, out = run_probe(self.public)
+        rc, out = self.probe()
         self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  3 note files follow the format", out)
+        self.assertIn("PASS  every due note has a page and no scheduled note does", out)
+        self.assertIn("PASS  every syndicated note shows its u-syndication links", out)
+        # not vacuous: the pages really carry the links the probe compares
+        self.assertEqual(len(syndication_anchors(self.page)), 2)
+        self.assertEqual(len(syndication_anchors(self.second)), 1)
         self.assertIn("PASS  2 notes carry complete h-entry markup", out)
         self.assertIn("PASS  the /notes/ index and feed match 2 published notes", out)
         self.assertIn("PASS  nav Notes link shown, 2 notes published", out)
@@ -543,9 +613,10 @@ class ProbeMutations(unittest.TestCase):
         self.assertEqual(html[a:b].count('rel="nofollow ugc"'), 3)
 
     def test_with_no_notes_both_probes_pass(self):
-        rc, out = run_probe(self.empty_public)
+        rc, out = self.probe(self.empty_public)
         self.assertEqual(rc, 0, out)
         self.assertIn("PASS  0 notes carry complete h-entry markup", out)
+        self.assertIn("PASS  0 note files follow the format", out)
         rc, out = run_fa_probe(self.empty_public, self.bare_data)
         self.assertEqual(rc, 0, out)
 
@@ -613,6 +684,94 @@ class ProbeMutations(unittest.TestCase):
         home = self.public / "index.html"
         self.mutate(home, lambda h: re.sub(r"<link rel=feed[^>]*>", "", h, count=1))
         self.assert_notes_red("the head has no rel=feed link to /notes/")
+
+    # --- validate-notes.sh, the record held to the pages
+
+    def test_a_u_syndication_anchor_removed(self):
+        self.mutate(self.page, lambda h: re.sub(r"<a [^>]*u-syndication[^>]*bsky\.app[^>]*>Bluesky</a>", "", h, count=1))
+        self.assert_notes_red("syndication: /notes/first/ shows 1 u-syndication links")
+
+    def test_a_u_syndication_href_changed(self):
+        self.mutate(self.page, lambda h: h.replace("/@falkensmage/101", "/@falkensmage/999", 1))
+        self.assert_notes_red("syndication: /notes/first/ shows 2 u-syndication links")
+
+    def test_a_u_syndication_anchor_with_no_record(self):
+        self.mutate(self.second, lambda h: h.replace(
+            "</article>", "<a class=u-syndication rel=syndication href=https://bsky.app/profile/x/post/1>Bluesky</a></article>", 1))
+        self.assert_notes_red("syndication: /notes/second/ shows 2 u-syndication links")
+
+    def test_rel_syndication_removed(self):
+        self.mutate(self.page, lambda h: re.sub(r" ?rel=syndication", "", h, count=1))
+        out = self.assert_notes_red("syndication: /notes/first/ u-syndication link to")
+        self.assertIn("lacks rel=syndication", out)
+
+    def test_a_due_notes_page_deleted(self):
+        original = self.second.read_bytes()
+        self.addCleanup(self.second.write_bytes, original)
+        self.second.unlink()
+        self.assert_notes_red("due: /notes/second/ came due more than 10 minutes ago but has no page")
+
+    def test_a_page_added_for_a_future_note(self):
+        later = self.public / "notes" / "later"
+        later.mkdir()
+        self.addCleanup(shutil.rmtree, later, ignore_errors=True)
+        (later / "index.html").write_bytes(self.page.read_bytes())
+        self.assert_notes_red("due: /notes/later/ is a draft or dated in the future but has a page")
+
+    def test_a_page_for_a_draft(self):
+        drafted = self.content_with(**{"first.md": f"---\ndate: {PAST_ONE[0]}\ndraft: true\n---\n{PAST_ONE[1]}"})
+        self.assert_notes_red("due: /notes/first/ is a draft or dated in the future but has a page",
+                              content=drafted)
+
+    def test_a_corrupt_state_file(self):
+        self.assert_notes_red("state: syndication.json: is not valid JSON", data=self.data_with("{nope"))
+
+    def test_a_record_with_a_host_outside_the_two_allowed(self):
+        records = json.loads(json.dumps(SYN_RECORDS))
+        records["/notes/first/"]["mastodon"]["url"] = "https://evil.example/@falkensmage/101"
+        self.assert_notes_red("syndication: /notes/first/ mastodon url is not https on mastodon.social",
+                              data=self.data_with(syn_doc(records)))
+
+    def test_a_record_on_the_wrong_scheme_or_a_lookalike_host(self):
+        for url in ("http://mastodon.social/@falkensmage/101",
+                    "https://mastodon.social.evil.example/@falkensmage/101",
+                    "https://evil.example@mastodon.social/@falkensmage/101"):
+            with self.subTest(url):
+                records = json.loads(json.dumps(SYN_RECORDS))
+                records["/notes/first/"]["mastodon"]["url"] = url
+                self.assert_notes_red("/notes/first/ mastodon url is not https on mastodon.social",
+                                      data=self.data_with(syn_doc(records)))
+
+    def test_a_note_file_with_an_empty_body(self):
+        content = self.content_with(**{"empty.md": "---\ndate: 2026-02-01T00:00:00Z\n---\n"})
+        self.assert_notes_red("format: empty.md: the body is empty", content=content)
+
+    def test_a_note_file_with_a_bad_name_or_date_is_named(self):
+        content = self.content_with(**{"Bad_Name.md": "---\ndate: 2026-02-01T00:00:00Z\n---\nHi\n"})
+        self.assert_notes_red("format: Bad_Name.md", content=content)
+
+    def test_a_due_note_seconds_old_with_no_page_is_a_race_not_a_bug(self):
+        now = "2026-06-01T12:00:00Z"
+        fresh = self.content_with(**{"fresh.md": "---\ndate: 2026-06-01T11:59:30Z\n---\nJust now.\n"})
+        rc, out = self.probe(content=fresh, now=now)
+        self.assertEqual(rc, 0, out)
+        stale = self.content_with(**{"stale.md": "---\ndate: 2026-06-01T11:49:00Z\n---\nEleven minutes ago.\n"})
+        self.assert_notes_red("due: /notes/stale/ came due more than 10 minutes ago", content=stale, now=now)
+
+    def test_a_record_whose_content_file_is_gone_is_counted_and_skipped(self):
+        records = json.loads(json.dumps(SYN_RECORDS))
+        records["/notes/gone/"] = {"mastodon": {"id": "7", "posted": "2026-01-01T00:00:00Z",
+                                                "url": "https://mastodon.social/@falkensmage/7"}}
+        rc, out = self.probe(data=self.data_with(syn_doc(records)))
+        self.assertEqual(rc, 0, out)
+        self.assertIn("1 recorded notes have no content file and were skipped as retired", out)
+
+    def test_a_recorded_note_with_no_page_is_red(self):
+        records = json.loads(json.dumps(SYN_RECORDS))
+        records["/notes/later/"] = {"mastodon": {"id": "8", "posted": "2026-01-01T00:00:00Z",
+                                                 "url": "https://mastodon.social/@falkensmage/8"}}
+        self.assert_notes_red("syndication: /notes/later/ is recorded as syndicated but has no page",
+                              data=self.data_with(syn_doc(records)))
 
     # --- validate-fa.sh, over note pages
 
