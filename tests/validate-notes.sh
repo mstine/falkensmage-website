@@ -10,6 +10,11 @@
 # can fail: tests/test-notes.py breaks the output in each way a regression would and
 # watches this script go red.
 #
+# A bare domain in a note body (example.com/path, falkensmage.com) is plain text to Hugo and to
+# the syndication script: only URLs with a scheme become links, so the copy that goes out to
+# Mastodon and Bluesky carries a dead string. The probe reads each note's e-content text outside
+# anchors and names the note and the match.
+#
 # The record of where each note was syndicated (data/syndication.json) is held to the built
 # pages the same way: a dropped u-syndication link breaks backfeed with no visible sign, and a
 # note that is due but has no page, or scheduled but already built, is invisible until a reader
@@ -41,7 +46,7 @@ fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
 echo "Notes (/notes/)"
 
 notes_out=$(python3 -I -B - "$PUBLIC" "$DATA" "$CONTENT" "$PROJECT_ROOT/scripts/syndicate-notes.py" "$NOW" <<'PY'
-import datetime, glob, importlib.util, os, sys
+import datetime, glob, importlib.util, os, re, sys
 from html.parser import HTMLParser
 
 public, data_dir, content_dir, script, now_override = sys.argv[1:6]
@@ -119,6 +124,75 @@ class Note(HTMLParser):
             self.econtent_text += data
 
 
+# A bare domain: a hostname of dotted labels ending in 2+ letters followed by a slash
+# (example.com/path), or, without a slash, a host ending in one of a short list of common TLDs
+# (falkensmage.com). The short list is deliberate: a generic host-only rule would flag file.txt
+# and Node.js in ordinary prose. The lookbehind skips anything attached to a word character,
+# @, dot, colon, hyphen or slash, so a scheme'd URL written as text (https://x.com/y), an
+# @handle and a mid-word fragment never match.
+BARE_DOMAIN = re.compile(
+    r"(?<![\w@.:/-])"
+    r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+"
+    r"(?:[a-z]{2,}/\S*|(?:com|org|net|io|dev|social|me)(?![\w-]))",
+    re.I)
+
+
+class Bare(HTMLParser):
+    """The text of the first h-entry's e-content that sits outside any anchor. It never reads the
+    card header, so the handle in it cannot trip the check."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.entries = 0
+        self.entry = None         # [tag, depth] while inside the first h-entry
+        self.econtent = None      # [tag, depth] while inside e-content
+        self.seen = False         # e-content already read
+        self.anchor = 0           # open anchors inside e-content
+        self.text = ""
+
+    def handle_starttag(self, tag, attrs):
+        a = {}
+        for k, v in attrs:
+            a.setdefault(k.lower(), v or "")
+        toks = set(a.get("class", "").split())
+        if self.entry is None:
+            if "h-entry" in toks:
+                self.entries += 1
+                if self.entries == 1:
+                    self.entry = [tag, 1]
+            return
+        if tag == self.entry[0]:
+            self.entry[1] += 1
+        if self.econtent is not None:
+            if tag == self.econtent[0]:
+                self.econtent[1] += 1
+            if tag == "a":
+                self.anchor += 1
+        elif "e-content" in toks and not self.seen:
+            self.econtent = [tag, 1]
+            self.seen = True
+
+    def handle_endtag(self, tag):
+        if self.entry is None:
+            return
+        if self.econtent is not None:
+            if tag == "a" and self.anchor:
+                self.anchor -= 1
+            if tag == self.econtent[0]:
+                self.econtent[1] -= 1
+                if self.econtent[1] == 0:
+                    self.econtent = None
+                    self.anchor = 0
+        if tag == self.entry[0]:
+            self.entry[1] -= 1
+            if self.entry[1] == 0:
+                self.entry = None
+
+    def handle_data(self, data):
+        if self.econtent is not None and not self.anchor:
+            self.text += data + " "
+
+
 def read(path):
     p = Note()
     p.feed(open(path, encoding="utf-8", errors="replace").read())
@@ -149,6 +223,23 @@ for line in problems:
     bad("h-entry: " + line)
 if not problems:
     ok(f"{len(notes)} notes carry complete h-entry markup")
+
+
+# 1b. no note carries a bare domain outside a link
+bare_problems = []
+for path in notes:
+    where = "/" + os.path.relpath(os.path.dirname(path), public) + "/"
+    b = Bare()
+    b.feed(open(path, encoding="utf-8", errors="replace").read())
+    b.close()
+    hits = sorted({mt.group(0).rstrip(".,;:!?)") for mt in BARE_DOMAIN.finditer(b.text)})
+    for hit in hits:
+        bare_problems.append(f'{where} has "{hit}" outside a link, write it with https:// '
+                             "because syndication links only URLs with a scheme")
+for line in bare_problems:
+    bad("bare domain: " + line)
+if not bare_problems:
+    ok("no note has a bare domain outside a link")
 
 published = {"/" + os.path.relpath(os.path.dirname(p), public) + "/" for p in notes}
 n = len(published)

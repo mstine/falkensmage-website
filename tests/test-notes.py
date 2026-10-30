@@ -650,6 +650,47 @@ class ProbeMutations(unittest.TestCase):
         self.mutate(self.page, lambda h: h.replace("u-photo", "u-phot", 1))
         self.assert_notes_red(f"{FIRST} missing: h-card>u-photo")
 
+    def with_text(self, text):
+        """Put `text` into the first note's e-content, as plain text after 'A second paragraph'."""
+        # the head repeats the text (description meta), so edit inside the article, not the first hit
+        def edit(h):
+            i = h.index("A second paragraph", h.index('<article class="h-entry note">'))
+            return h[:i] + "A second paragraph " + text + h[i + len("A second paragraph"):]
+        self.mutate(self.page, edit)
+
+    def test_bare_domain_with_a_path(self):
+        self.with_text("example.com/path")
+        out = self.assert_notes_red(f'bare domain: {FIRST} has "example.com/path" outside a link')
+        self.assertIn("https://", out)
+
+    def test_bare_domain_host_only(self):
+        self.with_text("falkensmage.com")
+        self.assert_notes_red(f'bare domain: {FIRST} has "falkensmage.com" outside a link')
+
+    def test_bare_domain_inside_an_anchor_is_fine(self):
+        self.with_text("<a href=https://example.com/path>example.com/path</a>")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  no note has a bare domain outside a link", out)
+
+    def test_bare_domain_with_a_scheme_is_fine(self):
+        self.with_text("https://example.com/path and http://falkensmage.com")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def test_bare_domain_check_ignores_handles_and_file_names(self):
+        self.with_text("@falkensmage.com, file.txt, Node.js, e.g. this, v1.5/2 and a.b")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def test_bare_domain_in_the_card_header_is_not_read(self):
+        # the handle sits in the header, outside e-content; a bare host there is not the body's
+        self.mutate(self.page, lambda h: h.replace(
+            '<article class="h-entry note">',
+            '<article class="h-entry note"><span>falkensmage.com/x</span>', 1))
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
     def test_h_entry_removed_from_the_index(self):
         self.mutate(self.index, lambda h: re.sub(
             r'<article class="h-entry note">.*?</article>', "", h, count=1, flags=re.S))
@@ -1352,6 +1393,24 @@ class DueParity(unittest.TestCase):
         self.assertNotIn("draftpast", got)
         self.assertNotIn("after", got)
         self.assertEqual(got["equal"], ["mastodon", "bluesky"])
+
+    def test_edited_body_is_not_pending(self):
+        # Note carries no body and state is keyed by note.path, so an edited body cannot make a
+        # recorded note due again. By construction; this pins it.
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        path = tmp / "edited.md"
+        date = "2026-02-27T09:00:00-06:00"
+        path.write_text(f"---\ndate: {date}\n---\nFirst wording of the body.\n")
+        before = m.read_note(path)
+        path.write_text(f"---\ndate: {date}\n---\nA different wording, with https://falkensmage.com/notes/.\n")
+        after = m.read_note(path)
+        self.assertEqual(before, after)
+        self.assertEqual(m.tid(before), m.tid(after))
+        done = {"url": "https://example.test/1"}
+        state = {"notes": {before.path: {"mastodon": done, "bluesky": done}}}
+        self.assertEqual(m.pending([before], state, NOW), [])
+        self.assertEqual(m.pending([after], state, NOW), [])
 
     def test_pending_is_oldest_first(self):
         Builds.get("syn")
