@@ -6,7 +6,12 @@
   {{/* FA pages carry the publication's name — that's what readers search for */}}
   {{ $inFA := eq .Section "fa" }}
   {{ $siteName := cond $inFA "Feral Architecture" site.Title }}
-  <title>{{ if .IsHome }}{{ site.Title }}{{ else if and $inFA .IsSection }}Feral Architecture — essays by Matt Stine{{ else }}{{ .Title }} | {{ $siteName }}{{ end }}</title>
+  {{/* A note has no title: its page title and description come from its own text.
+       Cast through printf "%s" so truncate's safe-HTML result is escaped on output. */}}
+  {{ $isNote := and (eq .Section "notes") .IsPage }}
+  {{ $noteText := "" }}
+  {{ if $isNote }}{{ $noteText = .Plain | htmlUnescape | plainify }}{{ end }}
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else if $isNote }}{{ printf "%s" ($noteText | truncate 60) }} | {{ site.Title }}{{ else if and $inFA .IsSection }}Feral Architecture — essays by Matt Stine{{ else }}{{ .Title }} | {{ $siteName }}{{ end }}</title>
   {{/* Per-page social metadata. FA essays share as articles with their own title,
        dek and cover; every other page keeps the site-wide Falken's Mage card. */}}
   {{ $desc := "Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft." }}
@@ -20,6 +25,10 @@
     {{ with .Params.subtitle }}{{ $desc = . }}{{ end }}
     {{ with index site.Data.fa_descriptions .Params.slug }}{{ $desc = . }}{{ end }}
     {{ with .Resources.GetMatch "cover.jpg" }}{{ $ogImgSrc = . }}{{ end }}
+  {{ else if $isNote }}
+    {{ $ogType = "article" }}
+    {{ $ogTitle = "A note from Falken's Mage" }}
+    {{ $desc = printf "%s" ($noteText | truncate 160) }}
   {{ else if and (eq .Section "fa") .IsSection }}
     {{ $ogTitle = "Feral Architecture — essays by Matt Stine" }}
     {{ with .Params.lede }}{{ $desc = . }}{{ end }}
@@ -46,7 +55,7 @@
   <meta property="og:title" content="{{ $ogTitle }}">
   <meta property="og:description" content="{{ $desc }}">
   <meta property="og:url" content="{{ .Permalink }}">
-  {{ if $isEssay }}
+  {{ if or $isEssay $isNote }}
   <meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
   <meta property="article:author" content="{{ site.Params.author }}">
   {{ end }}

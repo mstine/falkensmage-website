@@ -1,0 +1,17 @@
+{{- /*
+  notes/entry.html — the one h-entry for a note. Context: the Page.
+
+  Used by the note's own page and by the /notes/ index, so the markup cannot drift between
+  them. There is deliberately NO entry-level p-name: a title-less entry is what makes it a
+  note to every microformats consumer, and Bridgy treats a named entry as an article.
+  Responses (fa/mentions.html) are rendered by the caller, after this article closes.
+*/ -}}
+<article class="h-entry note">
+  <div class="offer-body page-body fa-prose e-content">
+    {{ .Content }}
+  </div>
+  <p class="note__meta">
+    <span class="p-author h-card"><span class="p-name">{{ site.Params.author }}</span><data class="u-url" value="{{ site.BaseURL }}"></data>{{ with resources.Get "images/matt-stine.jpg" }}<data class="u-photo" value="{{ (.Fill "800x800 Center").Permalink }}"></data>{{ end }}</span> &middot;
+    <a class="u-url" href="{{ .Permalink }}"><time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006, 3:04 PM" }}</time></a>
+  </p>
+</article>
