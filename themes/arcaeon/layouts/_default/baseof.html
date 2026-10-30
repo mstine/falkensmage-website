@@ -70,6 +70,8 @@
   {{/* IndieLogin sign-in for webmention.io — the GitHub profile links back here */}}
   <link rel="me" href="https://github.com/mstine">
   <meta name="fediverse:creator" content="@falkensmage@mastodon.social">
+  {{/* Webmention endpoint: replies, likes and reposts of any page are received by webmention.io and pulled into the essay pages at build (scripts/pull-webmentions.py) */}}
+  <link rel="webmention" href="https://webmention.io/falkensmage.com/webmention">
 
   {{/* FA feed discovery — readers and Buttondown find /fa/index.xml from any page */}}
   {{ with site.GetPage "/fa" }}{{ with .OutputFormats.Get "rss" }}

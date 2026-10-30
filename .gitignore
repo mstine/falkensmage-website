@@ -5,3 +5,4 @@ public/
 .DS_Store
 __pycache__/
 .webmentions-sent
+data/webmentions.json

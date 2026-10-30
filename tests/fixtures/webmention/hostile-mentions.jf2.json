@@ -1,0 +1,264 @@
+{
+ "type": "feed",
+ "name": "Webmentions",
+ "paging": {
+  "per-page": 1000,
+  "page": 0,
+  "total": 15,
+  "total-pages": 1
+ },
+ "children": [
+  {
+   "type": "entry",
+   "wm-id": 2001,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://mallory.example/r/1",
+   "wm-private": false,
+   "url": "https://mallory.example/r/1",
+   "author": {
+    "type": "card",
+    "name": "Mallory",
+    "url": "https://mallory.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "content-type": "text/plain",
+    "text": "<script>alert(1)</script><img src=x onerror=alert(2)> \" onmouseover=alert(3) x=\"",
+    "html": "<p>HTMLSENTINEL-7f3a</p>"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2002,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://tagger.example/r/2",
+   "wm-private": false,
+   "url": "https://tagger.example/r/2",
+   "author": {
+    "type": "card",
+    "name": "</a><script>alert(4)</script>\u202eevil",
+    "url": "https://tagger.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "text": "plain words"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2003,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://cmd.example/r/3",
+   "wm-private": false,
+   "url": "https://cmd.example/r/3",
+   "author": {
+    "type": "card",
+    "name": "::error::pwned\n::set-output name=x::y",
+    "url": "https://cmd.example/"
+   },
+   "published": null,
+   "content": {
+    "text": "::error::this line starts like a workflow command\n::warning::and so does this"
+   },
+   "wm-received": "2026-03-05T08:00:00Z"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2004,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://js.example/a",
+   "wm-private": false,
+   "url": "javascript:alert(1)",
+   "author": {
+    "type": "card",
+    "name": "Jay",
+    "url": "javascript:alert(1)"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "text": "bad url, good source"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2005,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://data.example/b",
+   "wm-private": false,
+   "url": "data:text/html,x",
+   "author": {
+    "type": "card",
+    "name": "Dana",
+    "url": "data:text/html,x"
+   },
+   "published": "2026-03-04T12:00:00+00:00"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2006,
+   "wm-property": "repost-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://rel.example/c",
+   "wm-private": false,
+   "url": "/relative/path",
+   "author": {
+    "type": "card",
+    "name": "Rel",
+    "url": "/relative/author"
+   },
+   "published": "2026-03-04T12:00:00+00:00"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2007,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://photo.example/d",
+   "wm-private": false,
+   "url": "https://photo.example/d",
+   "author": {
+    "type": "card",
+    "name": "Pia",
+    "url": "https://photo.example/",
+    "photo": "https://img.photohost.example/PHOTOSENTINEL-author.jpg"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "photo": [
+    "https://img.photohost.example/PHOTOSENTINEL-post.jpg"
+   ]
+  },
+  {
+   "type": "entry",
+   "wm-id": 2008,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://anon.example/e",
+   "wm-private": false,
+   "url": "https://anon.example/e",
+   "author": null,
+   "published": "2026-03-04T12:00:00+00:00"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2009,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://title.example/f",
+   "wm-private": false,
+   "url": "https://title.example/f",
+   "author": {
+    "type": "card",
+    "name": null,
+    "url": ""
+   },
+   "published": null,
+   "content": null,
+   "name": "A title-only reply",
+   "wm-received": "2026-03-06T09:30:00Z"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2010,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard#frag",
+   "wm-source": "https://frag.example/g",
+   "wm-private": false,
+   "url": "https://frag.example/g",
+   "author": {
+    "type": "card",
+    "name": "Frag",
+    "url": "https://frag.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2011,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://long.example/h",
+   "wm-private": false,
+   "url": "https://long.example/h",
+   "author": {
+    "type": "card",
+    "name": "Longform",
+    "url": "https://long.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "text": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2012,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://private.example/i",
+   "wm-private": true,
+   "url": "https://private.example/i",
+   "author": {
+    "type": "card",
+    "name": "Hush",
+    "url": "https://private.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "text": "PRIVATESENTINEL"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2013,
+   "wm-property": "in-reply-to",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://blocked.example/j",
+   "wm-private": false,
+   "url": "https://blocked.example/j",
+   "author": {
+    "type": "card",
+    "name": "Blocked",
+    "url": "https://blocked.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00",
+   "content": {
+    "text": "from a blocklisted domain"
+   }
+  },
+  {
+   "type": "entry",
+   "wm-id": 2014,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://empty.example/p/1",
+   "wm-private": false,
+   "url": "https://empty.example/p/1",
+   "author": {
+    "type": "card",
+    "name": "",
+    "url": "https://empty.example/p"
+   },
+   "published": "2026-03-04T12:00:00+00:00"
+  },
+  {
+   "type": "entry",
+   "wm-id": 2015,
+   "wm-property": "like-of",
+   "wm-target": "https://falkensmage.com/fa/youve-been-heard/",
+   "wm-source": "https://ctl.example/k",
+   "wm-private": false,
+   "url": "https://ctl.example/k",
+   "author": {
+    "type": "card",
+    "name": "Zed\u202e\u0007\u2066",
+    "url": "https://ctl.example/"
+   },
+   "published": "2026-03-04T12:00:00+00:00"
+  }
+ ]
+}

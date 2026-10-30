@@ -13,13 +13,20 @@
 # parser, so it gets a probe instead of trust. Essays are found by their rendered
 # og:type=article tag as well as data/fa-legacy.json, because the newest essays are not
 # in that list.
+#
+# The Webmention checks follow the same rule. An empty mention section looks exactly like a
+# healthy page with no mentions, so the render is checked against the data: the rel=webmention
+# link is on every page, each essay's section matches data/webmentions.json (when the build
+# has one), the section holds only inert markup and sits outside the h-entry, and the
+# blocklist file is well formed.
 
 set -uo pipefail
 
 PASS=0
 FAIL=0
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PUBLIC="$PROJECT_ROOT/public"
+PUBLIC="${VALIDATE_FA_PUBLIC:-$PROJECT_ROOT/public}"
+DATA_DIR="${VALIDATE_FA_DATA:-$PROJECT_ROOT/data}"
 
 pass() { echo "  PASS  $1"; PASS=$((PASS + 1)); }
 fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
@@ -273,6 +280,170 @@ if [ -z "$home_problems" ]; then
 else
   while IFS= read -r line; do fail "$line"; done <<< "$home_problems"
 fi
+
+# Webmention probe. html.parser, not grep: the minifier unquotes attributes. The block prints
+# PASS/FAIL lines and ends with DONE; a crash leaves DONE out, which is a red, not a blank.
+# It compares structure, never stranger text, so a mention cannot trip the gate (and block a
+# deploy) unless something actually escaped.
+mention_out=$(python3 -I - "$PUBLIC" "$DATA_DIR" <<'PY'
+import glob, json, os, re, sys
+from html.parser import HTMLParser
+
+public, data_dir = sys.argv[1], sys.argv[2]
+ENDPOINT = "https://webmention.io/falkensmage.com/webmention"
+ALLOWED = {"h2", "p", "ul", "li", "a", "span", "time"}
+KINDS = (("fa-mention--like", "likes"), ("fa-mention--repost", "reposts"),
+         ("fa-mention--reply", "replies"))
+out = []
+
+
+def ok(text):
+    out.append("PASS " + text)
+
+
+def bad(text):
+    out.append("FAIL " + text)
+
+
+def safe(text):
+    return re.sub(r"[^A-Za-z0-9_.-]", "?", text)[:40]
+
+
+class Page(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.og = None
+        self.endpoints = []
+        self.entry = None     # [tag, depth] while inside the h-entry
+        self.sec = None       # [tag, depth] while inside the mention section
+        self.sections = 0
+        self.problems = set()
+        self.kinds = {cls: 0 for cls, _ in KINDS}
+
+    def handle_starttag(self, tag, attrs):
+        a = {}
+        for k, v in attrs:
+            a.setdefault(k.lower(), v or "")
+        toks = set(a.get("class", "").split())
+        if tag == "meta" and a.get("property") == "og:type":
+            self.og = a.get("content")
+        if tag == "link" and "webmention" in a.get("rel", "").lower().split():
+            self.endpoints.append(a.get("href"))
+        for cls in self.kinds:
+            if cls in toks:
+                self.kinds[cls] += 1
+        if self.entry is None:
+            if "h-entry" in toks:
+                self.entry = [tag, 1]
+        elif tag == self.entry[0]:
+            self.entry[1] += 1
+        if self.sec is None:
+            if "fa-mentions" in toks:
+                self.sections += 1
+                self.sec = [tag, 1]
+                if self.entry is not None:
+                    self.problems.add("it sits inside the h-entry")
+            return
+        if tag == self.sec[0]:
+            self.sec[1] += 1
+        if tag not in ALLOWED:
+            self.problems.add(f"it holds a <{safe(tag)}> element")
+        for name in a:
+            if name.startswith("on") or name in ("style", "src", "srcset"):
+                self.problems.add(f"it holds a {safe(name)} attribute")
+        if tag == "a":
+            if not {"nofollow", "ugc"} <= set(a.get("rel", "").lower().split()):
+                self.problems.add("a link lacks rel nofollow ugc")
+            if not re.match(r"https?://[^/\s]", a.get("href", ""), re.I):
+                self.problems.add("a link is not http or https")
+
+    def handle_endtag(self, tag):
+        if self.sec is not None and tag == self.sec[0]:
+            self.sec[1] -= 1
+            if self.sec[1] == 0:
+                self.sec = None
+        if self.entry is not None and tag == self.entry[0]:
+            self.entry[1] -= 1
+            if self.entry[1] == 0:
+                self.entry = None
+
+
+pages = {}
+files = [os.path.join(public, "index.html")] + sorted(glob.glob(os.path.join(public, "fa", "*", "index.html")))
+for f in files:
+    if not os.path.isfile(f):
+        bad(f"missing built page {os.path.relpath(f, public)}")
+        continue
+    p = Page()
+    p.feed(open(f, encoding="utf-8", errors="replace").read())
+    p.close()
+    rel = os.path.relpath(os.path.dirname(f), public)
+    pages["/" if rel == "." else "/" + rel + "/"] = p
+
+# 1. the endpoint link, on every page
+lacking = [path for path, p in pages.items() if ENDPOINT not in p.endpoints]
+for path in lacking:
+    bad(f"no rel=webmention link on {path}")
+if pages and not lacking:
+    ok(f"webmention endpoint advertised on {len(pages)} pages")
+
+# 2 and 3. the render against the data, and the section's safety
+data, readable = None, True
+data_file = os.path.join(data_dir, "webmentions.json")
+if os.path.isfile(data_file):
+    try:
+        data = json.load(open(data_file, encoding="utf-8"))["pages"]
+        assert isinstance(data, dict)
+    except Exception:
+        readable = False
+        bad("webmentions.json is unreadable or has the wrong shape")
+problems = []
+essays = 0
+for path, p in sorted(pages.items()):
+    essay = p.og == "article"
+    essays += essay
+    entry = data.get(path) if (data and essay) else None
+    entry = entry if isinstance(entry, dict) else {}
+    want = 1 if entry else 0
+    if p.sections != want:
+        problems.append(f"{path} has {p.sections} mention sections, expected {want}")
+    for what in sorted(p.problems):
+        problems.append(f"{path} mention section: {what}")
+    for cls, key in KINDS:
+        n = len(entry.get(key) or [])
+        if p.kinds[cls] != n:
+            problems.append(f"{path} {key}: data has {n}, page has {p.kinds[cls]}")
+for line in problems:
+    bad(line)
+if readable and not problems:
+    if data is None:
+        ok("no mention data in this build, and no mention section on any page")
+    else:
+        ok(f"mention sections match the pulled data on {essays} essays")
+
+# 4. the committed blocklist
+try:
+    block = json.load(open(os.path.join(data_dir, "webmention-blocklist.json"), encoding="utf-8"))
+    assert isinstance(block, dict)
+    for key in ("domains", "authors"):
+        assert isinstance(block[key], list) and all(isinstance(v, str) for v in block[key])
+    ok("webmention blocklist is well formed")
+except Exception:
+    bad("webmention blocklist is missing or malformed")
+
+print("\n".join(out))
+print("DONE")
+PY
+)
+mention_done=0
+while IFS= read -r line; do
+  case "$line" in
+    "PASS "*) pass "${line#PASS }" ;;
+    "FAIL "*) fail "${line#FAIL }" ;;
+    DONE) mention_done=1 ;;
+  esac
+done <<< "$mention_out"
+[ "$mention_done" -eq 1 ] || fail "webmention probe did not finish"
 
 echo
 echo "  $PASS passed, $FAIL failed"

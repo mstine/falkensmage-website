@@ -1,0 +1,48 @@
+{{- /*
+  fa/mentions.html — replies, likes and reposts received for an essay. Context: the Page.
+
+  Three rules, each load-bearing:
+  1. Rendered AFTER the closing article tag (see fa/single.html), so it sits outside the
+     h-entry. scripts/send-webmentions.py sends to every link inside the h-entry; a stranger's
+     URL in there would become a citation we POST to.
+  2. Every value below is stranger text. It goes through plain double-brace output with no
+     pipe of any kind, so html/template escapes it. Never mark any of it safe.
+  3. Names only. The data file holds no image URL, so nothing here can hotlink one and hand
+     a reader's IP to a stranger's host.
+
+  Data: data/webmentions.json, generated at build by scripts/pull-webmentions.py, keyed by
+  the path Hugo returns as .RelPermalink. No entry means no output at all, so an essay with
+  no mentions is byte-identical to one built with no mention data. Dates arrive
+  pre-formatted: a template function that can fail on a stranger's value would let a stranger
+  block a deploy, so none is called on mention data. Use the named range variables, never a
+  bare dot, inside the nested blocks.
+*/ -}}
+{{- with index (hugo.Data.webmentions.pages | default dict) .RelPermalink -}}
+<section class="section {{ partial "helpers/band-tone.html" $ }}">
+  <div class="section-content fa-prose fa-mentions">
+    <h2 class="fa-rail-heading">Responses</h2>
+    {{- with .likes }}
+    <p class="fa-mentions__row"><span class="fa-post__meta">Liked by</span>
+      {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--like" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
+    {{- end }}
+    {{- with .reposts }}
+    <p class="fa-mentions__row"><span class="fa-post__meta">Reposted by</span>
+      {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--repost" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
+    {{- end }}
+    {{- with .replies }}
+    <p class="fa-mentions__row"><span class="fa-post__meta">Replies</span></p>
+    <ul class="fa-mentions__replies">
+      {{- range $r := . }}
+      <li class="fa-mention--reply">
+        <p><a href="{{ $r.url }}" rel="nofollow ugc">{{ $r.name }}</a>
+          {{- if $r.date }} <time datetime="{{ $r.date }}">{{ $r.date_text }}</time>{{ end }}</p>
+        {{- if $r.text }}
+        <p class="fa-mention__text">{{ $r.text }}</p>
+        {{- end }}
+      </li>
+      {{- end }}
+    </ul>
+    {{- end }}
+  </div>
+</section>
+{{- end -}}
