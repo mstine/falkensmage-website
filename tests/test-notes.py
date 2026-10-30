@@ -261,6 +261,73 @@ def read(path):
     return d
 
 
+class Card(HTMLParser):
+    """Every element inside the page's first h-entry, with its attributes, its ancestors
+    (inside the entry) and the text it holds. Only the tags that wrap content are tracked as
+    open elements; img, data and the svg parts never get an end tag to wait for."""
+
+    TRACK = {"article", "header", "footer", "div", "a", "span", "ul", "li", "time", "svg", "p"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack = []
+        self.els = []             # every element seen inside the first h-entry
+        self._entry = None        # depth marker: the first h-entry element
+        self._done = False
+
+    def handle_starttag(self, tag, attrs):
+        a = {}
+        for k, v in attrs:
+            a.setdefault(k.lower(), v or "")
+        toks = set(a.get("class", "").split())
+        if self._entry is None:
+            if "h-entry" in toks and not self._done:
+                self._entry = True
+                el = dict(tag=tag, a=a, cls=toks, anc=[], text="")
+                self.els.append(el)
+                self.stack.append(el)
+            return
+        el = dict(tag=tag, a=a, cls=toks, anc=list(self.stack), text="")
+        self.els.append(el)
+        if tag in self.TRACK:
+            self.stack.append(el)
+
+    def handle_endtag(self, tag):
+        if self._entry is None or not self.stack:
+            return
+        if tag == self.stack[-1]["tag"]:
+            self.stack.pop()
+            if not self.stack:
+                self._entry = None
+                self._done = True
+
+    def handle_data(self, data):
+        for el in self.stack:
+            el["text"] += data
+
+    def find(self, cls=None, tag=None, inside=None, outside=None):
+        out = []
+        for el in self.els:
+            if cls is not None and cls not in el["cls"]:
+                continue
+            if tag is not None and el["tag"] != tag:
+                continue
+            anc = [c for e in el["anc"] for c in e["cls"]]
+            if inside is not None and inside not in anc:
+                continue
+            if outside is not None and outside in anc:
+                continue
+            out.append(el)
+        return out
+
+
+def card(path):
+    c = Card()
+    c.feed(Path(path).read_text(encoding="utf-8"))
+    c.close()
+    return c
+
+
 class Builds:
     """The builds the tests share, made once on first use and removed at exit."""
 
@@ -308,6 +375,47 @@ class NotePage(unittest.TestCase):
         html = page.read_text(encoding="utf-8")
         self.assertIn("2026-01-05T09:30:00-06:00", html)
         self.assertIn("January 5, 2026, 9:30 AM", html)
+
+    def test_the_card_header_has_a_first_party_avatar_name_and_handle(self):
+        page = Builds.get("published") / "notes" / "first" / "index.html"
+        c = card(page)
+        imgs = c.find(tag="img", inside="h-card")
+        self.assertEqual(len(imgs), 1)
+        img = imgs[0]
+        self.assertIn("u-photo", img["cls"])
+        self.assertTrue(img["a"].get("alt", "").strip(), "the avatar needs alt text")
+        src = img["a"].get("src", "")
+        self.assertTrue(src.startswith("/") and not src.startswith("//"), src)  # first-party, site-relative
+        self.assertTrue(img["a"].get("width") and img["a"].get("height"))
+        names = c.find("p-name", inside="h-card")
+        self.assertEqual([n["text"].strip() for n in names], ["Falken's Mage"])
+        nicks = c.find("p-nickname", inside="h-card")
+        self.assertEqual([n["text"].strip() for n in nicks], ["@falkensmage.com"])
+        self.assertTrue(c.find("u-url", tag="data", inside="h-card"))
+        # nothing in the card is an entry-level property
+        self.assertEqual(c.find("p-name", outside="h-card"), [])
+        self.assertEqual(c.find("p-nickname", outside="h-card"), [])
+        self.assertEqual(c.find("u-photo", outside="h-card"), [])
+        raw = page.read_text(encoding="utf-8")
+        self.assertNotIn("<script", raw[raw.index("<article"):raw.index("</article>")])
+
+    def test_the_timestamp_is_an_entry_level_link_to_the_permalink(self):
+        c = card(Builds.get("published") / "notes" / "first" / "index.html")
+        links = [e for e in c.find(tag="a", outside="h-card") if "u-url" in e["cls"]]
+        self.assertEqual(len(links), 1)
+        self.assertEqual(links[0]["a"]["href"], "https://falkensmage.com/notes/first/")
+        inner = [e for e in c.find("dt-published", tag="time") if any(x is links[0] for x in e["anc"])]
+        self.assertEqual(len(inner), 1)
+
+    def test_the_body_is_the_e_content_at_entry_level_and_the_index_uses_the_same_card(self):
+        public = Builds.get("published")
+        for page in (public / "notes" / "first" / "index.html", public / "notes" / "index.html"):
+            c = card(page)
+            body = c.find("e-content")
+            self.assertGreaterEqual(len(body), 1, page)
+            self.assertIn("note__body", body[0]["cls"])
+            self.assertEqual(len(c.find("note__actions", tag="footer")), 1, page)
+            self.assertGreaterEqual(len(c.find("u-photo", tag="img")), 1, page)
 
     def test_the_index_lists_published_notes_newest_first_in_one_h_feed(self):
         public = Builds.get("published")
@@ -436,6 +544,34 @@ class Archetype(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         body = (tmp / "notes" / "x.md").read_text()
         self.assertRegex(body, r"\A---\ndate: \d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:[+-]\d\d:\d\d|Z)\n---\n*\Z")
+
+
+class FeedCss(unittest.TestCase):
+    """The Notes block of main.css, read as text: a one-column feed, secondary text that stays
+    readable, and no violet used as a text colour."""
+
+    @classmethod
+    def setUpClass(cls):
+        css = (ROOT / "themes" / "arcaeon" / "assets" / "css" / "main.css").read_text(encoding="utf-8")
+        cls.block = css[css.index("/* Notes ("):css.index("/* Responses under an essay")]
+
+    def test_the_column_is_about_600px(self):
+        self.assertIn("37.5rem", self.block)
+
+    def test_secondary_text_keeps_opacity_at_or_above_point_six(self):
+        values = [float(v) for v in re.findall(r"opacity:\s*([\d.]+)", self.block)]
+        self.assertTrue(values)
+        self.assertGreaterEqual(min(values), 0.6)
+
+    def test_electric_violet_is_never_a_text_colour(self):
+        for decl in re.findall(r"(?<![-\w])color:\s*([^;]+);", self.block):
+            self.assertNotRegex(decl, r"--color-accent\)|electric-violet", decl)
+
+    def test_no_script_and_no_remote_url_in_the_block_or_the_card(self):
+        self.assertNotIn("url(http", self.block)
+        entry = (ROOT / "themes" / "arcaeon" / "layouts" / "partials" / "notes" / "entry.html").read_text()
+        self.assertNotIn("<script", entry)
+        self.assertNotIn("http://", entry.replace("http://www.w3.org", ""))
 
 
 class NotesProbe(unittest.TestCase):
@@ -623,6 +759,48 @@ class ProbeMutations(unittest.TestCase):
         rc, out = run_fa_probe(self.empty_public, self.bare_data)
         self.assertEqual(rc, 0, out)
 
+    # --- the card's footer: counts from the pulled data, copies from the record
+
+    def counts(self, page):
+        c = card(page)
+        out = {}
+        for kind in ("replies", "likes", "reposts"):
+            els = c.find(f"note__count--{kind}")
+            self.assertEqual(len(els), 1, kind)
+            self.assertEqual(len(c.find("visually-hidden", inside=f"note__count--{kind}")), 1, kind)
+            icons = c.find(tag="svg", inside=f"note__count--{kind}")
+            self.assertEqual(len(icons), 1, kind)
+            self.assertEqual(icons[0]["a"].get("aria-hidden"), "true", kind)
+            n = c.find("note__n", inside=f"note__count--{kind}")
+            self.assertEqual(len(n), 1, kind)
+            out[kind] = n[0]["text"].strip()
+            self.assertTrue(out[kind].isdigit(), out[kind])  # an integer from len, never stranger text
+        return out
+
+    def test_counts_come_from_the_pulled_data_and_show_zeros(self):
+        self.assertEqual(self.counts(self.page), {"replies": "1", "likes": "1", "reposts": "0"})
+        self.assertEqual(self.counts(self.second), {"replies": "0", "likes": "0", "reposts": "0"})
+
+    def test_the_footer_holds_exactly_the_recorded_copies_with_icons(self):
+        c = card(self.page)
+        links = c.find("u-syndication", tag="a", inside="note__actions")
+        self.assertEqual(sorted(l["a"]["href"] for l in links),
+                         sorted(r["url"] for r in SYN_RECORDS[FIRST].values()))
+        for l in links:
+            self.assertIn("syndication", l["a"].get("rel", "").split())
+            self.assertTrue(l["text"].strip())  # a visible label
+            self.assertEqual(len([e for e in c.find(tag="svg") if any(x is l for x in e["anc"])]), 1)
+        self.assertEqual(c.find("u-syndication", outside="note__actions"), [])
+        c = card(self.second)
+        links = c.find("u-syndication", tag="a", inside="note__actions")
+        self.assertEqual([l["a"]["href"] for l in links], ["https://mastodon.social/@falkensmage/102"])
+
+    def test_the_entry_has_no_footer_copy_links_when_nothing_is_recorded(self):
+        public = Builds.get("published")
+        c = card(public / "notes" / "first" / "index.html")
+        self.assertEqual(c.find("u-syndication"), [])
+        self.assertEqual(len(c.find("note__actions", tag="footer")), 1)
+
     # --- validate-notes.sh
 
     def test_e_content_dropped(self):
@@ -634,7 +812,7 @@ class ProbeMutations(unittest.TestCase):
         self.assert_notes_red(f"{FIRST} missing: dt-published")
 
     def test_entry_level_u_url_dropped(self):
-        self.mutate(self.page, lambda h: re.sub(r"<a class=u-url", "<a class=u-urx", h, count=1))
+        self.mutate(self.page, lambda h: re.sub(r'<a class="u-url note__time"', '<a class="u-urx note__time"', h, count=1))
         self.assert_notes_red(f"{FIRST} missing: u-url")
 
     def test_p_author_h_card_dropped(self):
@@ -649,6 +827,47 @@ class ProbeMutations(unittest.TestCase):
     def test_h_card_part_dropped(self):
         self.mutate(self.page, lambda h: h.replace("u-photo", "u-phot", 1))
         self.assert_notes_red(f"{FIRST} missing: h-card>u-photo")
+
+    def with_text(self, text):
+        """Put `text` into the first note's e-content, as plain text after 'A second paragraph'."""
+        # the head repeats the text (description meta), so edit inside the article, not the first hit
+        def edit(h):
+            i = h.index("A second paragraph", h.index('<article class="h-entry note">'))
+            return h[:i] + "A second paragraph " + text + h[i + len("A second paragraph"):]
+        self.mutate(self.page, edit)
+
+    def test_bare_domain_with_a_path(self):
+        self.with_text("example.com/path")
+        out = self.assert_notes_red(f'bare domain: {FIRST} has "example.com/path" outside a link')
+        self.assertIn("https://", out)
+
+    def test_bare_domain_host_only(self):
+        self.with_text("falkensmage.com")
+        self.assert_notes_red(f'bare domain: {FIRST} has "falkensmage.com" outside a link')
+
+    def test_bare_domain_inside_an_anchor_is_fine(self):
+        self.with_text("<a href=https://example.com/path>example.com/path</a>")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  no note has a bare domain outside a link", out)
+
+    def test_bare_domain_with_a_scheme_is_fine(self):
+        self.with_text("https://example.com/path and http://falkensmage.com")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def test_bare_domain_check_ignores_handles_and_file_names(self):
+        self.with_text("@falkensmage.com, file.txt, Node.js, e.g. this, v1.5/2 and a.b")
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def test_bare_domain_in_the_card_header_is_not_read(self):
+        # the handle sits in the header, outside e-content; a bare host there is not the body's
+        self.mutate(self.page, lambda h: h.replace(
+            '<article class="h-entry note">',
+            '<article class="h-entry note"><span>falkensmage.com/x</span>', 1))
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
 
     def test_h_entry_removed_from_the_index(self):
         self.mutate(self.index, lambda h: re.sub(
@@ -691,7 +910,7 @@ class ProbeMutations(unittest.TestCase):
     # --- validate-notes.sh, the record held to the pages
 
     def test_a_u_syndication_anchor_removed(self):
-        self.mutate(self.page, lambda h: re.sub(r"<a [^>]*u-syndication[^>]*bsky\.app[^>]*>Bluesky</a>", "", h, count=1))
+        self.mutate(self.page, lambda h: re.sub(r"<a [^>]*u-syndication[^>]*bsky\.app[^>]*>.*?</a>", "", h, count=1, flags=re.S))
         self.assert_notes_red("syndication: /notes/first/ shows 1 u-syndication links")
 
     def test_a_u_syndication_href_changed(self):
@@ -1352,6 +1571,24 @@ class DueParity(unittest.TestCase):
         self.assertNotIn("draftpast", got)
         self.assertNotIn("after", got)
         self.assertEqual(got["equal"], ["mastodon", "bluesky"])
+
+    def test_edited_body_is_not_pending(self):
+        # Note carries no body and state is keyed by note.path, so an edited body cannot make a
+        # recorded note due again. By construction; this pins it.
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        path = tmp / "edited.md"
+        date = "2026-02-27T09:00:00-06:00"
+        path.write_text(f"---\ndate: {date}\n---\nFirst wording of the body.\n")
+        before = m.read_note(path)
+        path.write_text(f"---\ndate: {date}\n---\nA different wording, with https://falkensmage.com/notes/.\n")
+        after = m.read_note(path)
+        self.assertEqual(before, after)
+        self.assertEqual(m.tid(before), m.tid(after))
+        done = {"url": "https://example.test/1"}
+        state = {"notes": {before.path: {"mastodon": done, "bluesky": done}}}
+        self.assertEqual(m.pending([before], state, NOW), [])
+        self.assertEqual(m.pending([after], state, NOW), [])
 
     def test_pending_is_oldest_first(self):
         Builds.get("syn")
