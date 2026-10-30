@@ -1,0 +1,13 @@
+{{ define "main" }}
+<main class="fa-room">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content">
+      {{/* A title-less page still needs a heading; it sits outside the article. */}}
+      <h1 class="fa-rail-heading"><a href="/notes/">Notes</a></h1>
+      {{ partial "notes/entry.html" . }}
+    </div>
+  </section>
+  {{/* After the closing article tag: outside the h-entry, so the sender never POSTs to a stranger's link. */}}
+  {{ partial "fa/mentions.html" . }}
+</main>
+{{ end }}

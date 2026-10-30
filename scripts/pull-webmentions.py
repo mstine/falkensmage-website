@@ -3,7 +3,7 @@
 
 Runs in the build job, after the last-good cache is restored and before `hugo`, on push and on
 the nightly cron. Hugo reads the file and renders replies, likes, reposts and mentions under each Feral
-Architecture essay (themes/arcaeon/layouts/partials/fa/mentions.html). Stdlib only, no JS on
+Architecture essay and each note (themes/arcaeon/layouts/partials/fa/mentions.html). Stdlib only, no JS on
 the page, no commit back to the repo.
 
 Env: WEBMENTION_IO_TOKEN (the webmention.io account token; sent as a Bearer header only).
@@ -176,7 +176,8 @@ def clean_text(value, limit):
 
 
 def page_key(target):
-    """'/fa/slug/' for a target on this site's essay paths, else None."""
+    """'/fa/slug/' or '/notes/slug/' for a target on this site's essay or note paths, else None.
+    '/notes/' itself, anything deeper, and every other section give None."""
     if not isinstance(target, str):
         return None
     try:
@@ -187,7 +188,7 @@ def page_key(target):
     if host not in (DOMAIN, "www." + DOMAIN):
         return None
     path = parts.path if parts.path.endswith("/") else parts.path + "/"
-    return path if re.fullmatch(r"/fa/[^/]+/", path) else None
+    return path if re.fullmatch(r"/(?:fa|notes)/[^/]+/", path) else None
 
 
 def _host(url):

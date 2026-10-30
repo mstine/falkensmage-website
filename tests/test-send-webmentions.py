@@ -92,6 +92,17 @@ class Stub:
         self.server.server_close()
 
 
+EMPTY_NOTES = b'<rss version="2.0"><channel><title>Notes</title></channel></rss>'
+
+
+def stub_notes(stub, notes=()):
+    """The notes feed at /notes.xml: [(path, published)], newest first as Hugo writes it."""
+    items = "".join(f"<item><link>{stub.base}{path}</link>"
+                    f"<pubDate>{format_datetime(published)}</pubDate></item>" for path, published in notes)
+    xml = f'<rss version="2.0"><channel><title>Notes</title>{items}</channel></rss>'
+    stub.routes["/notes.xml"] = (200, [("Content-Type", "application/rss+xml")], xml.encode())
+
+
 def stub_feed(stub, essay_path="/fa/essay/", published=None):
     published = published or datetime.now(timezone.utc)
     xml = (f'<rss version="2.0"><channel><item><title>T</title>'
@@ -179,6 +190,12 @@ class LoopbackCase(unittest.TestCase):
         fp = mock.patch.object(m, "FEED", f"{self.stub.base}/feed.xml")
         fp.start()
         self.addCleanup(fp.stop)
+        # The notes feed is patched too, to an empty one by default, so no test can reach the
+        # real address (D-14). Tests with notes replace the route.
+        nf = mock.patch.object(m, "NOTES_FEED", f"{self.stub.base}/notes.xml")
+        nf.start()
+        self.addCleanup(nf.stop)
+        self.stub.routes["/notes.xml"] = (200, [("Content-Type", "application/rss+xml")], EMPTY_NOTES)
 
     def run_main(self):
         out = io.StringIO()
@@ -466,8 +483,109 @@ class Window(LoopbackCase):
         s.html("/live/", "<link rel=webmention href=/wm>")
         out = self.run_main()
         self.assertIn("skip-old", out)
-        self.assertEqual([r[1] for r in s.log], ["/feed.xml"])
+        self.assertEqual([r[1] for r in s.log], ["/feed.xml", "/notes.xml"],
+                         "nothing but the two feeds is fetched")
         self.assertTrue(os.path.exists(self.state))
+
+
+def minified_note(stub, targets, syndicated=()):
+    """A note page as Hugo emits it: the e-content links, then the u-syndication copies."""
+    links = "".join(f"<a href={t}>x</a>" for t in targets)
+    copies = "".join(f"<a class=u-syndication rel=syndication href={c}>copy</a>" for c in syndicated)
+    return ("<!doctype html><html><body><main><article class=\"h-entry note\">"
+            f"<div class=\"e-content\"><p>{links}</p></div>"
+            f"<p class=note__syndication>Also on {copies}</p></article></main></body></html>")
+
+
+class Notes(LoopbackCase):
+    def hour_ago(self, **kw):
+        return datetime.now(timezone.utc) - timedelta(**(kw or {"hours": 1}))
+
+    def build(self, published=None):
+        s = self.stub
+        stub_feed(s, published=datetime.now(timezone.utc) - timedelta(days=30))   # essay out of window
+        stub_notes(s, [("/notes/n1/", published or self.hour_ago())])
+        target = f"{s.base}/cited/"
+        s.html("/notes/n1/", minified_note(s, [target], syndicated=[f"{s.base}/masto/1", f"{s.base}/bsky/1"]))
+        s.html("/cited/", "<link rel=webmention href=/wm>")
+        s.routes["/wm"] = (202, [], b"")
+        return target
+
+    def test_recent_notes_returns_the_items_in_the_window_oldest_first(self):
+        now = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
+        xml = ("<rss><channel>"
+               f"<item><link>https://x/new/</link><pubDate>{format_datetime(now - timedelta(hours=1))}</pubDate></item>"
+               f"<item><link>https://x/mid/</link><pubDate>{format_datetime(now - timedelta(days=6))}</pubDate></item>"
+               f"<item><link>https://x/old/</link><pubDate>{format_datetime(now - timedelta(days=7, seconds=1))}</pubDate></item>"
+               "</channel></rss>")
+        self.assertEqual([u for u, _ in m.recent_notes(xml, now)], ["https://x/mid/", "https://x/new/"])
+        self.assertEqual(m.recent_notes("<rss><channel></channel></rss>", now), [])
+
+    def test_a_recent_notes_external_link_gets_a_webmention_with_the_note_as_source(self):
+        target = self.build()
+        out = self.run_main()
+        posts = self.stub.requests("POST")
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(urllib.parse.parse_qs(posts[0][2], strict_parsing=True),
+                         {"source": [f"{self.stub.base}/notes/n1/"], "target": [target]})
+        self.assertEqual(self.state_lines(), [f"{self.stub.base}/notes/n1/\t{target}"])
+        self.assertIn("1 recent notes", out)
+
+    def test_the_notes_own_u_syndication_links_are_not_citations(self):
+        self.build()
+        self.run_main()
+        fetched = {r[1] for r in self.stub.log}
+        self.assertNotIn("/masto/1", fetched)
+        self.assertNotIn("/bsky/1", fetched)
+        self.assertEqual(len(self.stub.requests("POST")), 1, "only the real citation")
+
+    def test_a_u_syndication_anchor_with_other_class_tokens_is_still_skipped_and_others_stay(self):
+        page = ("<article class=h-entry><div class=e-content>"
+                "<a href=https://a.example/>a</a>"
+                "<a class=\"foo u-syndication bar\" href=https://b.example/>b</a>"
+                "<a class=u-url href=https://c.example/>c</a></div></article>")
+        self.assertEqual(m.entry_links(page), ["https://a.example/", "https://c.example/"])
+
+    def test_an_old_note_is_not_processed_and_its_page_is_not_fetched(self):
+        self.build(published=datetime.now(timezone.utc) - timedelta(days=8))
+        self.run_main()
+        self.assertEqual(self.stub.requests("POST"), [])
+        self.assertNotIn("/notes/n1/", {r[1] for r in self.stub.log})
+
+    def test_an_old_essay_does_not_stop_notes_from_being_processed(self):
+        self.build()
+        out = self.run_main()
+        self.assertIn("skip-old", out)
+        self.assertEqual(len(self.stub.requests("POST")), 1)
+        self.assertNotIn("/fa/essay/", {r[1] for r in self.stub.log}, "the old essay is not fetched")
+
+    def test_a_second_run_resends_nothing_for_a_note(self):
+        self.build()
+        self.run_main()
+        out = self.run_main()
+        self.assertEqual(len(self.stub.requests("POST")), 1)
+        self.assertIn("1 already sent", out)
+
+    def test_a_notes_feed_that_fails_exits_non_zero_after_the_essay_was_handled(self):
+        stub_feed(self.stub)
+        self.stub.html("/fa/essay/", minified_essay(self.stub, []))
+        del self.stub.routes["/notes.xml"]
+        with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as cm:
+            m.main(entry_wait=0)
+        self.assertNotIn(cm.exception.code, (0, None))
+        self.assertIn("notes feed", str(cm.exception.code))
+
+    def test_an_empty_notes_feed_is_fine(self):
+        stub_feed(self.stub)
+        self.stub.html("/fa/essay/", minified_essay(self.stub, []))
+        out = self.run_main()
+        self.assertIn("0 recent notes", out)
+
+    def test_the_notes_feed_constant_is_the_deployed_address_and_every_test_patches_it(self):
+        fresh = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fresh)
+        self.assertEqual(fresh.NOTES_FEED, "https://falkensmage.com/notes/index.xml")
+        self.assertTrue(m.NOTES_FEED.startswith("http://127.0.0.1:"))
 
 
 class SourcePage(LoopbackCase):

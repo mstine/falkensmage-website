@@ -1,0 +1,15 @@
+{{ define "main" }}
+<main class="fa-room">
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content h-feed">
+      <h1 class="fa-rail-heading p-name">{{ .Title }}</h1>
+      {{ with .Params.lede }}<p class="offer-lede">{{ . }}</p>{{ end }}
+      {{ range .RegularPages.ByDate.Reverse }}
+        {{ partial "notes/entry.html" . }}
+      {{ else }}
+        <p class="notes-empty">Nothing here yet.</p>
+      {{ end }}
+    </div>
+  </section>
+</main>
+{{ end }}

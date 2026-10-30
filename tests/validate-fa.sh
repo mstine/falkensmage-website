@@ -16,9 +16,10 @@
 #
 # The Webmention checks follow the same rule. An empty mention section looks exactly like a
 # healthy page with no mentions, so the render is checked against the data: the rel=webmention
-# link is on every page, each essay's section matches data/webmentions.json (when the build
-# has one), the section holds only inert markup and sits outside the h-entry, and the
-# blocklist file is well formed.
+# link is on every page, each essay's and each note's section matches data/webmentions.json
+# (when the build has one), the section holds only inert markup and sits outside the h-entry,
+# and the blocklist file is well formed. Notes (public/notes/*/index.html) are covered the same
+# way as essays; the microformats probe above stays on /fa/ (validate-notes.sh owns notes).
 
 set -uo pipefail
 
@@ -370,6 +371,7 @@ class Page(HTMLParser):
 
 pages = {}
 files = [os.path.join(public, "index.html")] + sorted(glob.glob(os.path.join(public, "fa", "*", "index.html")))
+files += sorted(glob.glob(os.path.join(public, "notes", "*", "index.html")))
 for f in files:
     if not os.path.isfile(f):
         bad(f"missing built page {os.path.relpath(f, public)}")
@@ -400,7 +402,8 @@ if os.path.isfile(data_file):
 problems = []
 essays = 0
 for path, p in sorted(pages.items()):
-    essay = p.og == "article"
+    # a note is checked even if it loses its og tag, so a dropped tag cannot hide its section
+    essay = p.og == "article" or path.startswith("/notes/")
     essays += essay
     entry = data.get(path) if (data and essay) else None
     entry = entry if isinstance(entry, dict) else {}
