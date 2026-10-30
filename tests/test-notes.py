@@ -323,5 +323,227 @@ class NotesProbe(unittest.TestCase):
                           else f"PASS  nav Notes link shown, {n} notes published", out)
 
 
+MENTIONS = {
+    "generated": None,
+    "pages": {"/notes/first/": {
+        "likes": [{"name": "Ann", "url": "https://ann.example/l1"}],
+        "reposts": [],
+        "mentions": [{"name": "Bo", "url": "https://bo.example/m1"}],
+        "replies": [{"name": "Di", "url": "https://di.example/r1",
+                     "date": "2026-03-02T10:00:00+00:00", "date_text": "March 2, 2026",
+                     "text": "hello"}],
+    }},
+}
+FIRST = "/notes/first/"
+
+
+def run_fa_probe(public, data_dir):
+    env = dict(os.environ, VALIDATE_FA_PUBLIC=str(public), VALIDATE_FA_DATA=str(data_dir))
+    r = subprocess.run(["bash", str(ROOT / "tests" / "validate-fa.sh")], cwd=ROOT, env=env,
+                       capture_output=True, text=True)
+    return r.returncode, r.stdout + r.stderr
+
+
+def section_span(html):
+    """(start, end) of the mention band: the <section> wrapping the fa-mentions div."""
+    mid = html.index("fa-prose fa-mentions")
+    start = html.rindex("<section", 0, mid)
+    end = html.index("</section>", mid) + len("</section>")
+    return start, end
+
+
+class ProbeMutations(unittest.TestCase):
+    """The probes are only worth having if they can fail. Build over fixtures (two published
+    notes, one future, and a received mention of the first), then break the output in each way
+    a regression would, and watch the probe go red and name the page."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp())
+        cls.data = cls.tmp / "data"
+        cls.data.mkdir()
+        (cls.data / "webmentions.json").write_text(json.dumps(MENTIONS))
+        cls.fa_data = cls.tmp / "fa-data"
+        cls.fa_data.mkdir()
+        (cls.fa_data / "webmentions.json").write_text(json.dumps(MENTIONS))
+        shutil.copy(ROOT / "data" / "webmention-blocklist.json", cls.fa_data)
+        cls.bare_data = cls.tmp / "bare-data"
+        cls.bare_data.mkdir()
+        shutil.copy(ROOT / "data" / "webmention-blocklist.json", cls.bare_data)
+        notes = write_notes(cls.tmp / "notes", {"first": PAST_ONE, "second": PAST_TWO,
+                                                "later": FUTURE})
+        (cls.tmp / "work").mkdir()
+        cls.public = cls.tmp / "public"
+        build_site(cls.public, notes, data_dir=cls.data, work=cls.tmp / "work")
+        (cls.tmp / "work-empty").mkdir()
+        empty = write_notes(cls.tmp / "empty-notes", {})
+        cls.empty_public = cls.tmp / "empty-public"
+        build_site(cls.empty_public, empty, work=cls.tmp / "work-empty")
+        cls.page = cls.public / "notes" / "first" / "index.html"
+        cls.index = cls.public / "notes" / "index.html"
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def mutate(self, path, fn):
+        """Rewrite a file in the temp output; the original bytes come back after the test."""
+        original = Path(path).read_bytes()
+        self.addCleanup(Path(path).write_bytes, original)
+        new = fn(original.decode("utf-8"))
+        self.assertNotEqual(new, original.decode("utf-8"), "the mutation changed nothing")
+        Path(path).write_text(new, encoding="utf-8")
+
+    def assert_notes_red(self, needle, public=None):
+        rc, out = run_probe(public or self.public)
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(needle, out)
+        return out
+
+    def assert_fa_red(self, needle, public=None, data=None):
+        rc, out = run_fa_probe(public or self.public, data or self.fa_data)
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(needle, out)
+        return out
+
+    # --- baselines: green first, and not vacuous
+
+    def test_baselines_are_green(self):
+        rc, out = run_probe(self.public)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  2 notes carry complete h-entry markup", out)
+        self.assertIn("PASS  the /notes/ index and feed match 2 published notes", out)
+        self.assertIn("PASS  nav Notes link shown, 2 notes published", out)
+        rc, out = run_fa_probe(self.public, self.fa_data)
+        self.assertEqual(rc, 0, out)
+        self.assertRegex(out, r"PASS  mention sections match the pulled data on \d+ essays")
+        # not vacuous: the mention is really on the note page the probe compares
+        html = self.page.read_text(encoding="utf-8")
+        self.assertEqual(html.count("fa-mentions__row"), 3)  # likes, mentions, replies label
+        self.assertEqual(html.count("fa-mention--reply"), 1)
+
+    def test_mentions_sit_after_the_entry_and_outside_it(self):
+        html = self.page.read_text(encoding="utf-8")
+        self.assertLess(html.index("</article>"), html.index("fa-mentions"))
+        a, b = section_span(html)
+        self.assertEqual(html[a:b].count('rel="nofollow ugc"'), 3)
+
+    def test_with_no_notes_both_probes_pass(self):
+        rc, out = run_probe(self.empty_public)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("PASS  0 notes carry complete h-entry markup", out)
+        rc, out = run_fa_probe(self.empty_public, self.bare_data)
+        self.assertEqual(rc, 0, out)
+
+    # --- validate-notes.sh
+
+    def test_e_content_dropped(self):
+        self.mutate(self.page, lambda h: h.replace("e-content", "e-contnt", 1))
+        self.assert_notes_red(f"{FIRST} missing: e-content")
+
+    def test_dt_published_dropped(self):
+        self.mutate(self.page, lambda h: h.replace("dt-published", "dt-publishd", 1))
+        self.assert_notes_red(f"{FIRST} missing: dt-published")
+
+    def test_entry_level_u_url_dropped(self):
+        self.mutate(self.page, lambda h: re.sub(r"<a class=u-url", "<a class=u-urx", h, count=1))
+        self.assert_notes_red(f"{FIRST} missing: u-url")
+
+    def test_p_author_h_card_dropped(self):
+        self.mutate(self.page, lambda h: h.replace("p-author", "p-authr", 1))
+        self.assert_notes_red(f"{FIRST} missing: p-author+h-card")
+
+    def test_entry_level_p_name_added(self):
+        self.mutate(self.page, lambda h: h.replace(
+            '<article class="h-entry note">', '<article class="h-entry note"><b class=p-name>T</b>', 1))
+        self.assert_notes_red(f"{FIRST} has an entry-level p-name")
+
+    def test_h_card_part_dropped(self):
+        self.mutate(self.page, lambda h: h.replace("u-photo", "u-phot", 1))
+        self.assert_notes_red(f"{FIRST} missing: h-card>u-photo")
+
+    def test_h_entry_removed_from_the_index(self):
+        self.mutate(self.index, lambda h: re.sub(
+            r'<article class="h-entry note">.*?</article>', "", h, count=1, flags=re.S))
+        self.assert_notes_red("/notes/ lists 1 h-entry elements, expected 2")
+
+    def test_feed_item_dropped(self):
+        self.mutate(self.public / "notes" / "index.xml",
+                    lambda x: re.sub(r"<item>.*?</item>", "", x, count=1, flags=re.S))
+        self.assert_notes_red("/notes/index.xml has 1 items, expected 2")
+
+    def test_feed_item_pointing_at_an_unpublished_note(self):
+        self.mutate(self.public / "notes" / "index.xml", lambda x: x.replace(
+            "<link>https://falkensmage.com/notes/first/</link>",
+            "<link>https://falkensmage.com/notes/later/</link>", 1))
+        self.assert_notes_red("/notes/later/, which is not a published note")
+
+    def test_empty_state_added_to_a_non_empty_index(self):
+        self.mutate(self.index, lambda h: h.replace(
+            "</section>", "<p class=notes-empty>Nothing here yet.</p></section>", 1))
+        self.assert_notes_red("/notes/ shows the empty state although 2 notes are published")
+
+    def test_nav_link_removed(self):
+        home = self.public / "index.html"
+        self.mutate(home, lambda h: re.sub(r"<a href=/notes/>Notes</a>\s*", "", h, count=1))
+        self.assert_notes_red("the nav has no /notes/ link although 2 notes are published")
+
+    def test_nav_link_added_to_an_empty_section_build(self):
+        home = self.empty_public / "index.html"
+        self.mutate(home, lambda h: h.replace(
+            "<a href=/about/>", "<a href=/notes/>Notes</a><a href=/about/>", 1))
+        self.assert_notes_red("the nav links to /notes/ although no note is published",
+                              public=self.empty_public)
+
+    def test_head_feed_link_removed(self):
+        home = self.public / "index.html"
+        self.mutate(home, lambda h: re.sub(r"<link rel=feed[^>]*>", "", h, count=1))
+        self.assert_notes_red("the head has no rel=feed link to /notes/")
+
+    # --- validate-fa.sh, over note pages
+
+    def test_mentions_moved_inside_the_h_entry(self):
+        def move(h):
+            a, b = section_span(h)
+            block, rest = h[a:b], h[:a] + h[b:]
+            i = rest.index("</article>")
+            return rest[:i] + block + rest[i:]
+        self.mutate(self.page, move)
+        self.assert_fa_red(f"{FIRST} mention section: it sits inside the h-entry")
+
+    def test_ugc_dropped_from_a_mention_link(self):
+        def drop(h):
+            a, b = section_span(h)
+            return h[:a] + h[a:b].replace('rel="nofollow ugc"', "rel=nofollow", 1) + h[b:]
+        self.mutate(self.page, drop)
+        self.assert_fa_red(f"{FIRST} mention section: a link lacks rel nofollow ugc")
+
+    def test_webmention_link_removed_from_a_note_page(self):
+        other = self.public / "notes" / "second" / "index.html"
+        self.mutate(other, lambda h: h.replace(
+            "<link rel=webmention href=https://webmention.io/falkensmage.com/webmention>", ""))
+        self.assert_fa_red("no rel=webmention link on /notes/second/")
+
+    def test_a_mention_count_that_disagrees_with_the_data(self):
+        doc = json.loads(json.dumps(MENTIONS))
+        doc["pages"][FIRST]["likes"].append({"name": "Ed", "url": "https://ed.example/l2"})
+        bad = self.tmp / "bad-data"
+        bad.mkdir(exist_ok=True)
+        (bad / "webmentions.json").write_text(json.dumps(doc))
+        shutil.copy(self.bare_data / "webmention-blocklist.json", bad)
+        self.assert_fa_red(f"{FIRST} likes: data has 2, page has 1", data=bad)
+
+    def test_a_note_that_lost_its_og_tag_is_still_checked(self):
+        # data that says nothing while the page shows a section: red, even with og removed
+        gone = self.tmp / "gone-data"
+        gone.mkdir(exist_ok=True)
+        (gone / "webmentions.json").write_text('{"generated": null, "pages": {}}')
+        shutil.copy(self.bare_data / "webmention-blocklist.json", gone)
+        self.mutate(self.page, lambda h: h.replace(
+            '<meta property="og:type" content="article">',
+            '<meta property="og:type" content="website">', 1))
+        self.assert_fa_red(f"{FIRST} has 1 mention sections, expected 0", data=gone)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -449,6 +449,41 @@ class Shape(PullCase):
         self.assertEqual(len(pages[ESSAY_PATH]["likes"]), 1)
 
 
+class PageKey(unittest.TestCase):
+    """Which target URLs file under a page: essays and notes, and nothing else."""
+
+    def key(self, url):
+        return m.page_key(url)
+
+    def test_a_note_url(self):
+        self.assertEqual(self.key("https://falkensmage.com/notes/SLUG/"), "/notes/SLUG/")
+
+    def test_a_note_url_without_the_trailing_slash(self):
+        self.assertEqual(self.key("https://falkensmage.com/notes/SLUG"), "/notes/SLUG/")
+
+    def test_an_essay_url_is_unchanged(self):
+        self.assertEqual(self.key("https://falkensmage.com/fa/SLUG/"), "/fa/SLUG/")
+
+    def test_the_notes_index_is_not_a_page(self):
+        self.assertIsNone(self.key("https://falkensmage.com/notes/"))
+
+    def test_a_path_below_a_note_is_not_a_page(self):
+        self.assertIsNone(self.key("https://falkensmage.com/notes/SLUG/extra/"))
+
+    def test_another_section_is_not_a_page(self):
+        self.assertIsNone(self.key("https://falkensmage.com/work/SLUG/"))
+
+    def test_a_note_path_on_another_host_is_not_a_page(self):
+        self.assertIsNone(self.key("https://evil.example/notes/SLUG/"))
+
+    def test_normalize_files_a_mention_of_a_note_under_the_note(self):
+        target = "https://falkensmage.com/notes/SLUG/"
+        pages, counts = m.normalize([child(7001, "mention-of", "Heron", target=target)])
+        self.assertEqual(list(pages), ["/notes/SLUG/"])
+        self.assertEqual(len(pages["/notes/SLUG/"]["mentions"]), 1)
+        self.assertEqual(counts["off_essay"], 0)
+
+
 class Normalize(unittest.TestCase):
     def test_example_fixture(self):
         pages, counts = m.normalize(EXAMPLE["children"])

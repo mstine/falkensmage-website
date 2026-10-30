@@ -7,5 +7,7 @@
       {{ partial "notes/entry.html" . }}
     </div>
   </section>
+  {{/* After the closing article tag: outside the h-entry, so the sender never POSTs to a stranger's link. */}}
+  {{ partial "fa/mentions.html" . }}
 </main>
 {{ end }}
