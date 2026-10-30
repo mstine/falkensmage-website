@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-10-30T22:45:35.971Z"
+last_updated: "2026-10-30T22:55:22.220Z"
 last_activity: 2026-10-30
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: 86a1a5c2e21423cf05b113ccfdda0e8ff0c45849
+state_head: 9f1d0318e0fa98132ef39fb4d7c0a7bbd2994893
 progress:
   total_phases: 1
   completed_phases: 1
@@ -173,6 +173,7 @@ Carried forward to v1.1 scoping:
 | 6 | Exclude own Bluesky and Mastodon accounts from rendered mentions | 2026-10-30 | 34efaa0 | — |
 | 7 | Run Python test suites in the deploy workflow | 2026-10-30 | 673cdf9 | — |
 | 261030-mev | IndieWeb run 3: Notes section with direct Mastodon and Bluesky syndication | 2026-10-30 | 86a1a5c | [261030-mev-indieweb-run-3-notes](./quick/261030-mev-indieweb-run-3-notes/) |
+| 261030-oqx | Promote essay email drafts on send; blocked sends fail visibly | 2026-10-30 | 9f1d031 | [261030-oqx-fix-essay-email-draft-hazard-promote-dra](./quick/261030-oqx-fix-essay-email-draft-hazard-promote-dra/) |
 
 ## Session Continuity
 
