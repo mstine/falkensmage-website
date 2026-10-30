@@ -1,7 +1,9 @@
 # Deploy Hugo site to GitHub Pages
 # Source: Official Hugo starter workflow pattern (D-06)
 # Triggers: push to main, a nightly schedule (refreshes the CURRENTLY feed),
-# and manual dispatch.
+# and manual dispatch. notes.yml also dispatches this workflow (with no inputs, so no
+# subscriber is mailed) when a note is due and its page is not live, and once more after it
+# records a post, so the u-syndication links appear.
 
 name: Deploy Hugo site to Pages
 
@@ -104,12 +106,18 @@ jobs:
       - name: Validate Feral Architecture section
         run: bash tests/validate-fa.sh
 
+      # Gate: the note pages, the built-vs-due check and the u-syndication links must be right
+      # before anything deploys. The syndication script and the sender depend on that markup.
+      - name: Validate notes
+        run: bash tests/validate-notes.sh
+
       # Local-only tests let a failure ship on 2026-10-30, so they gate the deploy here.
       - name: Run Python test suites
         run: |
           python3 -I -S -B tests/test-send-webmentions.py
           python3 -I -S -B tests/test-pull-webmentions.py
           python3 -I -S -B tests/test-send-fa-email.py
+          python3 -I -S -B tests/test-notes.py
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
@@ -167,7 +175,7 @@ jobs:
           key: webmentions-sent-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: webmentions-sent-
 
-      - name: Send Webmentions for the newest essay
+      - name: Send Webmentions for the newest essay and recent notes
         run: python3 scripts/send-webmentions.py
 
       - name: Save sent Webmentions

@@ -1,0 +1,113 @@
+# Syndicate notes
+#
+# Every 15 minutes: is a note due and not yet sent to Mastodon and Bluesky? If not, this
+# workflow does nothing and makes no network call. If one is due, it makes sure the note's
+# page is live (dispatching the existing deploy only when it is not), posts to each network
+# that does not have it yet, records each post in data/syndication.json on main, and then
+# dispatches one more deploy so the u-syndication links appear on the page.
+#
+# Why it is NOT in the `pages` concurrency group. The deploy this dispatches needs that group,
+# and this workflow waits for the note's page to go live. Sharing the group would make it wait
+# on a run that cannot start until it ends: a deadlock until the timeout. It has its own group,
+# `notes-syndication`, which serializes posting.
+#
+# Why every checkout sets `ref: main`. A scheduled run uses the latest commit on the default
+# branch, but a dispatched or queued run is created at one commit and keeps it. The state file
+# is the only thing standing between a note and a second post, so the state read must be the
+# tip of main. (The script also pulls before it reads.)
+#
+# Why the state commit cannot loop. It is pushed with GITHUB_TOKEN, and GitHub starts no
+# workflow run for events caused by that token (workflow_dispatch and repository_dispatch are the
+# documented exceptions). This file has no push trigger either. If the token ever became a PAT,
+# the push would cost one deploy and stop: the deploy writes nothing.
+#
+# Why a deploy is dispatched only when a page is not live. A Bluesky outage retried every
+# 15 minutes must not become a deploy every 15 minutes. The email and Webmention jobs in the
+# deploy workflow are not meant to run on a timer.
+#
+# Scheduled workflows in a public repository are disabled by GitHub after 60 days with no
+# repository activity. That would silently stop syndication and the nightly rebuild. Feral
+# Architecture commits land far more often than that, so this is a note, not a mechanism.
+#
+# Secrets (MASTODON_ACCESS_TOKEN, BLUESKY_APP_PASSWORD) and `contents: write` exist in the
+# `syndicate` job only. The minutes 7, 22, 37 and 52 avoid the top of the hour, when GitHub's
+# schedule is most delayed.
+
+name: Syndicate notes
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: notes-syndication
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    outputs:
+      pending: ${{ steps.due.outputs.pending }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Is a note due?
+        id: due
+        run: python3 scripts/syndicate-notes.py check
+
+      - name: Deploy so the due notes are live
+        if: steps.due.outputs.deploy == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run hugo.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+  # The 30 minutes outlast the script's 15-minute wait for a page to go live.
+  syndicate:
+    needs: check
+    if: needs.check.outputs.pending == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      recorded: ${{ steps.post.outputs.recorded }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Post the due notes
+        id: post
+        env:
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: python3 scripts/syndicate-notes.py post
+
+  # Runs after a partial success too, so what was recorded still shows up on the page.
+  rebuild:
+    needs: syndicate
+    if: ${{ !cancelled() && needs.syndicate.outputs.recorded == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Deploy so the syndication links appear
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run hugo.yml --repo "$GITHUB_REPOSITORY" --ref main

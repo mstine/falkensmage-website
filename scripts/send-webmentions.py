@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""send-webmentions.py — tell the pages the newest Feral Architecture essay cites that it cited them.
+"""send-webmentions.py — tell the pages the newest Feral Architecture essay and the recent notes
+cite that they were cited.
 
 Runs after deploy, so a target never gets a Webmention for a page that isn't live. Reads the
-deployed feed, takes the newest essay, collects the external links inside its h-entry, finds
-each target's Webmention endpoint (W3C Webmention §3.1.2) and POSTs source and target
-(§3.1.3). Stdlib only; DRY_RUN=1 skips every POST.
+deployed essay feed, takes the newest essay, collects the external links inside its h-entry,
+finds each target's Webmention endpoint (W3C Webmention §3.1.2) and POSTs source and target
+(§3.1.3). Notes send too: the deployed notes feed lists them, every note inside the same
+7-day window is a source, and the same state file records what was accepted. A note page's
+u-syndication links (its own copies on Mastodon and Bluesky) are skipped: a syndicated copy is
+not a citation. An old essay no longer ends the run, since notes may still be in the window.
+Stdlib only; DRY_RUN=1 skips every POST.
 
 Env: DRY_RUN ("1" to skip every POST), WEBMENTION_STATE (path of the sent-state file).
-Exit 1 if our own side is broken: the feed is unreachable or empty, or the essay page never
-gains an h-entry. A dead or hostile target never changes the exit code.
+Exit 1 if our own side is broken: the essay feed is unreachable or empty, the notes feed is
+unreachable or unreadable (an empty notes feed is fine: there may be no notes), or a page
+never gains an h-entry. A dead or hostile target never changes the exit code.
 
 Sent state: where it lives and why
 ----------------------------------
@@ -48,6 +54,7 @@ from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
 FEED = "https://falkensmage.com/fa/index.xml"
+NOTES_FEED = "https://falkensmage.com/notes/index.xml"
 SITE_HOST = "falkensmage.com"
 UA = "falkensmage-webmention-sender (+https://falkensmage.com/)"
 TIMEOUT = 20
@@ -70,6 +77,20 @@ def newest_essay(xml_text):
         items.append(((it.findtext("link") or "").strip(),
                       email.utils.parsedate_to_datetime(it.findtext("pubDate"))))
     return max(items, key=lambda i: i[1]) if items else None
+
+
+def recent_notes(xml_text, now):
+    """[(url, published)] for each feed item `decide` says to send, oldest first. An empty feed
+    is an empty list."""
+    items = []
+    for it in ET.fromstring(xml_text).iter("item"):
+        published = email.utils.parsedate_to_datetime(it.findtext("pubDate"))
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        url = (it.findtext("link") or "").strip()
+        if url and decide(published, now) == "send":
+            items.append((url, published))
+    return sorted(items, key=lambda i: i[1])
 
 
 # --- the source page --------------------------------------------------------------------
@@ -95,6 +116,8 @@ class _EntryLinks(HTMLParser):
         if tag == self.tag:
             self.depth += 1
         if tag == "a" and a.get("href") is not None:
+            if "u-syndication" in (a.get("class") or "").split():
+                return  # a syndicated copy of this very entry, not something it cites
             self.links.append(a["href"])
 
     def handle_endtag(self, tag):
@@ -433,13 +456,25 @@ def main(entry_wait=15):
         open(STATE, "a").close()  # the cache save always has a path
     action = decide(published, datetime.now(timezone.utc))
     log(f"{action}: {source}{' (dry run)' if dry else ''}")
-    if action == "skip-old":
-        return
+    if action != "skip-old":
+        links = load_entry(source, wait=entry_wait)
+        targets = external_targets(links, source)
+        log(f"{len(targets)} external targets")
+        send_all(source, targets, STATE, dry)
 
-    links = load_entry(source, wait=entry_wait)
-    targets = external_targets(links, source)
-    log(f"{len(targets)} external targets")
-    send_all(source, targets, STATE, dry)
+    # Notes: our own feed, so it being unreadable is our side broken. An empty one is fine.
+    try:
+        req = urllib.request.Request(NOTES_FEED, headers={"User-Agent": UA})
+        with GET_OPENER.open(req, timeout=TIMEOUT) as r:
+            notes = recent_notes(r.read(MAX_BYTES).decode("utf-8"), datetime.now(timezone.utc))
+    except Exception as e:
+        sys.exit(f"send-webmentions: notes feed unreachable or unreadable ({type(e).__name__}: {e})")
+    log(f"{len(notes)} recent notes")
+    for note, _ in notes:
+        links = load_entry(note, wait=entry_wait)
+        targets = external_targets(links, note)
+        log(f"{note}: {len(targets)} external targets")
+        send_all(note, targets, STATE, dry)
 
 
 if __name__ == "__main__":

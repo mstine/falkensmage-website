@@ -2308,5 +2308,225 @@ class LivePage(SyndicationCase):
         self.assertEqual(sorted(output.read_text().split()), ["deploy=true", "pending=true"])
 
 
+# =========================================================================================
+# The workflows' properties (stdlib has no YAML parser and the suite runs under -I -S, so these
+# read the files by indentation: top-level keys, the `on:` block and one block per job)
+# =========================================================================================
+
+WORKFLOWS = ROOT / ".github" / "workflows"
+
+
+def _strip_comments(text):
+    out = []
+    for line in text.splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        out.append(re.sub(r"\s+#(?=[^\"']*$).*$", "", line).rstrip())
+    return out
+
+
+def workflow_blocks(path):
+    """(top, jobs): `top` maps each top-level key to its text (key line included); `jobs` maps each
+    job name to its block of lines. Comments are dropped, so a sentence in a header comment can
+    never satisfy or break an assertion."""
+    top, jobs, key, job = {}, {}, None, None
+    for line in _strip_comments(Path(path).read_text(encoding="utf-8")):
+        if not line.strip():
+            continue
+        if not line.startswith(" "):
+            key, job = line.split(":", 1)[0], None
+            top[key] = [line]
+            continue
+        top[key].append(line)
+        if key == "jobs":
+            found = re.fullmatch(r"  ([A-Za-z][\w-]*):", line)
+            if found:
+                job = found.group(1)
+                jobs[job] = []
+            if job:
+                jobs[job].append(line)
+    return {k: "\n".join(v) for k, v in top.items()}, {k: "\n".join(v) for k, v in jobs.items()}
+
+
+def steps_of(block):
+    """A job block split into its steps (each starts at a `      - ` line)."""
+    steps, cur = [], None
+    for line in block.splitlines():
+        if re.match(r"      - ", line):
+            cur = [line]
+            steps.append(cur)
+        elif cur is not None and line.startswith("        "):
+            cur.append(line)
+        else:
+            cur = None
+    return ["\n".join(s) for s in steps]
+
+
+def run_strings(block):
+    """Every `run:` value in a block: the one line, or the lines of a `|` or `>` scalar."""
+    lines, out, i = block.splitlines(), [], 0
+    while i < len(lines):
+        found = re.match(r"(\s*)(?:- )?run:\s*(.*)", lines[i])
+        if found:
+            indent, value = len(found.group(1)), found.group(2)
+            if value[:1] in ("|", ">"):
+                body = []
+                while i + 1 < len(lines) and (len(lines[i + 1]) - len(lines[i + 1].lstrip())) > indent:
+                    body.append(lines[i + 1])
+                    i += 1
+                value = "\n".join(body)
+            out.append(value)
+        i += 1
+    return out
+
+
+class WorkflowConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.top, cls.jobs = workflow_blocks(WORKFLOWS / "notes.yml")
+        cls.hugo_top, cls.hugo_jobs = workflow_blocks(WORKFLOWS / "hugo.yml")
+
+    def test_helper_splits_a_workflow_into_top_keys_and_job_blocks(self):
+        self.assertEqual(list(self.jobs), ["check", "syndicate", "rebuild"])
+        self.assertEqual({"name", "on", "permissions", "concurrency", "defaults", "jobs"}, set(self.top))
+        self.assertEqual(list(self.hugo_jobs), ["build", "deploy", "email", "webmentions", "mentions-probe"])
+
+    # --- triggers
+
+    def test_only_a_schedule_and_a_manual_dispatch_can_start_it(self):
+        triggers = re.findall(r"^  ([a-z_]+):", self.top["on"], re.M)
+        self.assertEqual(sorted(triggers), ["schedule", "workflow_dispatch"])
+        for forbidden in ("push", "pull_request", "pull_request_target", "workflow_run", "repository_dispatch"):
+            self.assertNotIn(forbidden, self.top["on"])
+
+    def test_the_schedule_is_every_fifteen_minutes_off_the_hour(self):
+        crons = re.findall(r'cron:\s*"([^"]+)"', self.top["on"])
+        self.assertEqual(crons, ["7,22,37,52 * * * *"])
+        minutes = [int(x) for x in crons[0].split()[0].split(",")]
+        self.assertEqual([b - a for a, b in zip(minutes, minutes[1:])], [15, 15, 15])
+        self.assertNotIn(0, minutes, "the top of the hour is when GitHub's schedule is most delayed")
+
+    # --- concurrency, permissions, secrets
+
+    def test_its_concurrency_group_is_its_own_and_never_the_pages_group(self):
+        self.assertIn("group: notes-syndication", self.top["concurrency"])
+        self.assertIn("cancel-in-progress: false", self.top["concurrency"])
+        self.assertNotIn("pages", self.top["concurrency"])
+        self.assertIn('group: "pages"', self.hugo_top["concurrency"])
+        for block in self.jobs.values():
+            self.assertNotIn("concurrency", block)
+
+    def test_the_workflow_starts_with_no_permissions_and_each_job_asks_for_its_own(self):
+        self.assertEqual(self.top["permissions"].strip(), "permissions: {}")
+        grants = {name: sorted(re.findall(r"^      ([a-z-]+): (?:read|write)$", block, re.M))
+                  for name, block in self.jobs.items()}
+        self.assertEqual(grants, {"check": ["actions", "contents"], "syndicate": ["contents"],
+                                  "rebuild": ["actions"]})
+        self.assertIn("contents: read", self.jobs["check"])
+        self.assertIn("actions: write", self.jobs["check"])
+        self.assertIn("contents: write", self.jobs["syndicate"])
+        self.assertIn("actions: write", self.jobs["rebuild"])
+
+    def test_contents_write_and_both_secrets_exist_in_exactly_one_job(self):
+        holders = [name for name, block in self.jobs.items() if "contents: write" in block]
+        self.assertEqual(holders, ["syndicate"])
+        for secret in ("MASTODON_ACCESS_TOKEN", "BLUESKY_APP_PASSWORD"):
+            self.assertEqual([n for n, b in self.jobs.items() if f"secrets.{secret}" in b], ["syndicate"])
+        self.assertNotIn("secrets.", self.top["on"] + self.top["permissions"] + self.top["concurrency"])
+        # in one step's env only
+        step_holders = [s for s in steps_of(self.jobs["syndicate"]) if "secrets." in s]
+        self.assertEqual(len(step_holders), 1)
+        self.assertIn("syndicate-notes.py post", step_holders[0])
+        self.assertNotIn("GITHUB_TOKEN", "".join(self.jobs.values()), "no token is written out by hand")
+
+    def test_the_other_workflows_deploy_permissions_do_not_change(self):
+        self.assertIn("contents: read", self.hugo_top["permissions"])
+        self.assertNotIn("contents: write", self.hugo_top["permissions"])
+        for name, block in self.hugo_jobs.items():
+            self.assertNotIn("contents: write", block, name)
+
+    # --- checkouts, expressions, actions
+
+    def test_every_checkout_is_on_ref_main(self):
+        seen = 0
+        for name, block in self.jobs.items():
+            for step in steps_of(block):
+                if "actions/checkout" in step:
+                    seen += 1
+                    self.assertRegex(step, r"\n\s+ref: main\b", f"{name}: a checkout without ref: main")
+        self.assertEqual(seen, 2)
+
+    def test_no_expression_is_interpolated_into_a_run_string(self):
+        runs = [r for b in self.jobs.values() for r in run_strings(b)]
+        self.assertGreaterEqual(len(runs), 4)
+        for run in runs:
+            self.assertNotIn("${{", run)
+
+    def test_the_only_action_used_is_the_checkout(self):
+        used = re.findall(r"uses:\s*(\S+)", "\n".join(self.jobs.values()))
+        self.assertTrue(used)
+        for action in used:
+            self.assertTrue(action.startswith("actions/checkout@"), action)
+
+    def test_every_job_declares_a_timeout_and_the_syndicate_outlasts_the_live_wait(self):
+        for name, block in self.jobs.items():
+            self.assertRegex(block, r"timeout-minutes: \d+", name)
+        minutes = int(re.search(r"timeout-minutes: (\d+)", self.jobs["syndicate"]).group(1))
+        self.assertGreater(minutes * 60, m.LIVE_TRIES * m.LIVE_WAIT)
+
+    # --- the shape: check, then syndicate, then rebuild
+
+    def test_jobs_run_check_then_syndicate_then_rebuild(self):
+        self.assertNotIn("needs:", self.jobs["check"])
+        self.assertRegex(self.jobs["syndicate"], r"needs: check\b")
+        self.assertRegex(self.jobs["rebuild"], r"needs: syndicate\b")
+        self.assertIn("needs.check.outputs.pending == 'true'", self.jobs["syndicate"])
+        self.assertIn("pending: ${{ steps.due.outputs.pending }}", self.jobs["check"])
+
+    def test_a_deploy_is_dispatched_only_when_the_check_says_a_page_is_not_live(self):
+        deploys = [s for s in steps_of(self.jobs["check"]) if "gh workflow run hugo.yml" in s]
+        self.assertEqual(len(deploys), 1)
+        self.assertIn("if: steps.due.outputs.deploy == 'true'", deploys[0])
+        self.assertIn("GH_TOKEN: ${{ github.token }}", deploys[0])
+        self.assertIn("--ref main", deploys[0])
+        self.assertIn("id: due", self.jobs["check"])
+        self.assertIn("syndicate-notes.py check", self.jobs["check"])
+
+    def test_the_rebuild_runs_after_a_partial_success_and_only_when_something_was_recorded(self):
+        self.assertIn("!cancelled() && needs.syndicate.outputs.recorded == 'true'", self.jobs["rebuild"])
+        self.assertIn("recorded: ${{ steps.post.outputs.recorded }}", self.jobs["syndicate"])
+        self.assertIn("gh workflow run hugo.yml", self.jobs["rebuild"])
+
+    def test_a_failed_post_is_not_swallowed(self):
+        for block in self.jobs.values():
+            self.assertNotIn("continue-on-error", block)
+            self.assertNotIn("|| true", block)
+
+    # --- the deploy gate
+
+    def test_the_deploy_gate_runs_the_notes_probe_after_the_fa_probe_and_the_notes_suite(self):
+        steps = steps_of(self.hugo_jobs["build"])
+        names = [re.search(r"name: (.+)", s).group(1) for s in steps]
+        self.assertEqual(names[names.index("Validate Feral Architecture section") + 1], "Validate notes")
+        self.assertIn("run: bash tests/validate-notes.sh", steps[names.index("Validate notes")])
+        suites = steps[names.index("Run Python test suites")]
+        self.assertIn("python3 -I -S -B tests/test-notes.py", suites)
+        self.assertIn("python3 -I -S -B tests/test-send-webmentions.py", suites)
+        self.assertIn("Send Webmentions for the newest essay and recent notes",
+                      "\n".join(steps_of(self.hugo_jobs["webmentions"])))
+
+    def test_neither_the_deploy_nor_the_site_config_builds_future_notes(self):
+        hugo_yml = (WORKFLOWS / "hugo.yml").read_text() + (WORKFLOWS / "notes.yml").read_text()
+        config = (ROOT / "hugo.toml").read_text()
+        for text in (hugo_yml, config):
+            self.assertNotRegex(text, r"(?i)buildFuture|--buildFuture|\bhugo\b[^\n]* -F\b")
+
+    def test_the_deploy_workflow_can_be_dispatched_without_inputs(self):
+        self.assertIn("workflow_dispatch:", self.hugo_top["on"])
+        self.assertIn("default: false", self.hugo_top["on"], "send_email defaults off, so a note deploy mails nobody")
+        self.assertIn("SEND_EMAIL: ${{ github.event_name == 'workflow_dispatch' && inputs.send_email }}",
+                      self.hugo_jobs["email"])
+
+
 if __name__ == "__main__":
     unittest.main()
