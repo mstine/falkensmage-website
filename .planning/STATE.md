@@ -1,19 +1,20 @@
 ---
-gsd_state_version: 1.0
+gsd_state_version: "1.0"
 milestone: v1.1
-milestone_name: Offer Pages — scoped 2026-07-01
-current_phase: 1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-07-02T13:05:52.314Z"
-last_activity: 2026-07-02
-last_activity_desc: Milestone v1.1 completed and archived
+last_updated: "2026-10-30T19:58:49.446Z"
+last_activity: 2026-10-30
+last_activity_desc: Completed quick task 261030-k5d (IndieWeb run 1)
+state_head: 6b1df873089fbccc6ec6d627ae90c50f3417873e
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 3
   completed_plans: 3
   percent: 100
+milestone_name: Offer Pages — scoped 2026-07-01
+current_phase: 1
 current_phase_name: offer-pages
 ---
 
@@ -166,6 +167,7 @@ Carried forward to v1.1 scoping:
 |---|-------------|------|--------|-----------|
 | 260416-rkc | Fix 3 UI review issues from phase 03 | 2026-04-17 | 97fd7d5 | [260416-rkc-fix-3-ui-review-issues-from-phase-03](./quick/260416-rkc-fix-3-ui-review-issues-from-phase-03/) |
 | 261030-fae | FA essay email step in deploy workflow | 2026-10-30 | 6f4d7db | [261030-fae-fa-email-step](./quick/261030-fae-fa-email-step/) |
+| 261030-k5d | IndieWeb run 1: microformats, probe, rel=me, webmention sender | 2026-10-30 | 6b1df87 | [261030-k5d-indieweb-run-1-publish-and-send-microfor](./quick/261030-k5d-indieweb-run-1-publish-and-send-microfor/) |
 
 ## Session Continuity
 

@@ -7,28 +7,29 @@
     </div>
   </section>
 
-  <article>
+  <article{{ if not $isPage }} class="h-entry"{{ end }}>
   <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <header class="section-content fa-essay-header">
-      <h1 class="fa-essay-title">{{ .Title }}</h1>
-      {{ with .Params.subtitle }}<p class="offer-lede">{{ . }}</p>{{ end }}
+      <h1 class="fa-essay-title{{ if not $isPage }} p-name{{ end }}">{{ .Title }}</h1>
+      {{ with .Params.subtitle }}<p class="offer-lede{{ if not $isPage }} p-summary{{ end }}">{{ . }}</p>{{ end }}
       {{ if not $isPage }}
         <p class="fa-essay-byline">
-          {{ site.Params.author }} &middot;
-          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+          <span class="p-author h-card"><span class="p-name">{{ site.Params.author }}</span><data class="u-url" value="{{ site.BaseURL }}"></data>{{ with resources.Get "images/matt-stine.jpg" }}<data class="u-photo" value="{{ (.Fill "800x800 Center").Permalink }}"></data>{{ end }}</span> &middot;
+          <time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006" }}</time>
           {{- with .Params.series }} &middot; {{ . }}{{ end }}
+          <data class="u-url" value="{{ .Permalink }}"></data>
         </p>
         {{ with .Resources.GetMatch "cover.jpg" }}
           {{ $c := .Resize "1200x webp q80" }}
           <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
-               alt="{{ $.Params.cover_alt | default (printf "Cover illustration for %s" $.Title) }}" class="fa-essay-cover" fetchpriority="high">
+               alt="{{ $.Params.cover_alt | default (printf "Cover illustration for %s" $.Title) }}" class="fa-essay-cover u-photo" fetchpriority="high">
         {{ end }}
       {{ end }}
     </header>
   </section>
 
   <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
-    <div class="section-content offer-body page-body fa-prose{{ if .Params.grid }} fa-prose--grid{{ end }}">
+    <div class="section-content offer-body page-body fa-prose{{ if not $isPage }} e-content{{ end }}{{ if .Params.grid }} fa-prose--grid{{ end }}">
       {{ .Content }}
     </div>
   </section>

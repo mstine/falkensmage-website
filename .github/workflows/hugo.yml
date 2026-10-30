@@ -107,3 +107,35 @@ jobs:
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
           SEND_EMAIL: ${{ github.event_name == 'workflow_dispatch' && inputs.send_email }}
         run: python3 scripts/send-fa-email.py
+
+  # After deploy, so a target never hears about a page that isn't live. Sent pairs live in
+  # the Actions cache, not a commit: a commit needs contents: write on the job that parses
+  # untrusted HTML. A lost cache costs a duplicate POST inside the 7-day window (the spec
+  # says receivers tolerate repeats), never a missed send. Restore and save are split so the
+  # record is saved even when the send step fails.
+  webmentions:
+    runs-on: ubuntu-latest
+    needs: deploy
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Restore sent Webmentions
+        uses: actions/cache/restore@v6
+        with:
+          path: .webmentions-sent
+          key: webmentions-sent-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: webmentions-sent-
+
+      - name: Send Webmentions for the newest essay
+        run: python3 scripts/send-webmentions.py
+
+      - name: Save sent Webmentions
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: .webmentions-sent
+          key: webmentions-sent-${{ github.run_id }}-${{ github.run_attempt }}
