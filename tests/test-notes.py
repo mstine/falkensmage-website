@@ -1251,5 +1251,359 @@ class Check(SyndicationCase):
         self.assertEqual(output.read_text().split(), ["pending=false", "deploy=false"])
 
 
+# =========================================================================================
+# The at-most-once protocol under every failure (one test per row of the script's failure table)
+# =========================================================================================
+
+def state_with(**notes):
+    """A state document text with the given records: state_with(old={"mastodon": {...}})."""
+    doc = {"_comment": "fixture", "notes": {f"/notes/{slug}/": plats for slug, plats in notes.items()}}
+    return json.dumps(doc, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+
+
+def rec(n):
+    return {"mastodon": {"id": str(n), "posted": "2026-01-01T00:00:00Z",
+                         "url": f"https://mastodon.social/@falkensmage/{n}"}}
+
+
+class PostCase(SyndicationCase):
+    """Helpers for tests that run `post`. Not a test itself."""
+
+    def run_post(self, *, expect_rc=None):
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertNotIn(FAKE_TOKEN, out)
+        if expect_rc is not None:
+            self.assertEqual(rc, expect_rc, out)
+        return rc, out
+
+    def keys(self):
+        return {p["headers"]["idempotency-key"] for p in self.stub.posts()}
+
+    def add_beta(self):
+        """A second due note, left untracked in the checkout so a pull rebases around it."""
+        (m.NOTES / "beta.md").write_text("---\ndate: %s\n---\n%s" % BETA)
+
+
+class AtMostOnce(PostCase):
+    NOTES = {"alpha": ALPHA}
+
+    # --- the retry rows
+
+    def test_a_response_lost_after_mastodon_took_the_post_is_retried_with_the_same_key(self):
+        self.stub.mastodon = ["lose"]
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.posts()), 2)
+        self.assertEqual(len(self.keys()), 1)
+        self.assertEqual(len(self.stub.statuses), 1)
+        self.assertEqual(self.local_state()["notes"][ALPHA_PATH]["mastodon"]["url"],
+                         self.stub.statuses[0]["url"])
+
+    def test_the_key_is_unchanged_across_runs_so_a_next_run_cannot_make_a_second_status(self):
+        self.stub.mastodon = ["lose"] * m.TRIES
+        rc, out = self.run_post(expect_rc=1)
+        self.assertIn("::error title=Notes::", out)
+        self.assertEqual(len(self.stub.posts()), m.TRIES)
+        self.assertEqual(self.local_state()["notes"], {})
+        later = NOW + datetime.timedelta(minutes=45)
+        with mock.patch.object(m, "utcnow", lambda: later):
+            self.run_post(expect_rc=0)
+        self.assertEqual(len(self.keys()), 1)
+        self.assertEqual(self.keys(), {hashlib.sha256(b"falkensmage.com:mastodon:/notes/alpha/").hexdigest()})
+        self.assertEqual(len(self.stub.statuses), 1)
+        self.assertEqual(self.origin_state()["notes"][ALPHA_PATH]["mastodon"]["url"],
+                         self.stub.statuses[0]["url"])
+
+    def test_two_500s_then_a_200_is_one_record_and_exit_0(self):
+        self.stub.mastodon = [("status", 500), ("status", 500)]
+        self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.posts()), 3)
+        self.assertEqual(len(self.local_state()["notes"][ALPHA_PATH]), 1)
+        self.assertEqual(len(self.stub.statuses), 1)
+
+    def test_5xx_and_429_after_three_tries_leave_state_unchanged_and_exit_1(self):
+        for code in (500, 503, 429):
+            with self.subTest(code):
+                before = len(self.stub.posts())
+                self.stub.mastodon = [("status", code)] * m.TRIES
+                self.run_post(expect_rc=1)
+                self.assertEqual(len(self.stub.posts()) - before, m.TRIES)
+        self.assertEqual(self.local_state()["notes"], {})
+        self.assertEqual(self.stub.statuses, [])
+
+    def test_4xx_is_not_retried_and_the_token_never_appears(self):
+        for code in (401, 403, 422):
+            with self.subTest(code):
+                before = len(self.stub.posts())
+                self.stub.mastodon = [("status", code)] * 5
+                rc, out = self.run_post(expect_rc=1)
+                self.assertEqual(len(self.stub.posts()) - before, 1)
+                self.assertIn(f"HTTP {code}", out)
+        self.assertEqual(self.local_state()["notes"], {})
+
+    def test_a_redirect_from_the_api_is_a_failure_and_its_location_gets_no_request(self):
+        self.stub.mastodon = [("redirect", "/elsewhere")]
+        rc, out = self.run_post(expect_rc=1)
+        self.assertIn("HTTP 302", out)
+        self.assertEqual(len(self.stub.posts()), 1)
+        self.assertEqual([r for r in self.stub.requests if r["path"].startswith("/elsewhere")], [])
+        self.assertEqual(self.local_state()["notes"], {})
+
+    def test_a_response_about_someone_elses_status_is_not_recorded(self):
+        with mock.patch.object(m, "MASTODON_POST_PREFIX", "https://mastodon.social/@someone-else/"):
+            rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(self.local_state()["notes"], {})
+        self.assertIn("not a status on this account", out)
+
+    def test_a_servers_text_cannot_start_a_workflow_command_line(self):
+        self.assertEqual(m.one_line("::error title=x::boom\n::warning y\r\n"), "::error title=x::boom ::warning y")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            m.annotate("error", "line one\n::warning title=Injected::two")
+        self.assertEqual(out.getvalue().count("\n"), 1)
+        self.assertTrue(out.getvalue().startswith("::error title=Notes::"))
+
+    # --- the durable-record rows
+
+    def test_a_push_that_fails_after_retries_stops_the_run_at_once(self):
+        hook = self.origin / "hooks" / "pre-receive"
+        hook.write_text("#!/bin/sh\necho rejected >&2\nexit 1\n")
+        hook.chmod(0o755)
+        self.add_beta()  # a second due note, so there is something that must not be posted
+        output = self.output_file()
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.posts()), 1, "no further POST once a record cannot be made")
+        line = next(l for l in out.splitlines() if l.startswith("::error"))
+        self.assertIn("/notes/alpha/", line)
+        self.assertIn("mastodon", line)
+        self.assertIn(self.stub.statuses[0]["url"], line)
+        self.assertEqual(output.read_text(), "", "recorded=true is only written once a record is durable")
+        self.assertNotIn(ALPHA_PATH, vcs(self.origin, "show", "main:data/syndication.json").stdout)
+
+    def test_a_commit_landing_on_origin_between_checkout_and_push_is_rebased_over(self):
+        landed = []
+        self.stub.on_post = lambda: landed or (landed.append(1), commit_to_origin(
+            self.tmp, self.origin, {"OTHER.txt": "someone else\n"}))
+        self.run_post(expect_rc=0)
+        self.assertEqual(self.origin_state()["notes"][ALPHA_PATH]["mastodon"]["url"], self.stub.statuses[0]["url"])
+        self.assertEqual(vcs(self.origin, "show", "main:OTHER.txt").stdout, "someone else\n")
+        self.assertEqual(self.origin_head(), vcs(m.ROOT, "rev-parse", "HEAD").stdout.strip())
+        self.assertFalse(m.rebase_in_progress())
+
+    def test_a_rebase_conflict_on_the_state_file_aborts_the_rebase_and_exits_1(self):
+        theirs = state_with(zeta=rec(9))
+        landed = []
+        self.stub.on_post = lambda: landed or (landed.append(1), commit_to_origin(
+            self.tmp, self.origin, {"data/syndication.json": theirs}))
+        rc, out = self.run_post(expect_rc=1)
+        self.assertFalse(m.rebase_in_progress(), "git rebase --abort must have run")
+        self.assertEqual(vcs(m.ROOT, "status", "--porcelain").stdout, "")
+        self.assertIn("rebase", out)
+        self.assertIn(self.stub.statuses[0]["url"], out)
+        self.assertEqual(len(self.stub.posts()), 1)
+        self.assertEqual(self.origin_state()["notes"].keys(), {"/notes/zeta/"})
+
+    def test_a_record_another_run_pushed_meanwhile_is_kept_by_the_next_record(self):
+        # old is recorded; alpha and beta are due. During alpha's POST another run records zzz
+        # (far from alpha's insertion point, so the rebase merges cleanly). Beta's record is then
+        # written from memory, which must already include zzz.
+        commit_to_origin(self.tmp, self.origin, {"data/syndication.json": state_with(old=rec(1))})
+        vcs(m.ROOT, "pull", "--rebase", "origin", "main")
+        self.add_beta()
+        theirs = state_with(old=rec(1), zzz=rec(2))
+        landed = []
+        self.stub.on_post = lambda: landed or (landed.append(1), commit_to_origin(
+            self.tmp, self.origin, {"data/syndication.json": theirs}))
+        self.run_post(expect_rc=0)
+        final = self.origin_state()["notes"]
+        self.assertEqual(sorted(final), ["/notes/alpha/", "/notes/beta/", "/notes/old/", "/notes/zzz/"])
+        self.assertEqual(sorted(self.local_state()["notes"]), sorted(final))
+        self.assertEqual(len(self.stub.posts()), 2)
+
+    def test_a_record_in_origin_newer_than_the_checkout_is_seen_before_posting(self):
+        self.add_beta()
+        commit_to_origin(self.tmp, self.origin, {"data/syndication.json": state_with(alpha=rec(7))})
+        self.assertNotIn("alpha", m.STATE.read_text(), "the checkout is stale")
+        self.run_post(expect_rc=0)
+        bodies = [urllib.parse.parse_qs(p["body"].decode())["status"][0] for p in self.stub.posts()]
+        self.assertEqual(bodies, ["Beta note, plain."], "alpha was already recorded in origin")
+
+    def test_a_failed_pull_before_posting_posts_nothing_and_exits_1(self):
+        vcs(m.ROOT, "remote", "set-url", "origin", f"file://{self.tmp}/gone.git")
+        rc, out = self.run_post(expect_rc=1)
+        self.assertEqual(self.stub.requests, [])
+        self.assertIn("::error", out)
+
+    def test_recorded_true_reaches_the_output_at_the_first_record_even_when_a_later_step_fails(self):
+        self.add_beta()
+        output = self.output_file()
+        self.stub.mastodon = ["ok", ("status", 401)]
+        self.run_post(expect_rc=1)
+        self.assertEqual(len(self.stub.posts()), 2)
+        self.assertIn("recorded=true", output.read_text())
+        self.assertEqual(list(self.origin_state()["notes"]), [ALPHA_PATH])
+
+    # --- the guard rows
+
+    def test_the_secret_absent_is_exit_1_with_no_post(self):
+        rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.posts(), [])
+        self.assertIn("MASTODON_ACCESS_TOKEN is not set", out)
+        self.assertEqual(self.local_state()["notes"], {})
+
+    def test_a_secret_with_header_unsafe_characters_is_refused_before_it_reaches_a_header(self):
+        with mock.patch.dict(os.environ, {"MASTODON_ACCESS_TOKEN": "bad token\nX-Evil: 1"}):
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.posts(), [])
+        self.assertNotIn("X-Evil", out)
+
+    def test_dry_run_posts_nothing_and_writes_nothing(self):
+        before = self.origin_head()
+        local = vcs(m.ROOT, "rev-parse", "HEAD").stdout
+        text = m.STATE.read_text()
+        with mock.patch.dict(os.environ, {"DRY_RUN": "1"}):
+            rc, out = self.run_post(expect_rc=0)
+        self.assertEqual(self.stub.posts(), [])
+        self.assertEqual(len(self.stub.gets(ALPHA_PATH)), 1, "the page is still fetched")
+        self.assertIn("would post", out)
+        self.assertEqual(m.STATE.read_text(), text)
+        self.assertEqual(vcs(m.ROOT, "rev-parse", "HEAD").stdout, local)
+        self.assertEqual(self.origin_head(), before)
+
+
+class MissingState(SyndicationCase):
+    NOTES = {"alpha": ALPHA}
+    STATE = None
+
+    def test_a_missing_state_file_posts_nothing_and_exits_1(self):
+        self.assertFalse(m.STATE.exists())
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.requests, [])
+        self.assertIn("syndication.json", out)
+        self.assertFalse(m.STATE.exists(), "it must not be recreated empty")
+
+    def test_check_also_fails_on_a_missing_state_file(self):
+        rc, out = self.run_main("check")
+        self.assertEqual(rc, 1, out)
+
+
+class MalformedState(SyndicationCase):
+    NOTES = {"alpha": ALPHA}
+    STATE = '{"notes": []}\n'
+
+    def test_a_malformed_state_file_posts_nothing_and_exits_1(self):
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.requests, [])
+
+
+class MalformedNote(SyndicationCase):
+    NOTES = {"alpha": ALPHA}
+
+    def test_a_malformed_note_posts_nothing_and_exits_1_naming_the_file(self):
+        (m.NOTES / "broken.md").write_text("---\ndate: 2026-02-01\n---\nHi\n")
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertIn("broken.md", out)
+        self.assertEqual(self.stub.posts(), [])
+
+
+class Window(SyndicationCase):
+    NOTES = {"alpha": ALPHA, "beta": BETA, "gamma": GAMMA,
+             "drafty": ("2026-02-20T09:00:00-06:00", "A draft.\n", "draft: true")}
+
+    def test_a_note_older_than_7_days_is_never_posted_and_warns(self):
+        later = NOW + datetime.timedelta(days=20)
+        with mock.patch.object(m, "utcnow", lambda: later), self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.stub.requests, [])
+        self.assertIn("::warning title=Notes::/notes/alpha/", out)
+        self.assertIn("::warning title=Notes::/notes/beta/", out)
+        self.assertEqual(self.local_state()["notes"], {})
+
+    def test_the_window_is_exactly_a_week_and_a_recorded_note_never_warns(self):
+        notes = [n for n in m.load_notes(m.NOTES) if n.slug in ("alpha", "beta")]
+        edge = notes[0].date + m.MAX_AGE
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual([n.slug for n, _ in m.pending(notes, {"notes": {}}, edge)], ["alpha", "beta"])
+            self.assertEqual(out.getvalue(), "", "exactly 7 days old is still in the window")
+            past = edge + datetime.timedelta(seconds=1)
+            self.assertEqual([n.slug for n, _ in m.pending(notes, {"notes": {}}, past)], ["beta"])
+        self.assertIn("::warning title=Notes::/notes/alpha/", out.getvalue())
+        out = io.StringIO()
+        recorded = {"notes": {ALPHA_PATH: rec(1), BETA_PATH: rec(2)}}
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(m.pending(notes, recorded, edge + datetime.timedelta(days=30)), [])
+        self.assertEqual(out.getvalue(), "")
+
+    def test_a_draft_and_a_future_note_are_not_posted_and_nothing_is_fetched_for_them(self):
+        with mock.patch.object(m, "utcnow", lambda: NOW - datetime.timedelta(days=60)), self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.stub.requests, [])
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 0, out)
+        paths = {r["path"] for r in self.stub.requests if r["method"] == "GET"}
+        self.assertEqual(paths, {ALPHA_PATH, BETA_PATH})
+
+
+class LivePage(SyndicationCase):
+    NOTES = {"alpha": ALPHA, "beta": BETA}
+
+    def test_a_page_that_never_goes_live_sends_no_post_and_a_later_note_gets_one_try(self):
+        self.stub.site = self.tmp / "empty-site"
+        self.stub.site.mkdir()
+        with mock.patch.object(m, "LIVE_TRIES", 3):
+            with self.token():
+                rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.posts(), [])
+        self.assertEqual(len(self.stub.gets(ALPHA_PATH)), 3)
+        self.assertEqual(len(self.stub.gets(BETA_PATH)), 1)
+        self.assertIn("never went live", out)
+
+    def test_a_live_page_with_no_e_content_sends_no_post_and_exits_1(self):
+        site = self.tmp / "bare-site"
+        for slug in ("alpha", "beta"):
+            (site / "notes" / slug).mkdir(parents=True)
+            (site / "notes" / slug / "index.html").write_text("<html><body><p>no entry here</p></body></html>")
+        self.stub.site = site
+        with self.token():
+            rc, out = self.run_main("post")
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.stub.posts(), [])
+        self.assertIn("e-content", out)
+        self.assertEqual(len(self.stub.gets(ALPHA_PATH)), 1, "waiting does not fix a page with no e-content")
+
+    def test_check_with_a_due_note_says_deploy_false_when_live_and_true_when_not(self):
+        output = self.output_file()
+        self.assertEqual(self.run_main("check")[0], 0)
+        self.assertEqual(sorted(output.read_text().split()), ["deploy=false", "pending=true"])
+        self.stub.site = self.tmp / "empty-site"
+        self.stub.site.mkdir()
+        output.write_text("")
+        self.assertEqual(self.run_main("check")[0], 0)
+        self.assertEqual(sorted(output.read_text().split()), ["deploy=true", "pending=true"])
+        self.assertEqual(self.stub.posts(), [])
+
+    def test_check_deploys_when_any_one_pending_page_is_missing(self):
+        site = self.tmp / "half-site"
+        shutil.copytree(Builds.get("syn"), site)
+        shutil.rmtree(site / "notes" / "beta")
+        self.stub.site = site
+        output = self.output_file()
+        self.assertEqual(self.run_main("check")[0], 0)
+        self.assertEqual(sorted(output.read_text().split()), ["deploy=true", "pending=true"])
+
+
 if __name__ == "__main__":
     unittest.main()

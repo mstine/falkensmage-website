@@ -158,6 +158,10 @@ class StateError(Exception):
     """data/syndication.json is missing or malformed."""
 
 
+class GitError(Exception):
+    """The checkout could not be brought to the tip of main. Nothing was posted."""
+
+
 class PostError(Exception):
     """A platform did not take the post. Safe to log: it never holds the token or note text."""
 
@@ -217,6 +221,24 @@ def git(*args, ident=False):
         return subprocess.run(cmd, capture_output=True, text=True, timeout=GIT_TIMEOUT, env=env)
     except (OSError, subprocess.TimeoutExpired) as e:
         return subprocess.CompletedProcess(cmd, 1, "", type(e).__name__)
+
+
+def rebase_in_progress():
+    for name in ("rebase-merge", "rebase-apply"):
+        r = git("rev-parse", "--git-path", name)
+        if r.returncode == 0 and (ROOT / r.stdout.strip()).exists():
+            return True
+    return False
+
+
+def pull_main():
+    """Bring the checkout to the tip of main. `post` does this before it reads state: a run that
+    queued behind another was created at an older commit and would otherwise read stale state."""
+    r = git("pull", "--rebase", REMOTE, BRANCH, ident=True)
+    if r.returncode != 0:
+        if rebase_in_progress():
+            git("rebase", "--abort")
+        raise GitError(f"could not pull {REMOTE} {BRANCH}: {one_line(r.stderr, 160)}")
 
 
 # --- the note format --------------------------------------------------------------------
@@ -347,7 +369,9 @@ def write_state(path, doc):
 def pending(notes, state, now, platforms=None):
     """[(note, [platform, ...])], oldest first: non-draft notes whose date has passed and that
     still lack a record on a platform in `platforms` (default: every registered poster). Hugo
-    publishes a note when its date is not after now, and so does this."""
+    publishes a note when its date is not after now, and so does this. A note older than MAX_AGE
+    that lacks a record is logged, warned about and left out: that bounds what a bad revert of
+    the state file can re-post, and makes a backdated note a deliberate publish-here-only."""
     wanted = list(platforms or POSTERS)
     out = []
     for note in sorted(notes, key=lambda n: (n.date, n.slug)):
@@ -355,8 +379,14 @@ def pending(notes, state, now, platforms=None):
             continue
         done = state["notes"].get(note.path, {})
         todo = [p for p in wanted if p not in done]
-        if todo:
-            out.append((note, todo))
+        if not todo:
+            continue
+        if now - note.date > MAX_AGE:
+            log(f"{note.slug}: older than {MAX_AGE.days} days and not syndicated; never posted")
+            annotate("warning", f"{note.path} is older than {MAX_AGE.days} days and was never "
+                                f"syndicated to {', '.join(todo)}; it will not be posted")
+            continue
+        out.append((note, todo))
     return out
 
 
@@ -594,10 +624,23 @@ def idempotency_key(note):
     return hashlib.sha256(f"falkensmage.com:mastodon:{note.path}".encode()).hexdigest()
 
 
+def _reason(err):
+    """': <error>' from a JSON error body, single-line and capped; '' if there is none."""
+    try:
+        doc = json.loads(err.read(4096))
+        reason = one_line(doc.get("error"), 200) if isinstance(doc, dict) and doc.get("error") else ""
+    except (ValueError, RecursionError, AttributeError, OSError, http.client.HTTPException):
+        return ""
+    return f": {reason}" if reason else ""
+
+
 def post_mastodon(note, text):
-    """POST the status. Returns {url, id, posted}. Raises PostError on anything but a 200 with a
-    string id and a url on the account's own prefix (a response about someone else's status is
-    never recorded)."""
+    """POST the status. Returns {url, id, posted}. 5xx, 429 and connection errors are retried
+    (TRIES, WAIT apart) with the same Idempotency-Key, so a response lost after Mastodon took the
+    post returns the first status instead of making a second. Any other status raises at once:
+    no retry, and no redirect is followed, so the Authorization header never leaves. Raises
+    PostError on anything but a 200 with a string id and a url on the account's own prefix (a
+    response about someone else's status is never recorded)."""
     token = os.environ.get("MASTODON_ACCESS_TOKEN", "").strip()
     if not token:
         raise PostError("MASTODON_ACCESS_TOKEN is not set")
@@ -609,14 +652,27 @@ def post_mastodon(note, text):
         "Authorization": f"Bearer {token}", "Idempotency-Key": idempotency_key(note),
         "User-Agent": UA, "Accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded"})
-    try:
-        with OPENER.open(req, timeout=TIMEOUT) as r:
-            status, body = r.status, r.read(MAX_BYTES + 1)
-    except urllib.error.HTTPError as e:
-        e.close()
-        raise PostError(f"mastodon: HTTP {e.code}") from None
-    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
-        raise PostError(f"mastodon: unreachable ({type(e).__name__})") from None
+    why = "no attempt"
+    for attempt in range(TRIES):
+        try:
+            with OPENER.open(req, timeout=TIMEOUT) as r:
+                status, body = r.status, r.read(MAX_BYTES + 1)
+            break
+        except urllib.error.HTTPError as e:
+            try:
+                if e.code < 500 and e.code != 429:
+                    raise PostError(f"mastodon: HTTP {e.code}{_reason(e)}") from None
+                why = f"HTTP {e.code}"
+            finally:
+                e.close()
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+            why = f"unreachable ({type(e).__name__})"
+        if attempt < TRIES - 1:
+            time.sleep(WAIT)
+    else:
+        raise PostError(f"mastodon: failed ({why}) after {TRIES} tries")
+    if len(body) > MAX_BYTES:
+        raise PostError("mastodon: the response was larger than the size cap")
     if status != 200:
         raise PostError(f"mastodon: HTTP {status}")
     try:
@@ -637,7 +693,9 @@ POSTERS = {"mastodon": post_mastodon}
 
 def record(state, note, platform, rec):
     """Make one success durable: update the document, write it atomically, commit it alone and
-    push, then tell the workflow. Raises RecordError (with what a human needs) on any failure."""
+    push (on a rejection, pull --rebase and push again, PUSH_TRIES times), then tell the
+    workflow. Raises RecordError, carrying what a human needs to commit it by hand, on any
+    failure."""
     state["notes"].setdefault(note.path, {})[platform] = rec
 
     def fail(why):
@@ -653,8 +711,31 @@ def record(state, note, platform, rec):
     msg = f"chore(notes): record {platform} syndication for {note.slug}"
     if git("commit", "-m", msg, "--", rel, ident=True).returncode != 0:
         fail("git commit failed")
-    if git("push", REMOTE, f"HEAD:{BRANCH}").returncode != 0:
-        fail("git push failed")
+    why = "git push failed"
+    for attempt in range(PUSH_TRIES):
+        if git("push", REMOTE, f"HEAD:{BRANCH}").returncode == 0:
+            break
+        pulled = git("pull", "--rebase", REMOTE, BRANCH, ident=True)
+        if pulled.returncode != 0:
+            if rebase_in_progress():
+                git("rebase", "--abort")
+                fail("the rebase conflicted on the state file and was aborted")
+            why = "git push failed and the pull failed"
+        else:
+            # Someone else's commit may now sit under ours. Our in-memory document predates it,
+            # and the next record writes from memory, so take the merged file as the truth.
+            try:
+                merged = load_state(STATE)
+            except StateError:
+                fail("the rebase left an unreadable state file")
+            if platform not in merged["notes"].get(note.path, {}):
+                fail("the rebase dropped the new record")
+            state.clear()
+            state.update(merged)
+        if attempt < PUSH_TRIES - 1:
+            time.sleep(PUSH_WAIT)
+    else:
+        fail(f"{why} after {PUSH_TRIES} tries")
     gh_output(recorded="true")
 
 
@@ -680,28 +761,39 @@ def cmd_check():
 
 
 def cmd_post():
+    dry = os.environ.get("DRY_RUN") == "1"
     try:
+        if not dry:
+            pull_main()
         notes = load_notes(NOTES)
         state = load_state(STATE)
-    except (NoteError, StateError) as e:
+    except (GitError, NoteError, StateError) as e:
         log(f"FAILED: {e}")
         annotate("error", e)
         return 1
-    failed = False
+    failed = timed_out = False
+    # Computed here, never trusted from `check`: the checkout may have moved since.
     for note, platforms in pending(notes, state, utcnow()):
         try:
-            text = wait_live(note, LIVE_TRIES)
+            # After one page has timed out, later notes get a single try, so the job cannot
+            # spend its whole timeout waiting on pages that are not coming.
+            text = wait_live(note, 1 if timed_out else LIVE_TRIES)
         except PostError as e:
             log(f"FAILED: {e}")
             annotate("error", e)
             failed = True
             continue
         if text is None:
+            timed_out = failed = True
             log(f"FAILED: {note.path} is not live")
             annotate("error", f"{note.path} never went live; nothing was posted")
-            failed = True
             continue
         for platform in platforms:
+            if platform in state["notes"].get(note.path, {}):
+                continue  # a rebase brought in another run's record for it
+            if dry:
+                log(f"dry run: {note.slug} {platform}: would post {len(text)} characters")
+                continue
             try:
                 rec = POSTERS[platform](note, text)
             except PostError as e:
@@ -712,6 +804,7 @@ def cmd_post():
             try:
                 record(state, note, platform, rec)
             except RecordError as e:
+                # Posting further with no way to record is the double post: stop now.
                 log(f"FAILED: {note.slug} {platform}: posted but not recorded ({e.why})")
                 annotate("error", f"POSTED BUT NOT RECORDED: {e.note} {e.platform} {e.url} "
                                   f"({e.why}). Add it to data/syndication.json by hand.")
