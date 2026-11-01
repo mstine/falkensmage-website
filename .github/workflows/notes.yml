@@ -32,6 +32,13 @@
 # Secrets (MASTODON_ACCESS_TOKEN, BLUESKY_APP_PASSWORD) and `contents: write` exist in the
 # `syndicate` job only. The minutes 7, 22, 37 and 52 avoid the top of the hour, when GitHub's
 # schedule is most delayed.
+#
+# The schedule is best effort, and sometimes GitHub just stops firing it: on 2026-11-01 it ran
+# twice in sixteen hours and a scheduled note went out 21 minutes late by hand. A LaunchAgent on
+# Matt's Mac (scripts/notes-backstop.sh, installed by scripts/install-notes-backstop.sh) checks
+# every 15 minutes and dispatches this workflow when its last run is more than 20 minutes old.
+# That is safe for the reasons above: a run with nothing due does nothing, and posting is
+# at-most-once.
 
 name: Syndicate notes
 
