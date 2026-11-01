@@ -14,6 +14,11 @@
    }
   },
   "/notes/rewired-bonus-only-dogma/": {
+   "bluesky": {
+    "posted": "2026-11-01T18:51:05Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3mzbgvt6753s3",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3mzbgvt6753s3"
+   },
    "mastodon": {
     "id": "117542686572403991",
     "posted": "2026-11-01T18:51:00Z",
