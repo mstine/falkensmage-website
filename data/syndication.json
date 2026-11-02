@@ -26,6 +26,11 @@
    }
   },
   "/notes/here-s-another-one-that-has/": {
+   "bluesky": {
+    "posted": "2026-11-02T22:02:23Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3mzeboaszl6ah",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3mzeboaszl6ah"
+   },
    "mastodon": {
     "id": "117549101253513490",
     "posted": "2026-11-02T22:02:20Z",
