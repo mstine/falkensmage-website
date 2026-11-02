@@ -1,6 +1,13 @@
 {
  "_comment": "Where each note was syndicated. scripts/syndicate-notes.py writes this file, one commit per platform per note, and the note template renders it as u-syndication links. Keyed by the note's path; each platform holds url, id and posted. A missing or malformed file fails the script on purpose: empty state would mean post everything.",
  "notes": {
+  "/notes/completed-an-archetypal-tarot-spread-this/": {
+   "mastodon": {
+    "id": "117547922220372833",
+    "posted": "2026-11-02T17:02:30Z",
+    "url": "https://mastodon.social/@falkensmage/117547922220372833"
+   }
+  },
   "/notes/i-m-experimenting-with-adding-additional/": {
    "bluesky": {
     "posted": "2026-11-02T00:14:36Z",
