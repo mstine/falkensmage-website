@@ -74,6 +74,11 @@
    }
   },
   "/notes/the-tower-in-the-challenge-spot/": {
+   "bluesky": {
+    "posted": "2026-11-05T21:10:58Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3mzlqmeiclujx",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3mzlqmeiclujx"
+   },
    "mastodon": {
     "id": "117565886023727212",
     "posted": "2026-11-05T21:10:55Z",
