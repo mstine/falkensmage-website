@@ -70,12 +70,23 @@ jobs:
       # continue-on-error so an outage never blocks the deploy (the essay publishes with
       # last-good mentions); the red lives in the mentions-probe job after deploy. A missing
       # secret is the one non-failure: green, with a log line and a notice.
+      # Avatars are self-hosted files the pull downloads into static/webmention-avatars/. They
+      # keep their own cache entry (restored before the pull, saved only when it succeeded)
+      # because actions/cache versions an entry by its path list: adding a path to the data
+      # entry would change its version and orphan the last-good data.
       - name: Restore last-good Webmentions
         uses: actions/cache/restore@v6
         with:
           path: data/webmentions.json
           key: webmentions-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: webmentions-data-
+
+      - name: Restore last-good Webmention avatars
+        uses: actions/cache/restore@v6
+        with:
+          path: static/webmention-avatars
+          key: webmention-avatars-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: webmention-avatars-
 
       - name: Pull Webmentions
         id: mentions
@@ -91,6 +102,13 @@ jobs:
         with:
           path: data/webmentions.json
           key: webmentions-data-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Save last-good Webmention avatars
+        if: steps.mentions.outcome == 'success'
+        uses: actions/cache/save@v6
+        with:
+          path: static/webmention-avatars
+          key: webmention-avatars-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Build with Hugo
         env:

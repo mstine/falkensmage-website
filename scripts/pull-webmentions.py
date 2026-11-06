@@ -33,6 +33,7 @@ takes effect even during an outage). Then:
     wrong shape, bad JSON, short walk     last-good kept, exit 1
     200 with zero mentions                see "The witness"
     blocklist file malformed              data file untouched, exit 1 (a repo bug)
+    an avatar fails (any reason)          that author shows an initial; exit code unchanged
 
 The workflow runs this step with continue-on-error, so a failure never blocks the deploy: the
 essay publishes with last-good mentions, and a separate job after deploy turns the run red.
@@ -53,29 +54,58 @@ is not the maximum. Stepping `page` has no ordering assumption, and a short walk
 comparing the unique count with the first response's `total`. Every build is a full pull: volume
 is low, one request carries up to 1000, and upstream deletions vanish with no extra endpoint.
 
-Why names only
---------------
-No avatar or photo URL is ever copied into the data file, so a template cannot hotlink one even
-by accident and no reader's IP reaches a stranger's host. Names link to the mention itself.
+Why avatars are self-hosted, never hotlinked
+--------------------------------------------
+Each distinct author photo is downloaded once at build into static/webmention-avatars/, named
+<sha256(photo url)[:32]>.<ext>. The data file holds only that site-relative path, so no template
+can hotlink a photo and no reader's IP reaches a stranger's host. The remote photo URL is kept
+in a side table during the run and never enters a record; write_data cuts every record to a
+fixed set of fields and drops any avatar that is not a /webmention-avatars/ path.
+
+The limits: https only, a dotted host name (no IP literal, no localhost), no redirects, no
+proxy, one 5-second attempt, at most 200 KB, a 45-second download budget per run, and no
+Authorization header. The extension comes from the downloaded bytes' magic number (PNG, JPEG,
+WebP or GIF), never from the URL or Content-Type, and SVG is never accepted. The files live in
+static/, not assets/: Hugo copies static bytes without decoding them, so a stranger's file can
+never fail the build.
+
+A blocked author's photo is never fetched, and every run (pull, no token, or outage) deletes
+any file in the avatar directory that the written data file does not reference. A valid
+cached file is reused without a request. Any failure shows the author's initial on a violet
+circle and never changes the exit code. Avatars persist between builds in their own Actions
+cache entry (webmention-avatars-*), separate from the data entry because actions/cache
+versions an entry by its path list: adding a path to the data entry would orphan last-good.
+
+Bridgy conversation links
+-------------------------
+webmention.io reports a Bridgy-bridged Mastodon reply's ActivityPub id as its url, and that
+address serves JSON. A source of the form https://brid.gy/<kind>/mastodon/@user@instance/<id>
+is mapped to https://<instance>/@user/<id>, the conversation a reader can open. Bluesky URLs
+and ordinary webmentions keep theirs. The record also gets a platform ("mastodon", "bluesky"
+or ""), a handle and an initial, computed here so no template function runs on stranger data.
+
 Only `content.text` is read, never `content.html`. Logs carry counts and fixed text, never a
 mention field: a line of stranger text starting `::` is a workflow command to the runner.
 
 webmention.io coverage (opt out explicitly, never by omission)
 --------------------------------------------------------------
-In: GET /api/mentions.jf2 with domain, per-page, page and sort-dir (Bearer header), and the
+In: author photos, self-hosted (see above); GET /api/mentions.jf2 with domain, per-page, page and sort-dir (Bearer header), and the
 same endpoint with target[] and no token (the witness); wm-property in-reply-to, like-of and
 repost-of and mention-of are rendered. Sources on the site's own domains (OWN_DOMAINS) are
 dropped and counted as own-site, whatever their kind, so the site's cross-links never render as
 responses from other people. Out, on purpose: bookmark-of and rsvp (counted in the log, not
 rendered; adding one is a KINDS entry and a template loop); wm-private mentions (dropped,
-never public); photo, video, audio and author photos (no third-party images); content.html;
+never public); a mention's own photo, video and audio; SVG and other image types, redirects and retries for
+avatars; content.html;
 the `token` query parameter; since, since_id, the wm-property filter and sort-by; deleted.jf2
 and count (a full pull is authoritative); the legacy, atom, html and jsonp formats; export.jf2;
 web hooks; webmention-render.js and its CSS; pingback; and the dashboard (sign-in, settings,
 moderation), which is manual and complements data/webmention-blocklist.json.
 """
 import datetime
+import hashlib
 import http.client
+import ipaddress
 import json
 import os
 import re
@@ -111,6 +141,17 @@ WAIT = 5
 MAX_BYTES = 32 * 1024 * 1024
 WITNESS_PATHS = 50
 TOKEN_RE = re.compile(r"[\x21-\x7e]+")
+AVATAR_DIR = ROOT / "static" / "webmention-avatars"
+AVATAR_PREFIX = "/webmention-avatars/"
+AVATAR_RE = re.compile(r"/webmention-avatars/[0-9a-f]{32}\.(?:png|jpg|webp|gif)")
+AVATAR_MAX_BYTES = 200 * 1024
+AVATAR_TIMEOUT = 5
+AVATAR_BUDGET = 45
+AVATAR_ACCEPT = "image/png, image/jpeg, image/webp, image/gif"
+# The only keys a record may carry into the data file, and the only platforms it may name.
+FIELDS = ("name", "url", "source", "author_url", "text", "date", "date_text", "avatar", "handle",
+          "initial", "platform")
+PLATFORMS = ("", "mastodon", "bluesky")
 
 
 class PullError(Exception):
@@ -325,9 +366,13 @@ def witness_total(paths):
 
 # --- normalize --------------------------------------------------------------------------
 
-def normalize(children):
+def normalize(children, photos=None):
     """(pages, counts). pages maps '/fa/slug/' to {likes, reposts, mentions, replies} lists of records
-    holding only name, url, source, author_url (and text, date, date_text on replies)."""
+    holding only name, url, source, author_url (and text, date, date_text on replies).
+
+    When `photos` is a dict, each kept record's author photo URL is noted there under
+    (path, kind, source). The record itself never holds it: a remote image URL must not be able
+    to reach the data file or a template."""
     pages, seen = {}, set()
     counts = {"private": 0, "other": 0, "off_essay": 0, "unusable": 0,
               "own": 0}
@@ -366,8 +411,288 @@ def normalize(children):
             text = clean_text(content.get("text"), REPLY_CHARS) if isinstance(content, dict) else ""
             rec["text"] = text or clean_text(child.get("name"), REPLY_CHARS)
             rec["date"], rec["date_text"] = _date(child)
+        if photos is not None:
+            photo = clean_url(author.get("photo"))
+            if photo:
+                photos[(path, kind, source)] = photo
         pages.setdefault(path, {}).setdefault(kind, []).append(rec)
     return pages, counts
+
+
+# --- avatars ----------------------------------------------------------------------------
+
+def avatar_name(url):
+    """The first 32 hex characters of the sha256 of the photo URL."""
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()[:32]
+
+
+def sniff_image(data):
+    """The file extension for PNG, JPEG, GIF or WebP bytes, by magic number; None for anything
+    else, SVG and HTML included."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def avatar_source_ok(url):
+    """True for an https URL on a dotted host name: no IP literal, no localhost."""
+    if not clean_url(url):
+        return False
+    try:
+        parts = urllib.parse.urlsplit(url)
+        host = (parts.hostname or "").lower().rstrip(".")
+    except ValueError:
+        return False
+    if parts.scheme != "https" or "." not in host or host == "localhost":
+        return False
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return True
+    return False
+
+
+def fetch_avatar(url):
+    """The image bytes, or None. One attempt, no redirects, no Authorization header."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": AVATAR_ACCEPT})
+    try:
+        with OPENER.open(req, timeout=AVATAR_TIMEOUT) as r:
+            body = r.read(AVATAR_MAX_BYTES + 1)
+    except urllib.error.HTTPError as e:
+        e.close()
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, ValueError):
+        return None
+    return body if len(body) <= AVATAR_MAX_BYTES else None
+
+
+def _store_avatar(avatar_dir, name, data):
+    fd, tmp = tempfile.mkstemp(dir=avatar_dir, prefix=".avatar-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, avatar_dir / name)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+AVATAR_EXTS = ("png", "jpg", "webp", "gif")
+
+
+def _valid_avatar_file(path, ext=None):
+    """True when the file is at most AVATAR_MAX_BYTES, sniffs as an image, and (when `ext` is
+    given) the sniff agrees with the extension."""
+    try:
+        if path.is_symlink() or path.stat().st_size > AVATAR_MAX_BYTES:
+            return False
+        got = sniff_image(path.read_bytes())
+    except OSError:
+        return False
+    return got is not None and (ext is None or got == ext)
+
+
+def _cached_avatar(avatar_dir, name):
+    """The file name of a valid cached avatar for this hash name, else None. An invalid file
+    found under the name is deleted."""
+    for ext in AVATAR_EXTS:
+        f = avatar_dir / f"{name}.{ext}"
+        if f.is_symlink() or f.exists():
+            if _valid_avatar_file(f, ext):
+                return f.name
+            try:
+                f.unlink()
+            except OSError:
+                pass
+    return None
+
+
+def attach_avatars(pages, photos, avatar_dir):
+    """Resolve each distinct photo URL once and set rec["avatar"] to its site-relative path.
+
+    A valid cached file is reused with no network and no budget. Otherwise the photo is fetched
+    (avatar_source_ok first), sniffed and written. Returns {shown, fetched, unavailable}. Any
+    failure, whatever its type, costs only that avatar."""
+    avatar_dir = Path(avatar_dir)
+    avatar_dir.mkdir(parents=True, exist_ok=True)
+    resolved, counts = {}, {"shown": 0, "fetched": 0, "unavailable": 0}
+    spent = 0.0
+    for path, kinds in pages.items():
+        for kind, records in kinds.items():
+            for r in records:
+                url = photos.get((path, kind, r.get("source")))
+                if not url:
+                    continue
+                if url not in resolved:
+                    resolved[url] = None
+                    try:
+                        if avatar_source_ok(url):
+                            name = avatar_name(url)
+                            hit = _cached_avatar(avatar_dir, name)
+                            if hit:
+                                resolved[url] = AVATAR_PREFIX + hit
+                            elif spent < AVATAR_BUDGET:
+                                t0 = time.monotonic()
+                                try:
+                                    data = fetch_avatar(url)
+                                finally:
+                                    spent += time.monotonic() - t0
+                                ext = sniff_image(data) if data else None
+                                if ext:
+                                    _store_avatar(avatar_dir, f"{name}.{ext}", data)
+                                    resolved[url] = AVATAR_PREFIX + f"{name}.{ext}"
+                                    counts["fetched"] += 1
+                    except Exception:
+                        resolved[url] = None
+                    if resolved[url] is None:
+                        counts["unavailable"] += 1
+                if resolved[url]:
+                    r["avatar"] = resolved[url]
+                    counts["shown"] += 1
+    return counts
+
+
+def keep_present_avatars(pages, avatar_dir):
+    """Drop the avatar field from any record whose avatar is not a well-formed path, whose
+    file is missing, or whose file fails revalidation (an invalid file is deleted). So if the
+    data cache and the avatar cache ever disagree, the page shows an initial, never a broken
+    image."""
+    avatar_dir = Path(avatar_dir)
+    for kinds in pages.values():
+        for records in kinds.values():
+            for r in records:
+                av = r.get("avatar")
+                if av is None:
+                    continue
+                f = None
+                if isinstance(av, str) and AVATAR_RE.fullmatch(av):
+                    f = avatar_dir / av.rsplit("/", 1)[1]
+                if f is not None and f.exists() and _valid_avatar_file(f, f.suffix[1:]):
+                    continue
+                if f is not None and (f.is_symlink() or f.exists()):
+                    try:
+                        f.unlink()
+                    except OSError:
+                        pass
+                del r["avatar"]
+    return pages
+
+
+def prune_avatars(avatar_dir, pages):
+    """Delete every file in avatar_dir that `pages` does not reference, leftover temp files
+    included. A blocked or vanished author's photo therefore never outlives the record."""
+    avatar_dir = Path(avatar_dir)
+    if not avatar_dir.is_dir():
+        return
+    keep = {r["avatar"].rsplit("/", 1)[1] for kinds in pages.values() for records in kinds.values()
+            for r in records if isinstance(r.get("avatar"), str)}
+    for f in avatar_dir.iterdir():
+        if f.name not in keep and (f.is_symlink() or f.is_file()):
+            try:
+                f.unlink()
+            except OSError:
+                pass
+
+
+# --- derived card fields ----------------------------------------------------------------
+
+_BRIDGY_MASTODON = re.compile(
+    r"https://brid\.gy/[a-z]+/mastodon/@([A-Za-z0-9_]+)@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)"
+    r"/([0-9]+)(?:/|$)")
+_BRIDGY_PLATFORM = re.compile(r"https://brid\.gy/[a-z]+/(mastodon|bluesky)/")
+_MASTODON_PATH = re.compile(r"/@([A-Za-z0-9_.-]+)/?")
+_BSKY_PATH = re.compile(r"/profile/([A-Za-z0-9.-]+)/?")
+
+
+def _bare_host(url):
+    host = _host(url)
+    return host[4:] if host.startswith("www.") else host
+
+
+def _handle(rec):
+    author_url = rec.get("author_url", "")
+    if author_url:
+        host = _host(author_url)
+        try:
+            path = urllib.parse.urlsplit(author_url).path
+        except ValueError:
+            path = ""
+        mast = _MASTODON_PATH.fullmatch(path)
+        if mast and host:
+            return f"@{mast.group(1)}@{host}"
+        bsky = _BSKY_PATH.fullmatch(path)
+        if bsky and host == "bsky.app":
+            return f"@{bsky.group(1)}"
+        return _bare_host(author_url)
+    return _bare_host(rec.get("url", ""))
+
+
+def _initial(name, handle):
+    for text in (name, handle):
+        for ch in text:
+            if ch.isalnum():
+                return ch.upper()[0]
+    return "\u2022"
+
+
+def derive(rec):
+    """Set url (the Bridgy-Mastodon conversation), platform, handle and initial on a record,
+    in place, and return it. Idempotent, so it runs on fresh and last-good records alike.
+
+    The pure-Python computation is the point: no template function that can fail on a
+    stranger's value is ever called on mention data."""
+    source = rec.get("source", "")
+    m_ = _BRIDGY_MASTODON.match(source) if isinstance(source, str) else None
+    if m_:
+        mapped = clean_url(f"https://{m_.group(2).lower()}/@{m_.group(1)}/{m_.group(3)}")
+        if mapped:
+            rec["url"] = mapped
+    p_ = _BRIDGY_PLATFORM.match(source) if isinstance(source, str) else None
+    if p_:
+        rec["platform"] = p_.group(1)
+    elif _host(rec.get("url", "")) == "bsky.app":
+        rec["platform"] = "bluesky"
+    else:
+        rec["platform"] = ""
+    handle = clean_text(_handle(rec), NAME_CHARS)
+    if handle == rec.get("name"):
+        handle = ""
+    rec["handle"] = handle
+    rec["initial"] = _initial(rec.get("name", ""), handle)
+    return rec
+
+
+def derive_all(pages):
+    for kinds in pages.values():
+        for records in kinds.values():
+            for r in records:
+                derive(r)
+    return pages
+
+
+def restore(pages, blocklist, avatar_dir):
+    """The pre-network path for last-good data: blocklist, derived fields, then drop any avatar
+    whose file is not there."""
+    pages, _ = apply_blocklist(pages, blocklist)
+    return keep_present_avatars(derive_all(pages), avatar_dir)
+
+
+def assemble(children, blocklist, avatar_dir):
+    """The fresh path: (pages, counts, blocked, avatar_counts). Blocked records are gone before
+    any photo is fetched."""
+    photos = {}
+    pages, counts = normalize(children, photos)
+    pages, blocked = apply_blocklist(pages, blocklist)
+    derive_all(pages)
+    avatar_counts = attach_avatars(pages, photos, avatar_dir)
+    return pages, counts, blocked, avatar_counts
 
 
 # --- blocklist --------------------------------------------------------------------------
@@ -428,7 +753,8 @@ def apply_blocklist(pages, blocklist):
 
 # --- the data file ----------------------------------------------------------------------
 
-_OPTIONAL = ("source", "author_url", "text", "date", "date_text")
+_OPTIONAL = ("source", "author_url", "text", "date", "date_text", "avatar", "handle", "initial",
+             "platform")
 
 
 def load_last_good(path):
@@ -461,10 +787,30 @@ def load_last_good(path):
         return {}, None
 
 
+def sanitize(pages):
+    """Every record cut to FIELDS; an avatar that is not a /webmention-avatars/ path and a
+    platform outside PLATFORMS are dropped. This is the privacy boundary: whatever a caller
+    passes, no remote image URL can reach the data file."""
+    clean = {}
+    for path, kinds in pages.items():
+        for kind, records in kinds.items():
+            for r in records:
+                out = {k: r[k] for k in FIELDS if k in r}
+                if "avatar" in out and not (isinstance(out["avatar"], str)
+                                            and AVATAR_RE.fullmatch(out["avatar"])):
+                    del out["avatar"]
+                if out.get("platform", "") not in PLATFORMS:
+                    del out["platform"]
+                clean.setdefault(path, {}).setdefault(kind, []).append(out)
+    return clean
+
+
 def write_data(path, pages, generated):
-    """Atomic write: a temp file in the same directory, then os.replace."""
+    """Atomic write: a temp file in the same directory, then os.replace. Returns the sanitized
+    pages that were written."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    pages = sanitize(pages)
     body = json.dumps({"generated": generated, "pages": pages}, ensure_ascii=False,
                       indent=1, sort_keys=True) + "\n"
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".webmentions-", suffix=".tmp")
@@ -476,6 +822,7 @@ def write_data(path, pages, generated):
         if os.path.exists(tmp):
             os.unlink(tmp)
         raise
+    return pages
 
 
 def _count(pages, kinds=tuple(KINDS.values())):
@@ -495,8 +842,10 @@ def main():
         return PULL_FAILED
 
     last, generated = load_last_good(DATA)
-    last, _ = apply_blocklist(last, blocklist)
-    write_data(DATA, last, generated)
+    last = restore(last, blocklist, AVATAR_DIR)
+    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    last = write_data(DATA, last, generated)
+    prune_avatars(AVATAR_DIR, last)
     kept = _count(last)
 
     token = os.environ.get("WEBMENTION_IO_TOKEN", "").strip()
@@ -518,10 +867,12 @@ def main():
         print(f"::error title=Webmentions::{e}; kept {kept} last-good mentions", flush=True)
         return PULL_FAILED
 
-    pages, counts = normalize(children)
-    pages, blocked = apply_blocklist(pages, blocklist)
+    pages, counts, blocked, avatar_counts = assemble(children, blocklist, AVATAR_DIR)
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    write_data(DATA, pages, now)
+    pages = write_data(DATA, pages, now)
+    prune_avatars(AVATAR_DIR, pages)
+    log(f"avatars: {avatar_counts['shown']} shown, {avatar_counts['fetched']} fetched, "
+        f"{avatar_counts['unavailable']} unavailable")
     log(f"pulled {len(children)}: {_count(pages, ('likes',))} likes, "
         f"{_count(pages, ('reposts',))} reposts, {_count(pages, ('mentions',))} mentions, "
         f"{_count(pages, ('replies',))} replies "

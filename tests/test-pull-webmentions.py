@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import unicodedata
 import unittest
 import urllib.parse
@@ -39,6 +40,28 @@ def load(name, filename):
 
 m = load("pull_webmentions", "pull-webmentions.py")
 sender = load("send_webmentions", "send-webmentions.py")
+
+REAL_SOURCE_OK = m.avatar_source_ok
+_GUARD = {}
+
+
+def setUpModule():
+    """No test may reach the real network for a fixture photo or write into the repo's static/:
+    avatars go to a module temp dir and only the local stub is an acceptable photo host."""
+    _GUARD["dir"] = Path(tempfile.mkdtemp())
+    _GUARD["patches"] = [
+        mock.patch.object(m, "AVATAR_DIR", _GUARD["dir"] / "avatars"),
+        mock.patch.object(m, "avatar_source_ok", lambda u: isinstance(u, str)
+                          and u.startswith("http://127.0.0.1:"))]
+    for p in _GUARD["patches"]:
+        p.start()
+
+
+def tearDownModule():
+    for p in _GUARD["patches"]:
+        p.stop()
+    shutil.rmtree(_GUARD["dir"], ignore_errors=True)
+
 
 ESSAY = "https://falkensmage.com/fa/youve-been-heard/"
 ESSAY_PATH = "/fa/youve-been-heard/"
@@ -115,7 +138,7 @@ def feed(children, per_page=1000, total=None):
             "children": children}
 
 
-def build_site(dest, data_dir=None, layouts_dir=None, work=None):
+def build_site(dest, data_dir=None, layouts_dir=None, work=None, avatars_dir=None):
     """Build the real site into dest with `hugo --minify`, offline. data_dir is mounted over
     data/ (the repo's own webmentions.json is always excluded, so a local generated file
     cannot leak in); layouts_dir overrides the theme's layouts."""
@@ -128,6 +151,11 @@ def build_site(dest, data_dir=None, layouts_dir=None, work=None):
     if layouts_dir is not None:
         mounts += ['[[module.mounts]]', f'source = {json.dumps(str(layouts_dir))}',
                    'target = "layouts"']
+    if avatars_dir is not None:
+        mounts += ['[[module.mounts]]', f'source = {json.dumps(str(ROOT / "static"))}',
+                   'target = "static"', 'files = ["! webmention-avatars/**"]',
+                   '[[module.mounts]]', f'source = {json.dumps(str(avatars_dir))}',
+                   'target = "static/webmention-avatars"']
     conf = work / "mounts.toml"
     conf.write_text("\n".join(mounts) + "\n")
     hugo = shutil.which("hugo")
@@ -245,11 +273,19 @@ class Tracer(unittest.TestCase):
     def test_essay_renders_one_section_with_names_and_text(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
         self.assertEqual(sec.sections, 1)
-        names = [a[2] for a in sec.anchors]
-        self.assertEqual(names, ["Ada", "Bo", "Eve", "Cy"])
+        texts = [a[2] for a in sec.anchors]
+        self.assertEqual(len(texts), 5)
+        # visible order: likes, reposts, mentions, replies (author, then the dated link)
+        self.assertIn("Liked by Ada", texts[0])
+        self.assertIn("Reposted by Bo", texts[1])
+        self.assertEqual(texts[2], "Eve")
+        self.assertIn("Cy", texts[3])
+        self.assertEqual(sec.anchors[3][0], "https://cy.example/")     # the author's own site
+        self.assertEqual(sec.anchors[4][0], "https://cy.example/3")    # the mention itself
         text = "".join(sec.text)
         self.assertIn("hello <b>x</b> there", text)
         self.assertIn("Mentioned by", text)
+        self.assertLess(text.index("Liked by Ada"), text.index("Reposted by Bo"))
         self.assertLess(text.index("Reposted by"), text.index("Mentioned by"))
         self.assertLess(text.index("Mentioned by"), text.index("Replies"))
         for href, _, _ in sec.anchors:
@@ -258,7 +294,8 @@ class Tracer(unittest.TestCase):
     def test_reply_markup_is_text_not_elements(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
         self.assertNotIn("b", sec.tags)
-        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time"}, set())
+        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time", "img", "svg",
+                                          "path"}, set())
 
     def test_every_anchor_is_nofollow_ugc_and_no_image_loads(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
@@ -339,6 +376,7 @@ class PullCase(unittest.TestCase):
         self.block = self.tmp / "blocklist.json"
         self.set_blocklist([], [])
         for p in (mock.patch.object(m, "API", self.stub.api), mock.patch.object(m, "DATA", self.data),
+                  mock.patch.object(m, "AVATAR_DIR", self.tmp / "avatars"),
                   mock.patch.object(m, "BLOCKLIST", self.block), mock.patch.object(m, "WAIT", 0),
                   mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": TOKEN})):
             p.start()
@@ -363,12 +401,16 @@ class PullCase(unittest.TestCase):
         return [r for r in self.stub.log if r[1].startswith("/api/mentions.jf2")]
 
     def leftovers(self):
-        return sorted(p.name for p in self.tmp.iterdir())
+        return sorted(p.name for p in self.tmp.iterdir() if p.name != "avatars")
 
 
-LAST_GOOD = {ESSAY_PATH: {"likes": [rec("Ada", "https://ada.example/1")],
+# In its derived form (see m.derive): a run rewrites last-good with handle, initial and platform,
+# and deriving twice changes nothing, so a cache that already has them round-trips unchanged.
+LAST_GOOD = {ESSAY_PATH: {"likes": [rec("Ada", "https://ada.example/1", handle="ada.example",
+                                        initial="A", platform="")],
                           "replies": [rec("Bo", "https://bo.example/1", text="hi",
-                                          date="2026-03-02", date_text="March 2, 2026")]}}
+                                          date="2026-03-02", date_text="March 2, 2026",
+                                          handle="bo.example", initial="B", platform="")]}}
 
 
 class Pagination(PullCase):
@@ -562,6 +604,82 @@ OWN_HOSTS = ("https://falkensmage.com/fa/both-hands/", "https://www.falkensmage.
 LOOKALIKES = ("https://falkensmage.com.evil.example/1", "https://notpsyche.sh/2",
               "https://psyche.sh.evil.example/3", "https://evil.example/falkensmage.com/",
               "https://falkensmage.com@evil.example/4")
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+
+class AvatarTracer(PullCase):
+    """One reply with a photo: stub photo -> pull -> data file -> Hugo page -> probe."""
+
+    def setUp(self):
+        super().setUp()
+        self.photo = self.stub.base + "/a.png"
+        self.stub.routes["/a.png"] = (200, [("Content-Type", "text/plain")], PNG)
+        kid = child(1, "in-reply-to", "Cy", content={"text": "hello"},
+                    author={"type": "card", "name": "Cy", "url": "https://cy.example/",
+                            "photo": self.photo})
+        self.stub.json("/api/mentions.jf2", feed([kid]))
+        rc, self.out = self.run_main()
+        self.assertEqual(rc, 0)
+        self.rec = self.disk()["pages"][ESSAY_PATH]["replies"][0]
+        d = self.tmp / "d"
+        d.mkdir()
+        shutil.copy(self.data, d / "webmentions.json")
+        shutil.copy(self.block, d / "webmention-blocklist.json")
+        work = self.tmp / "work"
+        work.mkdir()
+        self.public = self.tmp / "public"
+        build_site(self.public, d, avatars_dir=self.tmp / "avatars", work=work)
+
+    def probe(self):
+        return run_probe(self.public, self.tmp / "d")
+
+    def test_the_photo_is_downloaded_once_and_only_the_local_path_is_kept(self):
+        self.assertRegex(self.rec["avatar"], r"/webmention-avatars/[0-9a-f]{32}\.png")
+        self.assertTrue(m.AVATAR_RE.fullmatch(self.rec["avatar"]))
+        f = self.tmp / "avatars" / self.rec["avatar"].rsplit("/", 1)[1]
+        self.assertEqual(f.read_bytes(), PNG)
+        raw = self.data.read_text(encoding="utf-8")
+        self.assertNotIn(self.stub.base, raw)
+        self.assertNotIn("/a.png", raw)
+        photo_reqs = [r for r in self.stub.log if r[1] == "/a.png"]
+        self.assertEqual(len(photo_reqs), 1)
+        self.assertNotIn("authorization", photo_reqs[0][2])
+        self.assertNotIn(TOKEN, photo_reqs[0][1])
+
+    def test_the_page_shows_exactly_one_self_hosted_image_and_the_probe_is_green(self):
+        sec = section_of(self.public / "fa" / "youve-been-heard" / "index.html")
+        imgs = [a for t, a in sec.attrs if t == "img"]
+        self.assertEqual([i["src"] for i in imgs], [self.rec["avatar"]])
+        self.assertTrue((self.public / self.rec["avatar"].lstrip("/")).is_file())
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def mutate(self, fn):
+        page = self.public / "fa" / "youve-been-heard" / "index.html"
+        html = page.read_text(encoding="utf-8")
+        new = fn(html)
+        self.assertNotEqual(new, html)
+        page.write_text(new, encoding="utf-8")
+
+    def test_probe_goes_red_for_a_tracker_url(self):
+        self.mutate(lambda h: h.replace(self.rec["avatar"], "https://tracker.example/p.png"))
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
+
+    def test_probe_goes_red_for_an_image_outside_the_avatar_dir(self):
+        self.mutate(lambda h: h.replace(self.rec["avatar"], "/images/x.png"))
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
+
+    def test_probe_goes_red_for_a_missing_avatar_file(self):
+        (self.public / self.rec["avatar"].lstrip("/")).unlink()
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
 
 
 class MentionOf(PullCase):
@@ -922,6 +1040,357 @@ class HostileThroughMain(PullCase):
         self.assertEqual(len(self.disk()["pages"][ESSAY_PATH]["replies"]), 6)
 
 
+class Avatars(PullCase):
+    """Download, cache, limits and pruning, through main()."""
+
+    def reply(self, wm_id, name, photo, **extra):
+        author = {"type": "card", "name": name, "url": f"https://{name.lower()}.example/"}
+        if photo:
+            author["photo"] = photo
+        return child(wm_id, "in-reply-to", name, content={"text": "hi"}, author=author, **extra)
+
+    def pull(self, kids):
+        self.stub.json("/api/mentions.jf2", feed(kids))
+        return self.run_main()
+
+    def files(self):
+        d = self.tmp / "avatars"
+        return sorted(p.name for p in d.iterdir()) if d.is_dir() else []
+
+    def records(self):
+        return [r for kinds in self.disk()["pages"].values() for rs in kinds.values() for r in rs]
+
+    def photo_requests(self, path="/a.png"):
+        return [r for r in self.stub.log if r[1] == path]
+
+    def png(self, path="/a.png", ctype="image/png", body=PNG):
+        self.stub.routes[path] = (200, [("Content-Type", ctype)], body)
+
+    def test_two_records_sharing_a_photo_make_one_request(self):
+        self.png()
+        rc, _ = self.pull([self.reply(1, "Cy", self.stub.base + "/a.png"),
+                           self.reply(2, "Dee", self.stub.base + "/a.png")])
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(self.photo_requests()), 1)
+        avatars = {r["avatar"] for r in self.records()}
+        self.assertEqual(len(avatars), 1)
+        self.assertEqual(len(self.files()), 1)
+
+    def test_a_valid_cached_file_is_reused_with_no_request(self):
+        # Reuse happens for an avatar last-good already references: the pre-network prune
+        # deletes anything else.
+        url = self.stub.base + "/a.png"
+        self.png()
+        cached = self.tmp / "avatars"
+        cached.mkdir()
+        (cached / (m.avatar_name(url) + ".png")).write_bytes(PNG)
+        kid = self.reply(1, "Cy", url)
+        self.seed({ESSAY_PATH: {"replies": [rec("Cy", kid["url"], source=kid["wm-source"],
+                                                avatar=f"/webmention-avatars/{m.avatar_name(url)}.png")]}})
+        rc, _ = self.pull([kid])
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.photo_requests(), [])
+        self.assertEqual(self.records()[0]["avatar"], f"/webmention-avatars/{m.avatar_name(url)}.png")
+
+    def test_an_invalid_cached_file_is_deleted_and_fetched_again(self):
+        url = self.stub.base + "/a.png"
+        for label, fname, body in (("not an image", ".png", b"<svg xmlns='x'/>"),
+                                   ("extension disagrees", ".gif", PNG),
+                                   ("oversize", ".png", PNG + b"\x00" * m.AVATAR_MAX_BYTES)):
+            with self.subTest(label):
+                self.stub.log.clear()
+                self.png()
+                shutil.rmtree(self.tmp / "avatars", ignore_errors=True)
+                (self.tmp / "avatars").mkdir()
+                (self.tmp / "avatars" / (m.avatar_name(url) + fname)).write_bytes(body)
+                pages = {ESSAY_PATH: {"replies": [rec("Cy", "https://cy.example/1")]}}
+                counts = m.attach_avatars(pages, {(ESSAY_PATH, "replies", "https://cy.example/1"): url},
+                                          self.tmp / "avatars")
+                self.assertEqual((counts["fetched"], counts["shown"]), (1, 1))
+                self.assertEqual(len(self.photo_requests()), 1)
+                self.assertEqual(self.files(), [m.avatar_name(url) + ".png"])
+                self.assertEqual((self.tmp / "avatars" / self.files()[0]).read_bytes(), PNG)
+
+    def test_each_bad_photo_leaves_no_avatar_no_file_and_exit_zero(self):
+        big = b"\x89PNG\r\n\x1a\n" + b"\x00" * m.AVATAR_MAX_BYTES
+
+        def slow(method, path, headers):
+            time.sleep(0.6)
+            return 200, [("Content-Type", "image/png")], PNG
+
+        cases = {
+            "svg": ((200, [("Content-Type", "image/svg+xml")], b"<svg xmlns='http://www.w3.org/2000/svg'/>"), 1),
+            "html": ((200, [("Content-Type", "image/png")], b"<html><script>x</script></html>"), 1),
+            "oversize": ((200, [("Content-Type", "image/png")], big), 1),
+            "404": ((404, [], b"no"), 1),
+            "500": ((500, [], b"no"), 1),
+            "redirect": ((301, [("Location", self.stub.base + "/b.png")], b""), 1),
+            "slow": (slow, 1),
+        }
+        for label, (route, n) in cases.items():
+            with self.subTest(label), mock.patch.object(m, "AVATAR_TIMEOUT", 0.2):
+                self.stub.log.clear()
+                shutil.rmtree(self.tmp / "avatars", ignore_errors=True)
+                self.stub.routes["/a.png"] = route
+                self.png("/b.png")
+                rc, _ = self.pull([self.reply(1, "Cy", self.stub.base + "/a.png")])
+                self.assertEqual(rc, 0)
+                self.assertEqual(len(self.photo_requests()), n)
+                self.assertEqual(self.photo_requests("/b.png"), [])
+                self.assertNotIn("avatar", self.records()[0])
+                self.assertEqual(self.files(), [])
+
+    def test_the_type_comes_from_the_bytes_not_the_header(self):
+        gif = b"GIF89a" + b"\x00" * 32
+        for body, ctype, ext in ((PNG, "text/html", "png"), (gif, "image/png", "gif")):
+            with self.subTest(ext):
+                shutil.rmtree(self.tmp / "avatars", ignore_errors=True)
+                self.png(ctype=ctype, body=body)
+                self.pull([self.reply(1, "Cy", self.stub.base + "/a.png")])
+                self.assertTrue(self.records()[0]["avatar"].endswith("." + ext))
+                self.assertTrue(self.files()[0].endswith("." + ext))
+
+    def test_a_spent_budget_requests_nothing(self):
+        self.png()
+        with mock.patch.object(m, "AVATAR_BUDGET", 0):
+            rc, _ = self.pull([self.reply(1, "Cy", self.stub.base + "/a.png")])
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.photo_requests(), [])
+        self.assertNotIn("avatar", self.records()[0])
+
+    def test_a_blocked_author_is_never_fetched(self):
+        self.set_blocklist(["blocked.example"], [])
+        self.png()
+        kid = self.reply(1, "Blocked", self.stub.base + "/a.png")
+        kid["author"]["url"] = "https://blocked.example/"
+        rc, _ = self.pull([kid, self.reply(2, "Fine", None)])
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.photo_requests(), [])
+        self.assertEqual(self.files(), [])
+
+    def test_no_authorization_header_no_token_in_a_path_and_logs_stay_clean(self):
+        self.png()
+        rc, out = self.pull([self.reply(1, "Cy", self.stub.base + "/a.png")])
+        self.assertEqual(rc, 0)
+        for _, path, headers in self.photo_requests():
+            self.assertNotIn("authorization", headers)
+        for _, path, _ in self.stub.log:
+            self.assertNotIn(TOKEN, path)
+        for line in out.splitlines():
+            self.assertTrue(line.startswith("pull-webmentions:"), line)
+        self.assertIn("avatars: 1 shown, 1 fetched, 0 unavailable", out)
+        self.assertNotIn(self.stub.base, out)
+        self.assertNotIn("127.0.0.1", out)
+        self.assertNotIn(self.files()[0], out)
+
+    def test_the_real_source_policy(self):
+        for ok in ("https://avatars.webmention.io/files.mastodon.social/x.png",):
+            self.assertTrue(REAL_SOURCE_OK(ok), ok)
+        for bad in ("http://avatars.webmention.io/x.png", "https://127.0.0.1/x.png",
+                    "https://[::1]/x.png", "https://localhost/x.png", "https://intranet/x.png",
+                    "javascript:alert(1)", ["https://a.example/x.png"], None):
+            self.assertFalse(REAL_SOURCE_OK(bad), bad)
+
+
+REAL_BRIDGY = "https://brid.gy/comment/mastodon/@falkensmage@mastodon.social/117570501730802441/117570690950774654"
+REAL_LIKE = "https://brid.gy/like/mastodon/@falkensmage@mastodon.social/117570501730802441/115539496341770518"
+CONVO = "https://mastodon.social/@falkensmage/117570501730802441"
+
+
+class Derive(unittest.TestCase):
+    def d(self, name="N", url="https://n.example/1", **kw):
+        return m.derive(rec(name, url, **kw))
+
+    def test_the_real_reply_and_like_map_to_the_conversation(self):
+        r = self.d("Rowan", "https://mysticmikester.com/.ghost/activitypub/note/x", source=REAL_BRIDGY,
+                   author_url="https://mysticmikester.com/")
+        self.assertEqual((r["url"], r["platform"], r["author_url"]),
+                         (CONVO, "mastodon", "https://mysticmikester.com/"))
+        like = self.d("Rowan", CONVO + "#favorited-by-115539496341770518", source=REAL_LIKE)
+        self.assertEqual((like["url"], like["platform"]), (CONVO, "mastodon"))
+
+    def test_bluesky_and_plain_webmentions_keep_their_url(self):
+        bsky = self.d("Wren", "https://bsky.app/profile/wren.example/post/3x",
+                      source="https://brid.gy/comment/bluesky/did:plc:x/3x/3y")
+        self.assertEqual((bsky["url"], bsky["platform"]),
+                         ("https://bsky.app/profile/wren.example/post/3x", "bluesky"))
+        plain = self.d("Eve", "https://eve.example/post")
+        self.assertEqual((plain["url"], plain["platform"]), ("https://eve.example/post", ""))
+
+    def test_lookalikes_are_not_mapped(self):
+        for src in ("https://brid.gy.evil.example/comment/mastodon/@u@mastodon.social/1/2",
+                    "https://brid.gy/comment/mastodon/@u@localinstance/1/2",
+                    "https://brid.gy/comment/mastodon/@u@mastodon.social/abc/2",
+                    "https://brid.gy/comment/mastodon/@..@mastodon.social/1/2",
+                    "https://brid.gy/comment/mastodon/@u.v@mastodon.social/1/2",
+                    "https://brid.gy/comment/mastodon/@u/x@mastodon.social/1/2",
+                    "http://brid.gy/comment/mastodon/@u@mastodon.social/1/2"):
+            with self.subTest(src):
+                r = self.d("N", "https://orig.example/x", source=src)
+                self.assertEqual(r["url"], "https://orig.example/x")
+
+    def test_handle(self):
+        cases = [("rowan", "https://mastodon.social/@rowan", "@rowan@mastodon.social"),
+                 ("Wren", "https://bsky.app/profile/wren.example", "@wren.example"),
+                 ("Rowan Vale", "https://www.rowanvale.example/", "rowanvale.example"),
+                 ("rowanvale.example", "https://www.rowanvale.example/", "")]
+        for name, author_url, want in cases:
+            with self.subTest(author_url):
+                self.assertEqual(self.d(name, author_url=author_url)["handle"], want)
+        self.assertEqual(self.d("Q", "https://www.q.example/p")["handle"], "q.example")
+
+    def test_initial(self):
+        self.assertEqual(self.d("rowan")["initial"], "R")
+        self.assertEqual(self.d("\U0001f319 Luna")["initial"], "L")
+        self.assertEqual(m._initial("\U0001f319", "@wren.example"), "W")
+        self.assertEqual(m._initial("\U0001f319", "\U0001f319"), "•")
+
+    def test_idempotent(self):
+        r = self.d("Rowan", "https://orig.example/x", source=REAL_BRIDGY, author_url="https://www.r.example/")
+        self.assertEqual(m.derive(dict(r)), r)
+        r2 = self.d("Q", "https://orig.example/x", source=REAL_BRIDGY)
+        self.assertEqual(m.derive(dict(r2)), r2)
+
+
+class RestorePath(PullCase):
+    def setUp(self):
+        super().setUp()
+        self.av = self.tmp / "avatars"
+        self.av.mkdir()
+        self.name = "a" * 32 + ".png"
+        self.path = "/webmention-avatars/" + self.name
+        self.no_token = mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": ""})
+
+    def seeded(self, **kw):
+        kw.setdefault("url", "https://cy.example/1")
+        r = rec("Cy", **kw)
+        self.seed({ESSAY_PATH: {"replies": [dict(r, text="hi")]}})
+
+    def first(self):
+        return self.disk()["pages"][ESSAY_PATH]["replies"][0]
+
+    def test_an_underived_record_gains_url_platform_and_initial_with_no_token(self):
+        self.seeded(source=REAL_BRIDGY, url="https://x.example/.ghost/activitypub/note/1")
+        with self.no_token:
+            rc, _ = self.run_main()
+        self.assertEqual(rc, 0)
+        r = self.first()
+        self.assertEqual((r["url"], r["platform"], r["initial"]), (CONVO, "mastodon", "C"))
+
+    def test_a_valid_referenced_avatar_survives_no_token_and_an_outage(self):
+        (self.av / self.name).write_bytes(PNG)
+        self.seeded(avatar=self.path)
+        with self.no_token:
+            self.assertEqual(self.run_main()[0], 0)
+        self.assertEqual(self.first()["avatar"], self.path)
+        self.assertTrue((self.av / self.name).is_file())
+        self.stub.routes["/api/mentions.jf2"] = (503, [], b"down")
+        self.assertEqual(self.run_main()[0], FAILED)
+        self.assertEqual(self.first()["avatar"], self.path)
+        self.assertTrue((self.av / self.name).is_file())
+
+    def test_a_missing_file_loses_the_field(self):
+        self.seeded(avatar=self.path)
+        with self.no_token:
+            self.run_main()
+        self.assertNotIn("avatar", self.first())
+
+    def test_a_file_that_is_not_an_image_is_deleted_and_loses_the_field(self):
+        (self.av / self.name).write_bytes(b"<svg/>")
+        self.seeded(avatar=self.path)
+        with self.no_token:
+            self.run_main()
+        self.assertNotIn("avatar", self.first())
+        self.assertFalse((self.av / self.name).exists())
+
+    def test_unreferenced_files_and_temp_leftovers_are_deleted(self):
+        (self.av / self.name).write_bytes(PNG)
+        (self.av / ("b" * 32 + ".png")).write_bytes(PNG)
+        (self.av / ".avatar-x.tmp").write_bytes(b"x")
+        self.seeded(avatar=self.path)
+        with self.no_token:
+            self.run_main()
+        self.assertEqual(sorted(p.name for p in self.av.iterdir()), [self.name])
+
+    def test_a_new_blocklist_entry_deletes_that_authors_avatar(self):
+        (self.av / self.name).write_bytes(PNG)
+        self.seeded(avatar=self.path)
+        self.set_blocklist(["cy.example"], [])
+        with self.no_token:
+            self.assertEqual(self.run_main()[0], 0)
+        self.assertEqual(self.disk()["pages"], {})
+        self.assertEqual(list(self.av.iterdir()), [])
+
+
+class WritePrivacy(PullCase):
+    def test_write_data_drops_unknown_keys_and_bad_avatars_and_platforms(self):
+        good = "/webmention-avatars/" + "a" * 32 + ".png"
+        bad = ["https://x.example/a.png", "//x.example/a.png", "/webmention-avatars/../a.png",
+               "/webmention-avatars/" + "A" * 32 + ".png"]
+        records = [rec("Ok", "https://ok.example/1", avatar=good, photo="https://x.example/p.png",
+                       _photo="x", extra="y", platform="mastodon")]
+        records += [rec(f"B{i}", f"https://b{i}.example/1", avatar=a) for i, a in enumerate(bad)]
+        records.append(rec("Plat", "https://p.example/1", platform="myspace"))
+        written = m.write_data(self.data, {ESSAY_PATH: {"replies": records}}, "t")
+        on_disk = self.disk()["pages"][ESSAY_PATH]["replies"]
+        self.assertEqual(written[ESSAY_PATH]["replies"], on_disk)
+        self.assertEqual(on_disk[0]["avatar"], good)
+        for r in on_disk:
+            self.assertTrue(set(r) <= set(m.FIELDS), r)
+        for r in on_disk[1:]:
+            self.assertNotIn("avatar", r)
+        self.assertNotIn("platform", on_disk[-1])
+
+    def test_the_hostile_fixture_plus_a_photo_writes_a_clean_file(self):
+        self.set_blocklist(["blocked.example"], [])
+        self.stub.routes["/p.png"] = (200, [], PNG)
+        extra = child(9001, "in-reply-to", "Pic", content={"text": "x"},
+                      author={"type": "card", "name": "Pic", "url": "https://pic.example/",
+                              "photo": self.stub.base + "/p.png"})
+        self.stub.json("/api/mentions.jf2", feed(HOSTILE["children"] + [extra]))
+        rc, _ = self.run_main()
+        self.assertEqual(rc, 0)
+        raw = self.data.read_text(encoding="utf-8")
+        self.assertNotIn("PHOTOSENTINEL", raw)
+        self.assertNotIn(self.stub.base, raw)
+        avatars = [r["avatar"] for kinds in self.disk()["pages"].values() for rs in kinds.values()
+                   for r in rs if "avatar" in r]
+        self.assertEqual(len(avatars), 1)
+        for a in avatars:
+            self.assertTrue(m.AVATAR_RE.fullmatch(a), a)
+
+
+class AvatarWorkflow(unittest.TestCase):
+    def steps(self):
+        text = (ROOT / ".github" / "workflows" / "hugo.yml").read_text()
+        build = text[text.index("\n  build:"):]
+        parts = build.split("\n      - name: ")[1:]
+        return {p.split("\n", 1)[0].strip(): p for p in parts}, list(
+            p.split("\n", 1)[0].strip() for p in parts)
+
+    def test_avatar_restore_comes_before_the_pull_and_save_after_it_only_on_success(self):
+        steps, order = self.steps()
+        restore = steps["Restore last-good Webmention avatars"]
+        save = steps["Save last-good Webmention avatars"]
+        self.assertIn("path: static/webmention-avatars", restore)
+        self.assertIn("restore-keys: webmention-avatars-", restore)
+        self.assertIn("path: static/webmention-avatars", save)
+        self.assertIn("if: steps.mentions.outcome == 'success'", save)
+        self.assertLess(order.index("Restore last-good Webmention avatars"), order.index("Pull Webmentions"))
+        self.assertGreater(order.index("Save last-good Webmention avatars"), order.index("Pull Webmentions"))
+
+    def test_the_data_cache_steps_are_unchanged(self):
+        steps, _ = self.steps()
+        for name in ("Restore last-good Webmentions", "Save last-good Webmentions"):
+            self.assertIn("path: data/webmentions.json", steps[name])
+            self.assertIn("webmentions-data-", steps[name])
+            self.assertNotIn("avatars", steps[name])
+
+    def test_the_avatars_are_gitignored(self):
+        lines = (ROOT / ".gitignore").read_text().splitlines()
+        self.assertIn("static/webmention-avatars/", lines)
+
+
 PARTIAL = ROOT / "themes" / "arcaeon" / "layouts" / "partials" / "fa" / "mentions.html"
 ABOUT = "/fa/about/"
 YBH = "/fa/youve-been-heard/"
@@ -1000,10 +1469,14 @@ class ProbeMutations(unittest.TestCase):
     def test_the_section_holds_only_inert_markup(self):
         sec = section_of(self.page)
         self.assertEqual(sec.sections, 1)
-        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time"}, set())
+        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time", "img", "svg",
+                                          "path"}, set())
         for tag, attrs in sec.attrs:
             for name in attrs:
-                self.assertFalse(name.startswith("on") or name in ("style", "src", "srcset"), name)
+                self.assertFalse(name.startswith("on") or name in ("style", "srcset"), name)
+                if name == "src":
+                    self.assertEqual(tag, "img")
+                    self.assertTrue(m.AVATAR_RE.fullmatch(attrs["src"]), attrs["src"])
         for href, rel, _ in sec.anchors:
             self.assertEqual(set(rel.split()), {"nofollow", "ugc"})
             self.assertTrue(re.match(r"https?://", href), href)
@@ -1111,7 +1584,7 @@ class ProbeMutations(unittest.TestCase):
         rc, out = run_probe(bad_public, self.data)
         self.assertNotEqual(rc, 0, out)
         self.assertIn(YBH, out)
-        self.assertRegex(out, r"holds a <(script|img)> element")
+        self.assertRegex(out, r"holds a <script> element|holds an image that is not self-hosted")
         # the real partial, same data, stays green (the baseline test builds it)
         rc, out = run_probe(self.public, self.data)
         self.assertEqual(rc, 0, out)
