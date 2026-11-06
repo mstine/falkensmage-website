@@ -774,7 +774,8 @@ class ProbeMutations(unittest.TestCase):
         html = self.page.read_text(encoding="utf-8")
         self.assertLess(html.index("</article>"), html.index("fa-mentions"))
         a, b = section_span(html)
-        self.assertEqual(html[a:b].count('rel="nofollow ugc"'), 3)
+        # four links now: the like face, the mention, the reply's author and the reply's time
+        self.assertEqual(html[a:b].count('rel="nofollow ugc"'), 4)
 
     def test_with_no_notes_both_probes_pass(self):
         rc, out = self.probe(self.empty_public)

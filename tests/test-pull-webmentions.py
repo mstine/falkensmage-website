@@ -273,11 +273,19 @@ class Tracer(unittest.TestCase):
     def test_essay_renders_one_section_with_names_and_text(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
         self.assertEqual(sec.sections, 1)
-        names = [a[2] for a in sec.anchors]
-        self.assertEqual(names, ["Ada", "Bo", "Eve", "Cy"])
+        texts = [a[2] for a in sec.anchors]
+        self.assertEqual(len(texts), 5)
+        # visible order: likes, reposts, mentions, replies (author, then the dated link)
+        self.assertIn("Liked by Ada", texts[0])
+        self.assertIn("Reposted by Bo", texts[1])
+        self.assertEqual(texts[2], "Eve")
+        self.assertIn("Cy", texts[3])
+        self.assertEqual(sec.anchors[3][0], "https://cy.example/")     # the author's own site
+        self.assertEqual(sec.anchors[4][0], "https://cy.example/3")    # the mention itself
         text = "".join(sec.text)
         self.assertIn("hello <b>x</b> there", text)
         self.assertIn("Mentioned by", text)
+        self.assertLess(text.index("Liked by Ada"), text.index("Reposted by Bo"))
         self.assertLess(text.index("Reposted by"), text.index("Mentioned by"))
         self.assertLess(text.index("Mentioned by"), text.index("Replies"))
         for href, _, _ in sec.anchors:
@@ -286,7 +294,8 @@ class Tracer(unittest.TestCase):
     def test_reply_markup_is_text_not_elements(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
         self.assertNotIn("b", sec.tags)
-        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time"}, set())
+        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time", "img", "svg",
+                                          "path"}, set())
 
     def test_every_anchor_is_nofollow_ugc_and_no_image_loads(self):
         sec = section_of(self.with_data / "fa" / "youve-been-heard" / "index.html")
@@ -1460,10 +1469,14 @@ class ProbeMutations(unittest.TestCase):
     def test_the_section_holds_only_inert_markup(self):
         sec = section_of(self.page)
         self.assertEqual(sec.sections, 1)
-        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time"}, set())
+        self.assertEqual(set(sec.tags) - {"h2", "p", "ul", "li", "a", "span", "time", "img", "svg",
+                                          "path"}, set())
         for tag, attrs in sec.attrs:
             for name in attrs:
-                self.assertFalse(name.startswith("on") or name in ("style", "src", "srcset"), name)
+                self.assertFalse(name.startswith("on") or name in ("style", "srcset"), name)
+                if name == "src":
+                    self.assertEqual(tag, "img")
+                    self.assertTrue(m.AVATAR_RE.fullmatch(attrs["src"]), attrs["src"])
         for href, rel, _ in sec.anchors:
             self.assertEqual(set(rel.split()), {"nofollow", "ugc"})
             self.assertTrue(re.match(r"https?://", href), href)

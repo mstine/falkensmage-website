@@ -1,35 +1,60 @@
 {{- /*
-  fa/mentions.html — replies, mentions, likes and reposts received for an essay. Context: the Page.
+  fa/mentions.html — responses received for an essay or note, drawn as cards. Context: the Page.
+
+  Layout: likes and reposts are a row of overlapping round faces plus a count; each reply is a
+  card in the note card's style (avatar or initial, name, handle or domain, date, text, and a
+  link to the conversation on its platform); mentions stay a plain "Mentioned by" row, because a
+  mention is a post on another site, not a person reacting.
 
   Three rules, each load-bearing:
   1. Rendered AFTER the closing article tag (see fa/single.html), so it sits outside the
      h-entry. scripts/send-webmentions.py sends to every link inside the h-entry; a stranger's
-     URL in there would become a citation we POST to.
+     URL in there would become a citation we POST to. The section carries no microformat
+     classes for the same reason: a top-level mf2 item here would be read by Bridgy.
   2. Every value below is stranger text. It goes through plain double-brace output with no
-     pipe of any kind, so html/template escapes it. Never mark any of it safe.
+     pipe of any kind except `default` on a derived field, so html/template escapes it. Never
+     mark any of it safe.
   3. Images are self-hosted only. Every img src is a /webmention-avatars/ path that the pull
      script wrote after sniffing the downloaded bytes. No remote URL is ever in the data file,
-     so no reader's browser contacts a stranger's host. tests/validate-fa.sh fails the build
-     on any other src.
+     so no reader's browser contacts a stranger's host. tests/validate-fa.sh fails the build on
+     any other src. A person with no avatar gets their initial on a violet circle.
 
   Data: data/webmentions.json, generated at build by scripts/pull-webmentions.py, keyed by
   the path Hugo returns as .RelPermalink. No entry means no output at all, so an essay with
-  no mentions is byte-identical to one built with no mention data. Dates arrive
-  pre-formatted: a template function that can fail on a stranger's value would let a stranger
-  block a deploy, so none is called on mention data. Use the named range variables, never a
-  bare dot, inside the nested blocks.
+  no mentions is byte-identical to one built with no mention data. Dates, handle, initial and
+  platform arrive pre-computed: a template function that can fail on a stranger's value would
+  let a stranger block a deploy, so none is called on mention data (default, eq, len and cond
+  cannot fail on these values). Use the named range variables, never a bare dot, inside the
+  nested blocks. Each kind class (fa-mention--like and the rest) sits on exactly one element
+  per record: the probe counts them against the data.
 */ -}}
 {{- with index (hugo.Data.webmentions.pages | default dict) .RelPermalink -}}
 <section class="section {{ partial "helpers/band-tone.html" $ }}">
   <div class="section-content fa-prose fa-mentions">
-    <h2 class="fa-rail-heading">Responses</h2>
+    <h2 class="fa-rail-heading" id="responses">Responses</h2>
     {{- with .likes }}
-    <p class="fa-mentions__row"><span class="fa-post__meta">Liked by</span>
-      {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--like" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
+    <p class="fa-mentions__row fa-reactions"><span class="fa-reactions__icon" aria-hidden="true">{{ partial "icons/like.html" $ }}</span>
+      <span class="fa-faces">
+        {{- range $p := . }}
+        <a class="fa-mention--like fa-face" href="{{ $p.url }}" rel="nofollow ugc" title="{{ $p.name }}">
+          {{- if $p.avatar }}<img class="fa-avatar" src="{{ $p.avatar }}" alt="" width="32" height="32" loading="lazy" decoding="async">
+          {{- else }}<span class="fa-avatar fa-avatar--initial" aria-hidden="true">{{ $p.initial | default "•" }}</span>{{ end }}
+          <span class="visually-hidden">Liked by {{ $p.name }}</span></a>
+        {{- end }}
+      </span>
+      <span class="fa-reactions__count">{{ len . }} {{ cond (eq (len .) 1) "like" "likes" }}</span></p>
     {{- end }}
     {{- with .reposts }}
-    <p class="fa-mentions__row"><span class="fa-post__meta">Reposted by</span>
-      {{- range $i, $p := . }}{{ if $i }},{{ end }} <a class="fa-mention--repost" href="{{ $p.url }}" rel="nofollow ugc">{{ $p.name }}</a>{{ end }}</p>
+    <p class="fa-mentions__row fa-reactions"><span class="fa-reactions__icon" aria-hidden="true">{{ partial "icons/repost.html" $ }}</span>
+      <span class="fa-faces">
+        {{- range $p := . }}
+        <a class="fa-mention--repost fa-face" href="{{ $p.url }}" rel="nofollow ugc" title="{{ $p.name }}">
+          {{- if $p.avatar }}<img class="fa-avatar" src="{{ $p.avatar }}" alt="" width="32" height="32" loading="lazy" decoding="async">
+          {{- else }}<span class="fa-avatar fa-avatar--initial" aria-hidden="true">{{ $p.initial | default "•" }}</span>{{ end }}
+          <span class="visually-hidden">Reposted by {{ $p.name }}</span></a>
+        {{- end }}
+      </span>
+      <span class="fa-reactions__count">{{ len . }} {{ cond (eq (len .) 1) "repost" "reposts" }}</span></p>
     {{- end }}
     {{- with .mentions }}
     <p class="fa-mentions__row"><span class="fa-post__meta">Mentioned by</span>
@@ -39,14 +64,23 @@
     <p class="fa-mentions__row"><span class="fa-post__meta">Replies</span></p>
     <ul class="fa-mentions__replies">
       {{- range $r := . }}
-      <li class="fa-mention--reply">
-        {{- if $r.avatar }}
-        <img class="fa-avatar" src="{{ $r.avatar }}" alt="" width="40" height="40" loading="lazy" decoding="async">
-        {{- end }}
-        <p><a href="{{ $r.url }}" rel="nofollow ugc">{{ $r.name }}</a>
-          {{- if $r.date }} <time datetime="{{ $r.date }}">{{ $r.date_text }}</time>{{ end }}</p>
+      <li class="fa-mention--reply fa-reply">
+        <p class="fa-reply__header">
+          <a class="fa-reply__author" href="{{ $r.author_url | default $r.url }}" rel="nofollow ugc">
+            {{- if $r.avatar }}<img class="fa-avatar" src="{{ $r.avatar }}" alt="" width="40" height="40" loading="lazy" decoding="async">
+            {{- else }}<span class="fa-avatar fa-avatar--initial" aria-hidden="true">{{ $r.initial | default "•" }}</span>{{ end }}
+            <span class="fa-reply__who"><span class="fa-reply__name">{{ $r.name }}</span>
+              {{- if $r.handle }} <span class="fa-reply__handle">{{ $r.handle }}</span>{{ end }}</span></a>
+          <a class="fa-reply__time" href="{{ $r.url }}" rel="nofollow ugc">
+            {{- if $r.date }}<time datetime="{{ $r.date }}">{{ $r.date_text }}</time>{{ else }}View reply{{ end }}</a>
+        </p>
         {{- if $r.text }}
         <p class="fa-mention__text">{{ $r.text }}</p>
+        {{- end }}
+        {{- if $r.platform }}
+        <p class="fa-reply__actions"><a class="fa-reply__platform" href="{{ $r.url }}" rel="nofollow ugc"><span class="fa-reply__icon" aria-hidden="true">
+          {{- if eq $r.platform "mastodon" }}{{ partial "icons/mastodon.html" $ }}{{ else }}{{ partial "icons/bluesky.html" $ }}{{ end -}}
+          </span> <span>{{ if eq $r.platform "mastodon" }}View on Mastodon{{ else }}View on Bluesky{{ end }}</span></a></p>
         {{- end }}
       </li>
       {{- end }}
