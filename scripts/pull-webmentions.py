@@ -75,7 +75,9 @@ web hooks; webmention-render.js and its CSS; pingback; and the dashboard (sign-i
 moderation), which is manual and complements data/webmention-blocklist.json.
 """
 import datetime
+import hashlib
 import http.client
+import ipaddress
 import json
 import os
 import re
@@ -111,6 +113,17 @@ WAIT = 5
 MAX_BYTES = 32 * 1024 * 1024
 WITNESS_PATHS = 50
 TOKEN_RE = re.compile(r"[\x21-\x7e]+")
+AVATAR_DIR = ROOT / "static" / "webmention-avatars"
+AVATAR_PREFIX = "/webmention-avatars/"
+AVATAR_RE = re.compile(r"/webmention-avatars/[0-9a-f]{32}\.(?:png|jpg|webp|gif)")
+AVATAR_MAX_BYTES = 200 * 1024
+AVATAR_TIMEOUT = 5
+AVATAR_BUDGET = 45
+AVATAR_ACCEPT = "image/png, image/jpeg, image/webp, image/gif"
+# The only keys a record may carry into the data file, and the only platforms it may name.
+FIELDS = ("name", "url", "source", "author_url", "text", "date", "date_text", "avatar", "handle",
+          "initial", "platform")
+PLATFORMS = ("", "mastodon", "bluesky")
 
 
 class PullError(Exception):
@@ -325,9 +338,13 @@ def witness_total(paths):
 
 # --- normalize --------------------------------------------------------------------------
 
-def normalize(children):
+def normalize(children, photos=None):
     """(pages, counts). pages maps '/fa/slug/' to {likes, reposts, mentions, replies} lists of records
-    holding only name, url, source, author_url (and text, date, date_text on replies)."""
+    holding only name, url, source, author_url (and text, date, date_text on replies).
+
+    When `photos` is a dict, each kept record's author photo URL is noted there under
+    (path, kind, source). The record itself never holds it: a remote image URL must not be able
+    to reach the data file or a template."""
     pages, seen = {}, set()
     counts = {"private": 0, "other": 0, "off_essay": 0, "unusable": 0,
               "own": 0}
@@ -366,8 +383,107 @@ def normalize(children):
             text = clean_text(content.get("text"), REPLY_CHARS) if isinstance(content, dict) else ""
             rec["text"] = text or clean_text(child.get("name"), REPLY_CHARS)
             rec["date"], rec["date_text"] = _date(child)
+        if photos is not None:
+            photo = clean_url(author.get("photo"))
+            if photo:
+                photos[(path, kind, source)] = photo
         pages.setdefault(path, {}).setdefault(kind, []).append(rec)
     return pages, counts
+
+
+# --- avatars ----------------------------------------------------------------------------
+
+def avatar_name(url):
+    """The first 32 hex characters of the sha256 of the photo URL."""
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()[:32]
+
+
+def sniff_image(data):
+    """The file extension for PNG, JPEG, GIF or WebP bytes, by magic number; None for anything
+    else, SVG and HTML included."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def avatar_source_ok(url):
+    """True for an https URL on a dotted host name: no IP literal, no localhost."""
+    if not clean_url(url):
+        return False
+    try:
+        parts = urllib.parse.urlsplit(url)
+        host = (parts.hostname or "").lower().rstrip(".")
+    except ValueError:
+        return False
+    if parts.scheme != "https" or "." not in host or host == "localhost":
+        return False
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return True
+    return False
+
+
+def fetch_avatar(url):
+    """The image bytes, or None. One attempt, no redirects, no Authorization header."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": AVATAR_ACCEPT})
+    try:
+        with OPENER.open(req, timeout=AVATAR_TIMEOUT) as r:
+            body = r.read(AVATAR_MAX_BYTES + 1)
+    except urllib.error.HTTPError as e:
+        e.close()
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, ValueError):
+        return None
+    return body if len(body) <= AVATAR_MAX_BYTES else None
+
+
+def _store_avatar(avatar_dir, name, data):
+    fd, tmp = tempfile.mkstemp(dir=avatar_dir, prefix=".avatar-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, avatar_dir / name)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def attach_avatars(pages, photos, avatar_dir):
+    """Download each distinct photo once and set rec["avatar"] to its site-relative path.
+    Returns {shown, fetched, unavailable}. A failure costs only that avatar."""
+    avatar_dir = Path(avatar_dir)
+    avatar_dir.mkdir(parents=True, exist_ok=True)
+    resolved, counts = {}, {"shown": 0, "fetched": 0, "unavailable": 0}
+    for path, kinds in pages.items():
+        for kind, records in kinds.items():
+            for r in records:
+                url = photos.get((path, kind, r["source"]))
+                if not url:
+                    continue
+                if url not in resolved:
+                    resolved[url] = None
+                    if avatar_source_ok(url):
+                        data = fetch_avatar(url)
+                        ext = sniff_image(data) if data else None
+                        if ext:
+                            name = f"{avatar_name(url)}.{ext}"
+                            _store_avatar(avatar_dir, name, data)
+                            resolved[url] = AVATAR_PREFIX + name
+                            counts["fetched"] += 1
+                    if resolved[url] is None:
+                        counts["unavailable"] += 1
+                if resolved[url]:
+                    r["avatar"] = resolved[url]
+                    counts["shown"] += 1
+    return counts
 
 
 # --- blocklist --------------------------------------------------------------------------
@@ -428,7 +544,8 @@ def apply_blocklist(pages, blocklist):
 
 # --- the data file ----------------------------------------------------------------------
 
-_OPTIONAL = ("source", "author_url", "text", "date", "date_text")
+_OPTIONAL = ("source", "author_url", "text", "date", "date_text", "avatar", "handle", "initial",
+             "platform")
 
 
 def load_last_good(path):
@@ -461,10 +578,30 @@ def load_last_good(path):
         return {}, None
 
 
+def sanitize(pages):
+    """Every record cut to FIELDS; an avatar that is not a /webmention-avatars/ path and a
+    platform outside PLATFORMS are dropped. This is the privacy boundary: whatever a caller
+    passes, no remote image URL can reach the data file."""
+    clean = {}
+    for path, kinds in pages.items():
+        for kind, records in kinds.items():
+            for r in records:
+                out = {k: r[k] for k in FIELDS if k in r}
+                if "avatar" in out and not (isinstance(out["avatar"], str)
+                                            and AVATAR_RE.fullmatch(out["avatar"])):
+                    del out["avatar"]
+                if out.get("platform", "") not in PLATFORMS:
+                    del out["platform"]
+                clean.setdefault(path, {}).setdefault(kind, []).append(out)
+    return clean
+
+
 def write_data(path, pages, generated):
-    """Atomic write: a temp file in the same directory, then os.replace."""
+    """Atomic write: a temp file in the same directory, then os.replace. Returns the sanitized
+    pages that were written."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    pages = sanitize(pages)
     body = json.dumps({"generated": generated, "pages": pages}, ensure_ascii=False,
                       indent=1, sort_keys=True) + "\n"
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".webmentions-", suffix=".tmp")
@@ -476,6 +613,7 @@ def write_data(path, pages, generated):
         if os.path.exists(tmp):
             os.unlink(tmp)
         raise
+    return pages
 
 
 def _count(pages, kinds=tuple(KINDS.values())):
@@ -518,10 +656,14 @@ def main():
         print(f"::error title=Webmentions::{e}; kept {kept} last-good mentions", flush=True)
         return PULL_FAILED
 
-    pages, counts = normalize(children)
+    photos = {}
+    pages, counts = normalize(children, photos)
     pages, blocked = apply_blocklist(pages, blocklist)
+    avatar_counts = attach_avatars(pages, photos, AVATAR_DIR)
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    write_data(DATA, pages, now)
+    pages = write_data(DATA, pages, now)
+    log(f"avatars: {avatar_counts['shown']} shown, {avatar_counts['fetched']} fetched, "
+        f"{avatar_counts['unavailable']} unavailable")
     log(f"pulled {len(children)}: {_count(pages, ('likes',))} likes, "
         f"{_count(pages, ('reposts',))} reposts, {_count(pages, ('mentions',))} mentions, "
         f"{_count(pages, ('replies',))} replies "

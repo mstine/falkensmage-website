@@ -17,8 +17,9 @@
 # The Webmention checks follow the same rule. An empty mention section looks exactly like a
 # healthy page with no mentions, so the render is checked against the data: the rel=webmention
 # link is on every page, each essay's and each note's section matches data/webmentions.json
-# (when the build has one), the section holds only inert markup and sits outside the h-entry,
-# and the blocklist file is well formed. Notes (public/notes/*/index.html) are covered the same
+# (when the build has one), the section holds only inert markup (the one image it may show is a
+# self-hosted avatar under /webmention-avatars/ that exists in the build) and sits outside the
+# h-entry, and the blocklist file is well formed. Notes (public/notes/*/index.html) are covered the same
 # way as essays; the microformats probe above stays on /fa/ (validate-notes.sh owns notes).
 
 set -uo pipefail
@@ -292,7 +293,8 @@ from html.parser import HTMLParser
 
 public, data_dir = sys.argv[1], sys.argv[2]
 ENDPOINT = "https://webmention.io/falkensmage.com/webmention"
-ALLOWED = {"h2", "p", "ul", "li", "a", "span", "time"}
+ALLOWED = {"h2", "p", "ul", "li", "a", "span", "time", "img", "svg", "path"}
+AVATAR = re.compile(r"/webmention-avatars/[0-9a-f]{32}\.(?:png|jpg|webp|gif)")
 KINDS = (("fa-mention--like", "likes"), ("fa-mention--repost", "reposts"),
          ("fa-mention--mention", "mentions"), ("fa-mention--reply", "replies"))
 out = []
@@ -350,8 +352,16 @@ class Page(HTMLParser):
         if tag not in ALLOWED:
             self.problems.add(f"it holds a <{safe(tag)}> element")
         for name in a:
-            if name.startswith("on") or name in ("style", "src", "srcset"):
+            if name.startswith("on") or name in ("style", "srcset") or (name == "src" and tag != "img"):
                 self.problems.add(f"it holds a {safe(name)} attribute")
+        if tag == "img":
+            src = a.get("src", "")
+            if not AVATAR.fullmatch(src):
+                self.problems.add("it holds an image that is not self-hosted")
+            elif not os.path.isfile(os.path.join(public, src.lstrip("/"))):
+                self.problems.add("it shows an avatar that is not in the build")
+            if "alt" not in a:
+                self.problems.add("it holds an image with no alt attribute")
         if tag == "a":
             if not {"nofollow", "ugc"} <= set(a.get("rel", "").lower().split()):
                 self.problems.add("a link lacks rel nofollow ugc")

@@ -40,6 +40,28 @@ def load(name, filename):
 m = load("pull_webmentions", "pull-webmentions.py")
 sender = load("send_webmentions", "send-webmentions.py")
 
+REAL_SOURCE_OK = m.avatar_source_ok
+_GUARD = {}
+
+
+def setUpModule():
+    """No test may reach the real network for a fixture photo or write into the repo's static/:
+    avatars go to a module temp dir and only the local stub is an acceptable photo host."""
+    _GUARD["dir"] = Path(tempfile.mkdtemp())
+    _GUARD["patches"] = [
+        mock.patch.object(m, "AVATAR_DIR", _GUARD["dir"] / "avatars"),
+        mock.patch.object(m, "avatar_source_ok", lambda u: isinstance(u, str)
+                          and u.startswith("http://127.0.0.1:"))]
+    for p in _GUARD["patches"]:
+        p.start()
+
+
+def tearDownModule():
+    for p in _GUARD["patches"]:
+        p.stop()
+    shutil.rmtree(_GUARD["dir"], ignore_errors=True)
+
+
 ESSAY = "https://falkensmage.com/fa/youve-been-heard/"
 ESSAY_PATH = "/fa/youve-been-heard/"
 OWN_SOURCE = "https://falkensmage.com/fa/both-hands/"
@@ -115,7 +137,7 @@ def feed(children, per_page=1000, total=None):
             "children": children}
 
 
-def build_site(dest, data_dir=None, layouts_dir=None, work=None):
+def build_site(dest, data_dir=None, layouts_dir=None, work=None, avatars_dir=None):
     """Build the real site into dest with `hugo --minify`, offline. data_dir is mounted over
     data/ (the repo's own webmentions.json is always excluded, so a local generated file
     cannot leak in); layouts_dir overrides the theme's layouts."""
@@ -128,6 +150,11 @@ def build_site(dest, data_dir=None, layouts_dir=None, work=None):
     if layouts_dir is not None:
         mounts += ['[[module.mounts]]', f'source = {json.dumps(str(layouts_dir))}',
                    'target = "layouts"']
+    if avatars_dir is not None:
+        mounts += ['[[module.mounts]]', f'source = {json.dumps(str(ROOT / "static"))}',
+                   'target = "static"', 'files = ["! webmention-avatars/**"]',
+                   '[[module.mounts]]', f'source = {json.dumps(str(avatars_dir))}',
+                   'target = "static/webmention-avatars"']
     conf = work / "mounts.toml"
     conf.write_text("\n".join(mounts) + "\n")
     hugo = shutil.which("hugo")
@@ -339,6 +366,7 @@ class PullCase(unittest.TestCase):
         self.block = self.tmp / "blocklist.json"
         self.set_blocklist([], [])
         for p in (mock.patch.object(m, "API", self.stub.api), mock.patch.object(m, "DATA", self.data),
+                  mock.patch.object(m, "AVATAR_DIR", self.tmp / "avatars"),
                   mock.patch.object(m, "BLOCKLIST", self.block), mock.patch.object(m, "WAIT", 0),
                   mock.patch.dict(os.environ, {"WEBMENTION_IO_TOKEN": TOKEN})):
             p.start()
@@ -562,6 +590,82 @@ OWN_HOSTS = ("https://falkensmage.com/fa/both-hands/", "https://www.falkensmage.
 LOOKALIKES = ("https://falkensmage.com.evil.example/1", "https://notpsyche.sh/2",
               "https://psyche.sh.evil.example/3", "https://evil.example/falkensmage.com/",
               "https://falkensmage.com@evil.example/4")
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+
+class AvatarTracer(PullCase):
+    """One reply with a photo: stub photo -> pull -> data file -> Hugo page -> probe."""
+
+    def setUp(self):
+        super().setUp()
+        self.photo = self.stub.base + "/a.png"
+        self.stub.routes["/a.png"] = (200, [("Content-Type", "text/plain")], PNG)
+        kid = child(1, "in-reply-to", "Cy", content={"text": "hello"},
+                    author={"type": "card", "name": "Cy", "url": "https://cy.example/",
+                            "photo": self.photo})
+        self.stub.json("/api/mentions.jf2", feed([kid]))
+        rc, self.out = self.run_main()
+        self.assertEqual(rc, 0)
+        self.rec = self.disk()["pages"][ESSAY_PATH]["replies"][0]
+        d = self.tmp / "d"
+        d.mkdir()
+        shutil.copy(self.data, d / "webmentions.json")
+        shutil.copy(self.block, d / "webmention-blocklist.json")
+        work = self.tmp / "work"
+        work.mkdir()
+        self.public = self.tmp / "public"
+        build_site(self.public, d, avatars_dir=self.tmp / "avatars", work=work)
+
+    def probe(self):
+        return run_probe(self.public, self.tmp / "d")
+
+    def test_the_photo_is_downloaded_once_and_only_the_local_path_is_kept(self):
+        self.assertRegex(self.rec["avatar"], r"/webmention-avatars/[0-9a-f]{32}\.png")
+        self.assertTrue(m.AVATAR_RE.fullmatch(self.rec["avatar"]))
+        f = self.tmp / "avatars" / self.rec["avatar"].rsplit("/", 1)[1]
+        self.assertEqual(f.read_bytes(), PNG)
+        raw = self.data.read_text(encoding="utf-8")
+        self.assertNotIn(self.stub.base, raw)
+        self.assertNotIn("/a.png", raw)
+        photo_reqs = [r for r in self.stub.log if r[1] == "/a.png"]
+        self.assertEqual(len(photo_reqs), 1)
+        self.assertNotIn("authorization", photo_reqs[0][2])
+        self.assertNotIn(TOKEN, photo_reqs[0][1])
+
+    def test_the_page_shows_exactly_one_self_hosted_image_and_the_probe_is_green(self):
+        sec = section_of(self.public / "fa" / "youve-been-heard" / "index.html")
+        imgs = [a for t, a in sec.attrs if t == "img"]
+        self.assertEqual([i["src"] for i in imgs], [self.rec["avatar"]])
+        self.assertTrue((self.public / self.rec["avatar"].lstrip("/")).is_file())
+        rc, out = self.probe()
+        self.assertEqual(rc, 0, out)
+
+    def mutate(self, fn):
+        page = self.public / "fa" / "youve-been-heard" / "index.html"
+        html = page.read_text(encoding="utf-8")
+        new = fn(html)
+        self.assertNotEqual(new, html)
+        page.write_text(new, encoding="utf-8")
+
+    def test_probe_goes_red_for_a_tracker_url(self):
+        self.mutate(lambda h: h.replace(self.rec["avatar"], "https://tracker.example/p.png"))
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
+
+    def test_probe_goes_red_for_an_image_outside_the_avatar_dir(self):
+        self.mutate(lambda h: h.replace(self.rec["avatar"], "/images/x.png"))
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
+
+    def test_probe_goes_red_for_a_missing_avatar_file(self):
+        (self.public / self.rec["avatar"].lstrip("/")).unlink()
+        rc, out = self.probe()
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn(YBH, out)
 
 
 class MentionOf(PullCase):
@@ -1111,7 +1215,7 @@ class ProbeMutations(unittest.TestCase):
         rc, out = run_probe(bad_public, self.data)
         self.assertNotEqual(rc, 0, out)
         self.assertIn(YBH, out)
-        self.assertRegex(out, r"holds a <(script|img)> element")
+        self.assertRegex(out, r"holds a <script> element|holds an image that is not self-hosted")
         # the real partial, same data, stays green (the baseline test builds it)
         rc, out = run_probe(self.public, self.data)
         self.assertEqual(rc, 0, out)

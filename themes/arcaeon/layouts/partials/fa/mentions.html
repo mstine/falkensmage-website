@@ -7,8 +7,10 @@
      URL in there would become a citation we POST to.
   2. Every value below is stranger text. It goes through plain double-brace output with no
      pipe of any kind, so html/template escapes it. Never mark any of it safe.
-  3. Names only. The data file holds no image URL, so nothing here can hotlink one and hand
-     a reader's IP to a stranger's host.
+  3. Images are self-hosted only. Every img src is a /webmention-avatars/ path that the pull
+     script wrote after sniffing the downloaded bytes. No remote URL is ever in the data file,
+     so no reader's browser contacts a stranger's host. tests/validate-fa.sh fails the build
+     on any other src.
 
   Data: data/webmentions.json, generated at build by scripts/pull-webmentions.py, keyed by
   the path Hugo returns as .RelPermalink. No entry means no output at all, so an essay with
@@ -38,6 +40,9 @@
     <ul class="fa-mentions__replies">
       {{- range $r := . }}
       <li class="fa-mention--reply">
+        {{- if $r.avatar }}
+        <img class="fa-avatar" src="{{ $r.avatar }}" alt="" width="40" height="40" loading="lazy" decoding="async">
+        {{- end }}
         <p><a href="{{ $r.url }}" rel="nofollow ugc">{{ $r.name }}</a>
           {{- if $r.date }} <time datetime="{{ $r.date }}">{{ $r.date_text }}</time>{{ end }}</p>
         {{- if $r.text }}
