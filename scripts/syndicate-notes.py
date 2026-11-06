@@ -117,6 +117,12 @@ What each failure does
       or RecordNotFound
     Session login fails or wrong DID        tried once per run, nothing posted to Bluesky, exit 1
     Note older than 7 days, not recorded    never posted, exit 0, ::warning
+    No link but the note's own              no card, posted as before
+    Card page not 200, no title, or any     posted with no card, a log line, exit unchanged
+      card error
+    Thumb too big, not an image, or         card with no thumb, a log line
+      upload failed
+    PDS refuses the card (400)              posted again without it, same key, getRecord first
 
 Env: MASTODON_ACCESS_TOKEN (sent as a Bearer header only), BLUESKY_APP_PASSWORD (sent in the
 createSession body only; the session token it returns goes in a header only), GITHUB_OUTPUT (pending, deploy and
@@ -139,18 +145,52 @@ Bluesky coverage, AT Protocol (opt out explicitly, never by omission)
 In: com.atproto.server.createSession with the handle and an app password (one session per
 run, made only when a post is pending, the DID checked against BLUESKY_DID); getRecord (adopts a
 post whose record was lost); createRecord with repo, collection, a deterministic rkey and a
-record holding $type, text, createdAt, langs ["en"] and facets when there are any; facets
-#link and #tag with UTF-8 byte offsets.
+record holding $type, text, createdAt, langs ["en"], facets when there are any and an embed of
+type app.bsky.embed.external when the note links a page other than itself; facets #link and #tag
+with UTF-8 byte offsets; com.atproto.repo.uploadBlob, one attempt, for the card's thumb.
 Out, on purpose: facet #mention (needs handle resolution; an @name stays plain text); bare
 domains as links (reference detection needs a TLD list; Hugo emits links with a scheme); embed
-(images, external cards, records, video) and uploadBlob (images are out of scope, and the link
-back is in the text); reply, labels, tags, entities, threadgate, postgate (not requested);
-putRecord, applyWrites, deleteRecord, listRecords, swapCommit and validate (post once;
-createRecord plus a deterministic key is enough, and putRecord would silently overwrite);
-refreshSession (a session lasts one run); PDS discovery from the DID document (bsky.social is the
-documented entryway).
+images, video, record and recordWithMedia (a note has no attachments, and images are out of
+scope); a card for any link but the first (one card per post is what a reader sees); a card for
+the note's own permalink (the post already is that page); twitter:*, oEmbed and JSON-LD metadata
+(og plus <title> and the meta description is enough); resizing or recompressing a thumb (stdlib
+has no image codec; essay covers are 1200x630 JPEG crops well under the limit); retrying
+uploadBlob (the thumb is best effort); a card in DRY_RUN (uploadBlob is a write); reply, labels,
+tags, entities, threadgate, postgate (not requested); putRecord, applyWrites, deleteRecord,
+listRecords, swapCommit and validate (post once; createRecord plus a deterministic key is
+enough, and putRecord would silently overwrite); refreshSession (a session lasts one run); PDS
+discovery from the DID document (bsky.social is the documented entryway).
 
-Logs carry slugs, platforms and counts, never a token, a password and never note text.
+Link cards (Bluesky only)
+-------------------------
+On Bluesky the card is what draws the click, and a link in plain text has none.
+ * The target is the first http(s) link in the note's text, as read from the live page and before
+   any cut, that is not the note's own permalink. No such link means the post goes out exactly as
+   it would with no card code: no fetch, no upload, no log line.
+ * The page is fetched once, with a 10 s timeout and no credentials, through its own opener that
+   follows up to 5 redirects. The API opener never follows one, so the session token cannot be
+   sent anywhere a redirect points.
+ * Only the first 1,000,000 bytes are read, and only meta tags and <title> are parsed. Fetched
+   HTML is untrusted: nothing in it is executed or followed except the one og:image fetch.
+ * The title (og:title, else <title>) and the description (og:description, else the meta
+   description, else empty) are made single-line and capped at 300 and 1000 code points. No
+   title means no card, because a card with an empty title renders as a blank box.
+ * The thumb is og:image, resolved against the page's final address, only if it is JPEG, PNG or
+   WebP by its bytes (never by a header) and at most 1,000,000 bytes, uploaded once. Otherwise the
+   card goes without a thumb.
+ * The card is built once per post, before the getRecord/createRecord loop, so the record key and
+   the at-most-once protocol are unchanged. On the rare adopt path the uploaded blob is never
+   referenced, and the PDS discards it.
+ * A 400 from createRecord for a record carrying a card makes the same getRecord-first loop run
+   once more, on the same key, without the card. The PDS wrote nothing the first time, and
+   getRecord is asked again, so one note can never become two records.
+ * A card is made once, at post time. A target that was not live then gets no card, and a post is
+   never edited to add one.
+ * Mastodon needs no card code: the instance builds its own from the link's OG tags.
+
+Logs carry slugs, platforms and counts, never a token, a password and never note text. Card lines
+carry the slug and a fixed reason or an exception's type name, never the link, the title or the
+page's text.
 """
 import collections
 import datetime
