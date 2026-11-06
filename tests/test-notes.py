@@ -2530,6 +2530,204 @@ class LinkCards(BlueskyCase):
         self.assertNotIn("/card/", out)
         self.assertNotIn("Card Title", out)
 
+    # --- helpers for the rest
+
+    def text(self, path="/card/essay/"):
+        return "Read this: " + self.url(path)
+
+    def card(self, text=None):
+        """(embed or None, log) for one post of `text`, whose record is then forgotten."""
+        record, out = self.post(text or self.text())
+        embed = record.get("embed")
+        self.stub.records.clear()
+        return embed, out
+
+    def png(self, size):
+        return CARD_PNG[:8] + b"\0" * (size - 8)
+
+    # --- which link, and when there is none
+
+    def test_the_first_link_that_is_not_the_note_itself_is_the_card_and_no_other_is_fetched(self):
+        self.serve("/card/one/", card_html(og_title="One"))
+        self.serve("/card/two/", card_html(og_title="Two"))
+        text = f"self {m.SITE}{ALPHA_PATH} first {self.url('/card/one/')} then {self.url('/card/two/')}"
+        embed, out = self.card(text)
+        self.assertEqual(embed["external"]["uri"], self.url("/card/one/"))
+        self.assertEqual(embed["external"]["title"], "One")
+        self.assertEqual(self.stub.gets("/card/two/"), [])
+        self.assertEqual(self.stub.gets(ALPHA_PATH), [])
+
+    def test_a_note_with_no_link_or_only_its_own_permalink_posts_with_no_card_and_no_card_traffic(self):
+        own = m.SITE + ALPHA_PATH
+        for text in ("Just words, no link.", f"Mine: {own}", f"Mine: {own.rstrip('/')}",
+                     f"Mine, anchored: {own}#top"):
+            with self.subTest(text=text):
+                embed, out = self.card(text)
+                self.assertIsNone(embed)
+                self.assertNotIn("link card", out)
+        self.assertEqual([r for r in self.stub.requests if not r["path"].startswith("/xrpc/")], [])
+        self.assertEqual(self.stub.uploads(), [])
+
+    # --- what the card says
+
+    def test_a_page_without_og_tags_gets_its_title_and_meta_description(self):
+        self.serve("/card/essay/", card_html(title="Plain Title", description="Plain description."))
+        embed, out = self.card()
+        self.assertEqual(embed["external"], {"uri": self.url("/card/essay/"), "title": "Plain Title",
+                                             "description": "Plain description."})
+        self.assertIn("without a thumbnail (the page has no og:image)", out)
+
+    def test_a_page_with_a_title_and_no_description_gets_an_empty_description(self):
+        self.serve("/card/essay/", card_html(og_title="Only A Title"))
+        embed, out = self.card()
+        self.assertEqual(embed["external"]["description"], "")
+
+    def test_a_page_with_no_title_gets_no_card_but_the_post_is_made(self):
+        self.serve("/card/essay/", card_html(og_description="Nobody home."))
+        record, out = self.post(self.text())
+        self.assertNotIn("embed", record)
+        self.assertIn("no link card (the page has no title)", out)
+
+    def test_a_card_page_that_answers_404_or_500_gets_no_card_but_the_post_is_made(self):
+        for status in (404, 500):
+            with self.subTest(status=status):
+                self.serve("/card/essay/", b"nope", "text/plain", status)
+                record, out = self.post(self.text())
+                self.assertNotIn("embed", record)
+                self.assertEqual(out.count("no link card"), 1, out)
+                self.stub.records.clear()
+
+    def test_card_text_is_single_line_unescaped_and_capped(self):
+        self.serve("/card/essay/", card_html(og_title="T" * 400, og_description="D" * 1500))
+        embed, out = self.card()
+        title, desc = embed["external"]["title"], embed["external"]["description"]
+        self.assertLessEqual(len(title), 300)
+        self.assertTrue(title.endswith("…"))
+        self.assertLessEqual(len(desc), 1000)
+        self.assertTrue(desc.endswith("…"))
+        self.serve("/card/essay/", card_html(og_title="A &amp; B\n\n  C"))
+        embed, out = self.card()
+        self.assertEqual(embed["external"]["title"], "A & B C")
+
+    # --- redirects
+
+    def test_a_redirect_is_followed_and_a_relative_image_resolves_against_the_final_page(self):
+        self.stub.pages["/card/moved/"] = ("redirect", 301, "/card/essay/")
+        self.serve("/card/essay/", card_html(og_title="Moved Here", og_image="thumb.png"))
+        self.serve("/card/essay/thumb.png", CARD_JPEG, "image/jpeg")
+        embed, out = self.card(self.text("/card/moved/"))
+        self.assertEqual(embed["external"]["uri"], self.url("/card/moved/"))
+        self.assertEqual(embed["external"]["title"], "Moved Here")
+        self.assertEqual(len(self.stub.gets("/card/essay/thumb.png")), 1)
+        self.assertEqual(embed["external"]["thumb"]["mimeType"], "image/jpeg")
+
+    # --- the thumb
+
+    def test_an_image_over_the_blob_limit_gets_a_card_without_a_thumb_and_no_upload(self):
+        self.serve("/card/essay/", card_html(og_title="Big", og_image=self.url("/card/big.png")))
+        self.serve("/card/big.png", self.png(1_000_001), "image/png")
+        embed, out = self.card()
+        self.assertNotIn("thumb", embed["external"])
+        self.assertEqual(self.stub.uploads(), [])
+        self.assertIn("over 1,000,000 bytes", out)
+
+    def test_an_image_of_exactly_the_blob_limit_gets_a_thumb(self):
+        self.serve("/card/essay/", card_html(og_title="Edge", og_image=self.url("/card/edge.png")))
+        self.serve("/card/edge.png", self.png(1_000_000), "image/png")
+        embed, out = self.card()
+        self.assertEqual(embed["external"]["thumb"]["size"], 1_000_000)
+        self.assertEqual(len(self.stub.uploads()), 1)
+
+    def test_the_image_type_comes_from_its_bytes_not_its_header(self):
+        self.serve("/card/essay/", card_html(og_title="Gif", og_image=self.url("/card/pic.png")))
+        self.serve("/card/pic.png", CARD_GIF, "image/png")
+        embed, out = self.card()
+        self.assertNotIn("thumb", embed["external"])
+        self.assertEqual(self.stub.uploads(), [])
+        self.assertIn("not JPEG, PNG or WebP", out)
+
+    def test_an_image_that_answers_404_gives_a_card_without_a_thumb(self):
+        self.serve("/card/essay/", card_html(og_title="No Pic", og_image=self.url("/card/gone.png")))
+        embed, out = self.card()
+        self.assertEqual(embed["external"]["title"], "No Pic")
+        self.assertNotIn("thumb", embed["external"])
+        self.assertIn("the image did not answer 200", out)
+
+    def test_a_failed_upload_gives_a_card_without_a_thumb_after_exactly_one_attempt(self):
+        self.stub.bsky_upload = [("status", 500)]
+        self.serve("/card/essay/", card_html(og_title="Up", og_image=self.url("/card/pic.png")))
+        self.serve("/card/pic.png", CARD_WEBP, "image/webp")
+        record, out = self.post(self.text())
+        self.assertNotIn("thumb", record["embed"]["external"])
+        self.assertEqual(len(self.stub.uploads()), 1)
+        self.assertIn("uploadBlob failed", out)
+
+    def test_image_type_recognises_jpeg_png_and_webp_and_nothing_else(self):
+        self.assertEqual(m._image_type(CARD_JPEG), "image/jpeg")
+        self.assertEqual(m._image_type(CARD_PNG), "image/png")
+        self.assertEqual(m._image_type(CARD_WEBP), "image/webp")
+        for data in (CARD_GIF, b"", b"RIFF\0\0\0\0WAVE"):
+            self.assertIsNone(m._image_type(data))
+
+    # --- nothing a card does can fail a post, leak, or double it
+
+    def test_an_exception_in_the_card_code_posts_without_a_card_and_logs_only_its_type(self):
+        with mock.patch.object(m, "_card_get", side_effect=RuntimeError("secret-looking detail")):
+            record, out = self.post(self.text())
+        self.assertNotIn("embed", record)
+        self.assertIn("RuntimeError", out)
+        self.assertNotIn("secret-looking detail", out)
+
+    def test_the_log_never_carries_the_link_or_the_page_title(self):
+        self.serve("/card/essay/", card_html(og_title="Hidden Title", og_image=self.url("/card/nope.png")))
+        _, ok_out = self.post(self.text())
+        self.stub.records.clear()
+        self.serve("/card/essay/", b"x", "text/plain", 500)
+        _, bad_out = self.post(self.text())
+        for out in (ok_out, bad_out):
+            self.assertIn("link card", out)
+            self.assertNotIn("/card/", out)
+            self.assertNotIn("Hidden Title", out)
+
+    def test_a_response_lost_after_the_record_was_made_is_one_record_one_upload_and_one_state_entry(self):
+        essay = self.url("/card/essay/")
+        self.serve("/card/essay/", card_html(og_title="Lost", og_image=self.url("/card/pic.png")))
+        self.serve("/card/pic.png", CARD_PNG, "image/png")
+        self.stub.bsky_create = ["lose"]
+        with mock.patch.object(m, "wait_live", lambda note, tries: "New essay: " + essay):
+            self.run_post(expect_rc=0)
+        self.assertEqual(len(self.stub.records), 1)
+        self.assertEqual(len(self.stub.creates()), 1)
+        self.assertEqual(len(self.stub.getrecords()), 2)
+        self.assertEqual(len(self.stub.uploads()), 1)
+        self.assertEqual(self.stub.records[self.rkey()]["record"]["embed"]["external"]["title"], "Lost")
+        self.assertEqual(self.recorded(), ["bluesky", "mastodon"])
+        self.assertEqual(len(self.local_state()["notes"][ALPHA_PATH]["bluesky"]), 3)
+
+    def test_a_card_the_pds_refuses_is_posted_again_without_it_on_the_same_key(self):
+        self.stub.bsky_create = [("status", 400, "InvalidRequest")]
+        self.serve("/card/essay/", card_html(og_title="Refused", og_image=self.url("/card/pic.png")))
+        self.serve("/card/pic.png", CARD_PNG, "image/png")
+        record, out = self.post(self.text())
+        self.assertNotIn("embed", record)
+        creates = self.stub.creates()
+        self.assertEqual(len(creates), 2)
+        self.assertEqual({json.loads(c["body"])["rkey"] for c in creates}, {self.rkey()})
+        self.assertIn("embed", json.loads(creates[0]["body"])["record"])
+        self.assertNotIn("embed", json.loads(creates[1]["body"])["record"])
+        self.assertEqual(len(self.stub.getrecords()), 2, "getRecord is asked before each create")
+        self.assertEqual(len(self.stub.records), 1)
+        self.assertEqual(len(self.stub.uploads()), 1, "the card is built once")
+        self.assertIn("refused the link card", out)
+
+    def test_a_400_for_a_record_with_no_card_is_still_not_retried(self):
+        self.stub.bsky_create = [("status", 400, "InvalidRequest")]
+        with self.token():
+            with self.assertRaises(m.PostError):
+                m.post_bluesky(m.read_note(m.NOTES / "alpha.md"), "no link here")
+        self.assertEqual(len(self.stub.creates()), 1)
+        self.assertEqual(self.stub.records, {})
+
 
 class MissingState(SyndicationCase):
     NOTES = {"alpha": ALPHA}

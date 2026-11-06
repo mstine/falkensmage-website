@@ -229,6 +229,11 @@ class PostError(Exception):
     """A platform did not take the post. Safe to log: it never holds the token or note text."""
 
 
+class _CardRejected(PostError):
+    """createRecord answered 400 for a record carrying a link card: no record was written, and
+    the card is the likely cause."""
+
+
 class RecordError(Exception):
     """A post succeeded and could not be made durable. Carries what a human needs to commit it."""
 
@@ -1164,35 +1169,48 @@ def post_bluesky(note, text):
     card = link_card(note, received, token)
     if isinstance(card, dict):
         record["embed"] = card
-    why = "no attempt"
-    for attempt in range(TRIES):
-        status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
-        if status == 200:
-            uri = doc.get("uri") if doc else None
-            if not isinstance(uri, str) or not uri.endswith(suffix):
-                raise PostError("bluesky: getRecord returned no matching uri")
-            break
-        if status == 400 and doc and doc.get("error") == "RecordNotFound":
-            now = utcnow()
-            record["createdAt"] = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
-            status, doc = _bsky("POST", "com.atproto.repo.createRecord", token=token, body={
-                "repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey, "record": record})
+
+    def put(record):
+        why = "no attempt"
+        for attempt in range(TRIES):
+            status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
             if status == 200:
                 uri = doc.get("uri") if doc else None
                 if not isinstance(uri, str) or not uri.endswith(suffix):
-                    raise PostError("bluesky: createRecord returned no matching uri")
+                    raise PostError("bluesky: getRecord returned no matching uri")
                 break
-            if not _transient(status):
-                raise PostError(f"bluesky: createRecord HTTP {status}{_code(doc)}")
-            why = "unreachable" if status == 0 else f"HTTP {status}"
-        elif _transient(status):
-            why = "getRecord " + ("unreachable" if status == 0 else f"HTTP {status}")
+            if status == 400 and doc and doc.get("error") == "RecordNotFound":
+                now = utcnow()
+                record["createdAt"] = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
+                status, doc = _bsky("POST", "com.atproto.repo.createRecord", token=token, body={
+                    "repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey, "record": record})
+                if status == 200:
+                    uri = doc.get("uri") if doc else None
+                    if not isinstance(uri, str) or not uri.endswith(suffix):
+                        raise PostError("bluesky: createRecord returned no matching uri")
+                    break
+                if not _transient(status):
+                    msg = f"bluesky: createRecord HTTP {status}{_code(doc)}"
+                    raise (_CardRejected if status == 400 and "embed" in record else PostError)(msg)
+                why = "unreachable" if status == 0 else f"HTTP {status}"
+            elif _transient(status):
+                why = "getRecord " + ("unreachable" if status == 0 else f"HTTP {status}")
+            else:
+                raise PostError(f"bluesky: getRecord HTTP {status}{_code(doc)}")
+            if attempt < TRIES - 1:
+                time.sleep(WAIT)
         else:
-            raise PostError(f"bluesky: getRecord HTTP {status}{_code(doc)}")
-        if attempt < TRIES - 1:
-            time.sleep(WAIT)
-    else:
-        raise PostError(f"bluesky: failed ({why}) after {TRIES} tries")
+            raise PostError(f"bluesky: failed ({why}) after {TRIES} tries")
+        return uri
+
+    try:
+        uri = put(record)
+    except _CardRejected:
+        # The PDS wrote nothing and the card is the likely cause. Same key, and getRecord is
+        # asked first again, so this pass adopts any record the first one made: never a second.
+        log(f"{note.slug} bluesky: the PDS refused the link card; posting without it")
+        del record["embed"]
+        uri = put(record)
     return {"url": BLUESKY_WEB + rkey, "uri": uri,
             "posted": utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 
