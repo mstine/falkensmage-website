@@ -117,6 +117,12 @@ What each failure does
       or RecordNotFound
     Session login fails or wrong DID        tried once per run, nothing posted to Bluesky, exit 1
     Note older than 7 days, not recorded    never posted, exit 0, ::warning
+    No link but the note's own              no card, posted as before
+    Card page not 200, no title, or any     posted with no card, a log line, exit unchanged
+      card error
+    Thumb too big, not an image, or         card with no thumb, a log line
+      upload failed
+    PDS refuses the card (400)              posted again without it, same key, getRecord first
 
 Env: MASTODON_ACCESS_TOKEN (sent as a Bearer header only), BLUESKY_APP_PASSWORD (sent in the
 createSession body only; the session token it returns goes in a header only), GITHUB_OUTPUT (pending, deploy and
@@ -139,18 +145,52 @@ Bluesky coverage, AT Protocol (opt out explicitly, never by omission)
 In: com.atproto.server.createSession with the handle and an app password (one session per
 run, made only when a post is pending, the DID checked against BLUESKY_DID); getRecord (adopts a
 post whose record was lost); createRecord with repo, collection, a deterministic rkey and a
-record holding $type, text, createdAt, langs ["en"] and facets when there are any; facets
-#link and #tag with UTF-8 byte offsets.
+record holding $type, text, createdAt, langs ["en"], facets when there are any and an embed of
+type app.bsky.embed.external when the note links a page other than itself; facets #link and #tag
+with UTF-8 byte offsets; com.atproto.repo.uploadBlob, one attempt, for the card's thumb.
 Out, on purpose: facet #mention (needs handle resolution; an @name stays plain text); bare
 domains as links (reference detection needs a TLD list; Hugo emits links with a scheme); embed
-(images, external cards, records, video) and uploadBlob (images are out of scope, and the link
-back is in the text); reply, labels, tags, entities, threadgate, postgate (not requested);
-putRecord, applyWrites, deleteRecord, listRecords, swapCommit and validate (post once;
-createRecord plus a deterministic key is enough, and putRecord would silently overwrite);
-refreshSession (a session lasts one run); PDS discovery from the DID document (bsky.social is the
-documented entryway).
+images, video, record and recordWithMedia (a note has no attachments, and images are out of
+scope); a card for any link but the first (one card per post is what a reader sees); a card for
+the note's own permalink (the post already is that page); twitter:*, oEmbed and JSON-LD metadata
+(og plus <title> and the meta description is enough); resizing or recompressing a thumb (stdlib
+has no image codec; essay covers are 1200x630 JPEG crops well under the limit); retrying
+uploadBlob (the thumb is best effort); a card in DRY_RUN (uploadBlob is a write); reply, labels,
+tags, entities, threadgate, postgate (not requested); putRecord, applyWrites, deleteRecord,
+listRecords, swapCommit and validate (post once; createRecord plus a deterministic key is
+enough, and putRecord would silently overwrite); refreshSession (a session lasts one run); PDS
+discovery from the DID document (bsky.social is the documented entryway).
 
-Logs carry slugs, platforms and counts, never a token, a password and never note text.
+Link cards (Bluesky only)
+-------------------------
+On Bluesky the card is what draws the click, and a link in plain text has none.
+ * The target is the first http(s) link in the note's text, as read from the live page and before
+   any cut, that is not the note's own permalink. No such link means the post goes out exactly as
+   it would with no card code: no fetch, no upload, no log line.
+ * The page is fetched once, with a 10 s timeout and no credentials, through its own opener that
+   follows up to 5 redirects. The API opener never follows one, so the session token cannot be
+   sent anywhere a redirect points.
+ * Only the first 1,000,000 bytes are read, and only meta tags and <title> are parsed. Fetched
+   HTML is untrusted: nothing in it is executed or followed except the one og:image fetch.
+ * The title (og:title, else <title>) and the description (og:description, else the meta
+   description, else empty) are made single-line and capped at 300 and 1000 code points. No
+   title means no card, because a card with an empty title renders as a blank box.
+ * The thumb is og:image, resolved against the page's final address, only if it is JPEG, PNG or
+   WebP by its bytes (never by a header) and at most 1,000,000 bytes, uploaded once. Otherwise the
+   card goes without a thumb.
+ * The card is built once per post, before the getRecord/createRecord loop, so the record key and
+   the at-most-once protocol are unchanged. On the rare adopt path the uploaded blob is never
+   referenced, and the PDS discards it.
+ * A 400 from createRecord for a record carrying a card makes the same getRecord-first loop run
+   once more, on the same key, without the card. The PDS wrote nothing the first time, and
+   getRecord is asked again, so one note can never become two records.
+ * A card is made once, at post time. A target that was not live then gets no card, and a post is
+   never edited to add one.
+ * Mastodon needs no card code: the instance builds its own from the link's OG tags.
+
+Logs carry slugs, platforms and counts, never a token, a password and never note text. Card lines
+carry the slug and a fixed reason or an exception's type name, never the link, the title or the
+page's text.
 """
 import collections
 import datetime
@@ -195,6 +235,13 @@ MAX_AGE = datetime.timedelta(days=7)
 REMOTE = "origin"
 BRANCH = "main"
 PLATFORMS = ("mastodon", "bluesky")
+EMBED_EXTERNAL = "app.bsky.embed.external"
+CARD_TIMEOUT = 10
+CARD_PAGE_BYTES = 1_000_000
+CARD_REDIRECTS = 5
+BLOB_MAX = 1_000_000   # Bluesky's limit for a thumb
+CARD_TITLE_MAX = 300
+CARD_DESC_MAX = 1000
 GIT_ID = ["-c", "user.name=github-actions[bot]",
           "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
           "-c", "commit.gpgsign=false"]
@@ -222,6 +269,11 @@ class PostError(Exception):
     """A platform did not take the post. Safe to log: it never holds the token or note text."""
 
 
+class _CardRejected(PostError):
+    """createRecord answered 400 for a record carrying a link card: no record was written, and
+    the card is the likely cause."""
+
+
 class RecordError(Exception):
     """A post succeeded and could not be made durable. Carries what a human needs to commit it."""
 
@@ -238,6 +290,19 @@ for _h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandl
            urllib.request.HTTPErrorProcessor(), urllib.request.HTTPHandler(),
            urllib.request.HTTPSHandler()):
     OPENER.add_handler(_h)
+
+
+class _CardRedirect(urllib.request.HTTPRedirectHandler):
+    max_redirections = 5   # must equal CARD_REDIRECTS (defined with the other constants)
+
+
+# Separate from OPENER on purpose: OPENER carries credentials and must never follow a redirect,
+# and nothing secret is ever sent on CARD_OPENER. Like OPENER, it has no ProxyHandler.
+CARD_OPENER = urllib.request.OpenerDirector()
+for _h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandler(),
+           _CardRedirect(), urllib.request.HTTPErrorProcessor(), urllib.request.HTTPHandler(),
+           urllib.request.HTTPSHandler()):
+    CARD_OPENER.add_handler(_h)
 
 
 def log(msg):
@@ -884,10 +949,11 @@ def _code(doc):
     return f": {one_line(code, 60)}" if isinstance(code, str) and code else ""
 
 
-def _bsky(method, name, *, token=None, body=None, query=None):
+def _bsky(method, name, *, token=None, body=None, query=None, raw=None, ctype=None):
     """One attempt at one XRPC call. Returns (status, doc): the HTTP status, or 0 when the
     server was unreachable, and the parsed JSON object or None. No redirect is followed, so the
-    Authorization header never leaves, and no body is ever printed."""
+    Authorization header never leaves, and no body is ever printed. `raw` and `ctype` send bytes
+    as they are (uploadBlob) instead of a JSON body."""
     url = f"{BLUESKY}/xrpc/{name}"
     if query:
         url += "?" + urllib.parse.urlencode(query)
@@ -895,7 +961,10 @@ def _bsky(method, name, *, token=None, body=None, query=None):
     data = None
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    if body is not None:
+    if raw is not None:
+        data = raw
+        headers["Content-Type"] = ctype
+    elif body is not None:
         data = json.dumps(body, ensure_ascii=False).encode("utf-8")
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
@@ -954,6 +1023,165 @@ def _transient(status):
     return status == 0 or status == 429 or status >= 500
 
 
+# --- Bluesky: the link card -------------------------------------------------------------
+
+class _CardMeta(html.parser.HTMLParser):
+    """The few things a card needs from a page: the first content of each of og:title,
+    og:description, og:image and meta description, and the text of the first <title>. A meta key
+    is its `property`, or its `name` when there is no property. Nothing else is read."""
+
+    WANTED = ("og:title", "og:description", "og:image", "description")
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.meta = {}
+        self.title = None
+        self._in_title = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "meta":
+            a = {k.lower(): v for k, v in attrs if v is not None}
+            key = (a["property"] if "property" in a else a.get("name", "")).strip().lower()
+            if key in self.WANTED and key not in self.meta and "content" in a:
+                self.meta[key] = a["content"]
+        elif tag == "title" and self.title is None:
+            self.title = ""
+            self._in_title = True
+
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self._in_title = False
+
+    def handle_data(self, data):
+        if self._in_title:
+            self.title += data
+
+
+def _card_get(url, accept, cap):
+    """(final_url, charset, data) for a 200 answer, data being at most cap + 1 bytes, else None.
+    Sends only a User-Agent and an Accept header, never a credential, through CARD_OPENER."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": accept})
+    try:
+        with CARD_OPENER.open(req, timeout=CARD_TIMEOUT) as r:
+            if r.status != 200:
+                return None
+            return r.geturl(), r.headers.get_content_charset(), r.read(cap + 1)
+    except urllib.error.HTTPError as e:
+        e.close()
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, ValueError):
+        return None
+
+
+def _same_page(url):
+    return url.split("#", 1)[0].rstrip("/")
+
+
+def card_target(note, text):
+    """The first link in `text` that is not the note's own permalink, else None."""
+    own = _same_page(SITE + note.path)
+    for start, end in find_urls(text):
+        url = text[start:end]
+        if _same_page(url) != own:
+            return url
+    return None
+
+
+def _image_type(data):
+    """The MIME type a thumb may be sent as, judged by its first bytes and never by a header."""
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def _upload_thumb(token, data, mime):
+    """One uploadBlob attempt. The blob object for the card, rebuilt from validated fields, or
+    None."""
+    status, doc = _bsky("POST", "com.atproto.repo.uploadBlob", token=token, raw=data, ctype=mime)
+    blob = doc.get("blob") if status == 200 and doc else None
+    if not isinstance(blob, dict) or blob.get("$type") != "blob":
+        return None
+    ref, mt, size = blob.get("ref"), blob.get("mimeType"), blob.get("size")
+    link = ref.get("$link") if isinstance(ref, dict) else None
+    if (not isinstance(link, str) or not isinstance(mt, str) or not mt.startswith("image/")
+            or not isinstance(size, int) or isinstance(size, bool) or not 1 <= size <= BLOB_MAX):
+        return None
+    return {"$type": "blob", "ref": {"$link": link}, "mimeType": mt, "size": size}
+
+
+def _card_thumb(note, token, page_url, og_image):
+    """The card's thumb blob, or None with one log line saying why."""
+    def skip(reason):
+        log(f"{note.slug} bluesky: link card without a thumbnail ({reason})")
+        return None
+
+    try:
+        src = urllib.parse.urljoin(page_url, og_image.strip())
+        parts = urllib.parse.urlsplit(src)
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            return skip("the image address is not http or https")
+        got = _card_get(src, "image/jpeg,image/png,image/webp", BLOB_MAX)
+        if got is None:
+            return skip("the image did not answer 200")
+        data = got[2]
+        if len(data) > BLOB_MAX:
+            return skip("the image is over 1,000,000 bytes")
+        mime = _image_type(data)
+        if mime is None:
+            return skip("the image is not JPEG, PNG or WebP")
+        blob = _upload_thumb(token, data, mime)
+        return blob if blob is not None else skip("uploadBlob failed")
+    except Exception as e:
+        return skip(type(e).__name__)
+
+
+def link_card(note, text, token):
+    """The record's app.bsky.embed.external for the first link in `text` that is not the note's
+    own, or None. Best effort: any failure is one log line (slug and a fixed reason or an
+    exception's type name, never the link or the page's text) and no card."""
+    slug = note.slug
+    try:
+        target = card_target(note, text)
+        if target is None:
+            return None
+        got = _card_get(target, "text/html,application/xhtml+xml", CARD_PAGE_BYTES)
+        if got is None:
+            log(f"{slug} bluesky: no link card (the page did not answer 200)")
+            return None
+        final_url, charset, data = got
+        try:
+            page = data[:CARD_PAGE_BYTES].decode(charset or "utf-8", errors="replace")
+        except LookupError:
+            page = data[:CARD_PAGE_BYTES].decode("utf-8", errors="replace")
+        meta = _CardMeta()
+        meta.feed(page)
+        meta.close()
+        title = one_line(meta.meta.get("og:title") or meta.title or "", CARD_TITLE_MAX - 1)
+        description = one_line(meta.meta.get("og:description") or meta.meta.get("description") or "",
+                               CARD_DESC_MAX - 1)
+        if not title:
+            log(f"{slug} bluesky: no link card (the page has no title)")
+            return None
+        external = {"uri": target, "title": title, "description": description}
+        og_image = meta.meta.get("og:image")
+        if og_image:
+            thumb = _card_thumb(note, token, final_url, og_image)
+            if thumb is not None:
+                external["thumb"] = thumb
+        else:
+            log(f"{slug} bluesky: link card without a thumbnail (the page has no og:image)")
+        log(f"{slug} bluesky: link card attached, "
+            + ("with a thumbnail" if "thumb" in external else "without a thumbnail"))
+        return {"$type": EMBED_EXTERNAL, "external": external}
+    except Exception as e:
+        log(f"{slug} bluesky: no link card ({type(e).__name__})")
+        return None
+
+
 def post_bluesky(note, text):
     """Make the note's one Bluesky post. Returns {url, uri, posted}. Each attempt asks getRecord
     first: a 200 adopts that post's URI (a prior attempt, or a prior run, already made it, even
@@ -966,6 +1194,7 @@ def post_bluesky(note, text):
     params = {"repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey}
     suffix = "/" + rkey
     url = SITE + note.path
+    received = text   # the card's target comes from the text before any cut
     text, hard = _fit(text, BLUESKY_LIMIT, url, len)
     record = {"$type": COLLECTION, "text": text, "langs": ["en"]}
     found = facets(text)
@@ -977,35 +1206,51 @@ def post_bluesky(note, text):
                                           and f["index"]["byteEnd"] == stop)]
     if found:
         record["facets"] = found
-    why = "no attempt"
-    for attempt in range(TRIES):
-        status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
-        if status == 200:
-            uri = doc.get("uri") if doc else None
-            if not isinstance(uri, str) or not uri.endswith(suffix):
-                raise PostError("bluesky: getRecord returned no matching uri")
-            break
-        if status == 400 and doc and doc.get("error") == "RecordNotFound":
-            now = utcnow()
-            record["createdAt"] = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
-            status, doc = _bsky("POST", "com.atproto.repo.createRecord", token=token, body={
-                "repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey, "record": record})
+    card = link_card(note, received, token)
+    if isinstance(card, dict):
+        record["embed"] = card
+
+    def put(record):
+        why = "no attempt"
+        for attempt in range(TRIES):
+            status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
             if status == 200:
                 uri = doc.get("uri") if doc else None
                 if not isinstance(uri, str) or not uri.endswith(suffix):
-                    raise PostError("bluesky: createRecord returned no matching uri")
+                    raise PostError("bluesky: getRecord returned no matching uri")
                 break
-            if not _transient(status):
-                raise PostError(f"bluesky: createRecord HTTP {status}{_code(doc)}")
-            why = "unreachable" if status == 0 else f"HTTP {status}"
-        elif _transient(status):
-            why = "getRecord " + ("unreachable" if status == 0 else f"HTTP {status}")
+            if status == 400 and doc and doc.get("error") == "RecordNotFound":
+                now = utcnow()
+                record["createdAt"] = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
+                status, doc = _bsky("POST", "com.atproto.repo.createRecord", token=token, body={
+                    "repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey, "record": record})
+                if status == 200:
+                    uri = doc.get("uri") if doc else None
+                    if not isinstance(uri, str) or not uri.endswith(suffix):
+                        raise PostError("bluesky: createRecord returned no matching uri")
+                    break
+                if not _transient(status):
+                    msg = f"bluesky: createRecord HTTP {status}{_code(doc)}"
+                    raise (_CardRejected if status == 400 and "embed" in record else PostError)(msg)
+                why = "unreachable" if status == 0 else f"HTTP {status}"
+            elif _transient(status):
+                why = "getRecord " + ("unreachable" if status == 0 else f"HTTP {status}")
+            else:
+                raise PostError(f"bluesky: getRecord HTTP {status}{_code(doc)}")
+            if attempt < TRIES - 1:
+                time.sleep(WAIT)
         else:
-            raise PostError(f"bluesky: getRecord HTTP {status}{_code(doc)}")
-        if attempt < TRIES - 1:
-            time.sleep(WAIT)
-    else:
-        raise PostError(f"bluesky: failed ({why}) after {TRIES} tries")
+            raise PostError(f"bluesky: failed ({why}) after {TRIES} tries")
+        return uri
+
+    try:
+        uri = put(record)
+    except _CardRejected:
+        # The PDS wrote nothing and the card is the likely cause. Same key, and getRecord is
+        # asked first again, so this pass adopts any record the first one made: never a second.
+        log(f"{note.slug} bluesky: the PDS refused the link card; posting without it")
+        del record["embed"]
+        uri = put(record)
     return {"url": BLUESKY_WEB + rkey, "uri": uri,
             "posted": utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 
