@@ -6,3 +6,4 @@ public/
 __pycache__/
 .webmentions-sent
 data/webmentions.json
+static/webmention-avatars/
