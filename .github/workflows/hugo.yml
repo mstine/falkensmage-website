@@ -126,16 +126,79 @@ jobs:
           # Needed for public/.well-known/atproto-did (Bluesky domain handle).
           include-hidden-files: true
 
+  # Pages refuses a deployment while it believes another is in progress, and that belief can
+  # outlive the run that made it. On 2026-11-06 the deploy dispatched by notes.yml (to add a
+  # note's syndication links) was refused for about 45 minutes after the previous deploy had
+  # gone green: "due to in progress deployment. Please cancel <sha> first", while the cancel
+  # API answered that the same deployment was finished. Nothing retried, so the links waited
+  # for a human. So the deploy is tried up to six times, waiting 2, 5, 10, 15 and 20 minutes
+  # between tries (about 52 minutes in all), and the job fails only when every try failed.
+  # Any failure is retried, not just that one: a real failure costs an hour's delay before the
+  # run turns red, which is cheaper than a missed deploy. Waiting holds the `pages` group, so
+  # a push in the meantime queues behind it rather than racing it.
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.try1.outputs.page_url || steps.try2.outputs.page_url || steps.try3.outputs.page_url || steps.try4.outputs.page_url || steps.try5.outputs.page_url || steps.try6.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 70
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
+        id: try1
+        continue-on-error: true
         uses: actions/deploy-pages@v5
+
+      - name: Wait 2 minutes
+        if: steps.try1.outcome == 'failure'
+        run: sleep 120
+      - name: Deploy to GitHub Pages (try 2)
+        id: try2
+        if: steps.try1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait 5 minutes
+        if: steps.try2.outcome == 'failure'
+        run: sleep 300
+      - name: Deploy to GitHub Pages (try 3)
+        id: try3
+        if: steps.try2.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait 10 minutes
+        if: steps.try3.outcome == 'failure'
+        run: sleep 600
+      - name: Deploy to GitHub Pages (try 4)
+        id: try4
+        if: steps.try3.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait 15 minutes
+        if: steps.try4.outcome == 'failure'
+        run: sleep 900
+      - name: Deploy to GitHub Pages (try 5)
+        id: try5
+        if: steps.try4.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait 20 minutes
+        if: steps.try5.outcome == 'failure'
+        run: sleep 1200
+      - name: Deploy to GitHub Pages (try 6)
+        id: try6
+        if: steps.try5.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Fail if every try failed
+        if: steps.try6.outcome == 'failure'
+        run: |
+          echo "::error title=Deploy::Pages refused all six deploy tries over about 52 minutes; see the try steps' logs."
+          exit 1
 
   # After deploy, so an email can never link to a page that isn't live. Only a dispatch
   # with send_email sends; push and the nightly rebuild leave a draft, which keeps the
