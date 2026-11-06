@@ -195,6 +195,13 @@ MAX_AGE = datetime.timedelta(days=7)
 REMOTE = "origin"
 BRANCH = "main"
 PLATFORMS = ("mastodon", "bluesky")
+EMBED_EXTERNAL = "app.bsky.embed.external"
+CARD_TIMEOUT = 10
+CARD_PAGE_BYTES = 1_000_000
+CARD_REDIRECTS = 5
+BLOB_MAX = 1_000_000   # Bluesky's limit for a thumb
+CARD_TITLE_MAX = 300
+CARD_DESC_MAX = 1000
 GIT_ID = ["-c", "user.name=github-actions[bot]",
           "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
           "-c", "commit.gpgsign=false"]
@@ -238,6 +245,19 @@ for _h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandl
            urllib.request.HTTPErrorProcessor(), urllib.request.HTTPHandler(),
            urllib.request.HTTPSHandler()):
     OPENER.add_handler(_h)
+
+
+class _CardRedirect(urllib.request.HTTPRedirectHandler):
+    max_redirections = 5   # must equal CARD_REDIRECTS (defined with the other constants)
+
+
+# Separate from OPENER on purpose: OPENER carries credentials and must never follow a redirect,
+# and nothing secret is ever sent on CARD_OPENER. Like OPENER, it has no ProxyHandler.
+CARD_OPENER = urllib.request.OpenerDirector()
+for _h in (urllib.request.UnknownHandler(), urllib.request.HTTPDefaultErrorHandler(),
+           _CardRedirect(), urllib.request.HTTPErrorProcessor(), urllib.request.HTTPHandler(),
+           urllib.request.HTTPSHandler()):
+    CARD_OPENER.add_handler(_h)
 
 
 def log(msg):
@@ -884,10 +904,11 @@ def _code(doc):
     return f": {one_line(code, 60)}" if isinstance(code, str) and code else ""
 
 
-def _bsky(method, name, *, token=None, body=None, query=None):
+def _bsky(method, name, *, token=None, body=None, query=None, raw=None, ctype=None):
     """One attempt at one XRPC call. Returns (status, doc): the HTTP status, or 0 when the
     server was unreachable, and the parsed JSON object or None. No redirect is followed, so the
-    Authorization header never leaves, and no body is ever printed."""
+    Authorization header never leaves, and no body is ever printed. `raw` and `ctype` send bytes
+    as they are (uploadBlob) instead of a JSON body."""
     url = f"{BLUESKY}/xrpc/{name}"
     if query:
         url += "?" + urllib.parse.urlencode(query)
@@ -895,7 +916,10 @@ def _bsky(method, name, *, token=None, body=None, query=None):
     data = None
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    if body is not None:
+    if raw is not None:
+        data = raw
+        headers["Content-Type"] = ctype
+    elif body is not None:
         data = json.dumps(body, ensure_ascii=False).encode("utf-8")
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
@@ -954,6 +978,165 @@ def _transient(status):
     return status == 0 or status == 429 or status >= 500
 
 
+# --- Bluesky: the link card -------------------------------------------------------------
+
+class _CardMeta(html.parser.HTMLParser):
+    """The few things a card needs from a page: the first content of each of og:title,
+    og:description, og:image and meta description, and the text of the first <title>. A meta key
+    is its `property`, or its `name` when there is no property. Nothing else is read."""
+
+    WANTED = ("og:title", "og:description", "og:image", "description")
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.meta = {}
+        self.title = None
+        self._in_title = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "meta":
+            a = {k.lower(): v for k, v in attrs if v is not None}
+            key = (a["property"] if "property" in a else a.get("name", "")).strip().lower()
+            if key in self.WANTED and key not in self.meta and "content" in a:
+                self.meta[key] = a["content"]
+        elif tag == "title" and self.title is None:
+            self.title = ""
+            self._in_title = True
+
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self._in_title = False
+
+    def handle_data(self, data):
+        if self._in_title:
+            self.title += data
+
+
+def _card_get(url, accept, cap):
+    """(final_url, charset, data) for a 200 answer, data being at most cap + 1 bytes, else None.
+    Sends only a User-Agent and an Accept header, never a credential, through CARD_OPENER."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": accept})
+    try:
+        with CARD_OPENER.open(req, timeout=CARD_TIMEOUT) as r:
+            if r.status != 200:
+                return None
+            return r.geturl(), r.headers.get_content_charset(), r.read(cap + 1)
+    except urllib.error.HTTPError as e:
+        e.close()
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, ValueError):
+        return None
+
+
+def _same_page(url):
+    return url.split("#", 1)[0].rstrip("/")
+
+
+def card_target(note, text):
+    """The first link in `text` that is not the note's own permalink, else None."""
+    own = _same_page(SITE + note.path)
+    for start, end in find_urls(text):
+        url = text[start:end]
+        if _same_page(url) != own:
+            return url
+    return None
+
+
+def _image_type(data):
+    """The MIME type a thumb may be sent as, judged by its first bytes and never by a header."""
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def _upload_thumb(token, data, mime):
+    """One uploadBlob attempt. The blob object for the card, rebuilt from validated fields, or
+    None."""
+    status, doc = _bsky("POST", "com.atproto.repo.uploadBlob", token=token, raw=data, ctype=mime)
+    blob = doc.get("blob") if status == 200 and doc else None
+    if not isinstance(blob, dict) or blob.get("$type") != "blob":
+        return None
+    ref, mt, size = blob.get("ref"), blob.get("mimeType"), blob.get("size")
+    link = ref.get("$link") if isinstance(ref, dict) else None
+    if (not isinstance(link, str) or not isinstance(mt, str) or not mt.startswith("image/")
+            or not isinstance(size, int) or isinstance(size, bool) or not 1 <= size <= BLOB_MAX):
+        return None
+    return {"$type": "blob", "ref": {"$link": link}, "mimeType": mt, "size": size}
+
+
+def _card_thumb(note, token, page_url, og_image):
+    """The card's thumb blob, or None with one log line saying why."""
+    def skip(reason):
+        log(f"{note.slug} bluesky: link card without a thumbnail ({reason})")
+        return None
+
+    try:
+        src = urllib.parse.urljoin(page_url, og_image.strip())
+        parts = urllib.parse.urlsplit(src)
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            return skip("the image address is not http or https")
+        got = _card_get(src, "image/jpeg,image/png,image/webp", BLOB_MAX)
+        if got is None:
+            return skip("the image did not answer 200")
+        data = got[2]
+        if len(data) > BLOB_MAX:
+            return skip("the image is over 1,000,000 bytes")
+        mime = _image_type(data)
+        if mime is None:
+            return skip("the image is not JPEG, PNG or WebP")
+        blob = _upload_thumb(token, data, mime)
+        return blob if blob is not None else skip("uploadBlob failed")
+    except Exception as e:
+        return skip(type(e).__name__)
+
+
+def link_card(note, text, token):
+    """The record's app.bsky.embed.external for the first link in `text` that is not the note's
+    own, or None. Best effort: any failure is one log line (slug and a fixed reason or an
+    exception's type name, never the link or the page's text) and no card."""
+    slug = note.slug
+    try:
+        target = card_target(note, text)
+        if target is None:
+            return None
+        got = _card_get(target, "text/html,application/xhtml+xml", CARD_PAGE_BYTES)
+        if got is None:
+            log(f"{slug} bluesky: no link card (the page did not answer 200)")
+            return None
+        final_url, charset, data = got
+        try:
+            page = data[:CARD_PAGE_BYTES].decode(charset or "utf-8", errors="replace")
+        except LookupError:
+            page = data[:CARD_PAGE_BYTES].decode("utf-8", errors="replace")
+        meta = _CardMeta()
+        meta.feed(page)
+        meta.close()
+        title = one_line(meta.meta.get("og:title") or meta.title or "", CARD_TITLE_MAX - 1)
+        description = one_line(meta.meta.get("og:description") or meta.meta.get("description") or "",
+                               CARD_DESC_MAX - 1)
+        if not title:
+            log(f"{slug} bluesky: no link card (the page has no title)")
+            return None
+        external = {"uri": target, "title": title, "description": description}
+        og_image = meta.meta.get("og:image")
+        if og_image:
+            thumb = _card_thumb(note, token, final_url, og_image)
+            if thumb is not None:
+                external["thumb"] = thumb
+        else:
+            log(f"{slug} bluesky: link card without a thumbnail (the page has no og:image)")
+        log(f"{slug} bluesky: link card attached, "
+            + ("with a thumbnail" if "thumb" in external else "without a thumbnail"))
+        return {"$type": EMBED_EXTERNAL, "external": external}
+    except Exception as e:
+        log(f"{slug} bluesky: no link card ({type(e).__name__})")
+        return None
+
+
 def post_bluesky(note, text):
     """Make the note's one Bluesky post. Returns {url, uri, posted}. Each attempt asks getRecord
     first: a 200 adopts that post's URI (a prior attempt, or a prior run, already made it, even
@@ -966,6 +1149,7 @@ def post_bluesky(note, text):
     params = {"repo": BLUESKY_DID, "collection": COLLECTION, "rkey": rkey}
     suffix = "/" + rkey
     url = SITE + note.path
+    received = text   # the card's target comes from the text before any cut
     text, hard = _fit(text, BLUESKY_LIMIT, url, len)
     record = {"$type": COLLECTION, "text": text, "langs": ["en"]}
     found = facets(text)
@@ -977,6 +1161,9 @@ def post_bluesky(note, text):
                                           and f["index"]["byteEnd"] == stop)]
     if found:
         record["facets"] = found
+    card = link_card(note, received, token)
+    if isinstance(card, dict):
+        record["embed"] = card
     why = "no attempt"
     for attempt in range(TRIES):
         status, doc = _bsky("GET", "com.atproto.repo.getRecord", token=token, query=params)
