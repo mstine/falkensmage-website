@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-06T18:53:35.556Z"
+last_updated: "2026-11-06T20:17:52.977Z"
 last_activity: 2026-11-06
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: f9362c3f2372a0359be24dd991f6fc4f1c3d01b6
+state_head: 501bdf236dd558f87330e6cbdd3e8f4b876a1cd5
 progress:
   total_phases: 1
   completed_phases: 1
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-07-02)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-11-06 - Completed quick task 261106-hbn: Bluesky link cards for syndicated notes
+Last activity: 2026-11-06 - Completed quick task 261106-izg: Social-style response cards with self-hosted avatars
 
 ## Performance Metrics
 
@@ -177,6 +177,7 @@ Carried forward to v1.1 scoping:
 | 261030-pg5 | Notes social feed design and bare-domain gate | 2026-10-30 | dfd2be1 | [261030-pg5-notes-links-and-social-feed-design](./quick/261030-pg5-notes-links-and-social-feed-design/) |
 | 261106-gqa | Retry the GitHub Pages deploy step in hugo.yml (up to six tries over about 52 minutes) | 2026-11-06 | fa5d238 | [261106-gqa-retry-the-github-pages-deploy-step-in-hu](./quick/261106-gqa-retry-the-github-pages-deploy-step-in-hu/) |
 | 261106-hbn | Bluesky link cards for syndicated notes | 2026-11-06 | f9362c3 | [261106-hbn-bluesky-link-cards-for-syndicated-notes](./quick/261106-hbn-bluesky-link-cards-for-syndicated-notes/) |
+| 261106-izg | Social-style response cards with self-hosted avatars | 2026-11-06 | 501bdf2 | [261106-izg-social-style-response-cards-with-self-ho](./quick/261106-izg-social-style-response-cards-with-self-ho/) |
 
 ## Session Continuity
 
