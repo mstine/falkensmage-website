@@ -50,6 +50,11 @@
    }
   },
   "/notes/i-haven-t-seen-a-democratic/": {
+   "bluesky": {
+    "posted": "2026-11-12T00:01:50Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3n2356xtjqzyb",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3n2356xtjqzyb"
+   },
    "mastodon": {
     "id": "117600531773610319",
     "posted": "2026-11-12T00:01:48Z",
