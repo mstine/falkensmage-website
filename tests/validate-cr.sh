@@ -205,6 +205,77 @@ if [ -z "$PARTIAL" ]; then
   fi
 fi
 
+# h. head metadata: article OG tags with an image, and the publication's own <title>
+no_og=0
+bad_title=0
+for slug in $slugs; do
+  page="$PUBLIC/cr/$slug/index.html"
+  [ -f "$page" ] || continue
+  grep -Eq 'property="?og:type"? content="?article' "$page" && grep -Eq 'property="?og:image"?' "$page" || { no_og=$((no_og + 1)); echo "        no article OG: /cr/$slug/"; }
+  grep -Eq '<title>[^<]*\| Contemplating Resonance</title>' "$page" || { bad_title=$((bad_title + 1)); echo "        bad <title>: /cr/$slug/"; }
+done
+[ "$no_og" -eq 0 ] && pass "every CR post has article Open Graph tags with an image" || fail "$no_og CR posts missing article OG tags"
+[ "$bad_title" -eq 0 ] && pass "every CR post title ends with | Contemplating Resonance" || fail "$bad_title CR posts with the wrong <title>"
+
+# i. Pre-cutover: /cr/ is unlinked — delete this block on cutover day.
+# Nothing outside /cr/ may link into it: every built page outside /cr/ is parsed, and any a href
+# that resolves into /cr/ (relative, root-relative or absolute falkensmage.com) fails. The home
+# page may not mention /cr/ at all.
+inbound=$(python3 -I - "$PUBLIC" <<'PY'
+import os, sys
+from html.parser import HTMLParser
+from urllib.parse import urljoin, urlsplit
+
+public = sys.argv[1]
+
+
+class Links(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            for k, v in attrs:
+                if k == "href" and v:
+                    self.hrefs.append(v)
+
+
+for dirpath, dirs, files in os.walk(public):
+    rel_dir = os.path.relpath(dirpath, public)
+    if rel_dir == "cr" or rel_dir.startswith("cr" + os.sep):
+        dirs[:] = []
+        continue
+    for name in files:
+        if not name.endswith(".html"):
+            continue
+        path = os.path.join(dirpath, name)
+        rel = os.path.relpath(path, public)
+        base = "https://falkensmage.com/" + (rel[: -len(name)] if rel != name else "")
+        text = open(path, encoding="utf-8", errors="replace").read()
+        p = Links()
+        p.feed(text)
+        for href in p.hrefs:
+            u = urlsplit(urljoin(base, href))
+            if u.netloc in ("falkensmage.com", "www.falkensmage.com") and (u.path == "/cr" or u.path.startswith("/cr/")):
+                print(f"{rel} → {href}")
+home = open(os.path.join(public, "index.html"), encoding="utf-8").read()
+if "/cr/" in home:
+    print("index.html mentions /cr/")
+PY
+)
+[ -z "$inbound" ] && pass "pre-cutover: nothing outside /cr/ links into it" || { fail "pre-cutover: /cr/ is linked from outside:"; echo "$inbound" | sed 's/^/        /'; }
+
+# j. INFO only: the sitemap and the home feed list /cr/ URLs once built. Both only go live on
+# merge, which is cutover day per the FA precedent (OWN-THE-STACK-MIGRATION.md), so nothing extra
+# is gated now. A sitemap opt-out, if ever wanted, is front matter `sitemap: {disable: true}`
+# cascaded from content/cr/_index.md — deliberately not added.
+for f in sitemap.xml index.xml; do
+  if [ -f "$PUBLIC/$f" ]; then
+    info "$f lists $(grep -o '/cr/' "$PUBLIC/$f" | wc -l | tr -d ' ') /cr/ occurrences (live only on merge)"
+  fi
+done
+
 echo ""
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

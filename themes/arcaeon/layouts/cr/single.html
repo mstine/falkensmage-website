@@ -1,6 +1,12 @@
 {{ define "main" }}
 {{- $isPodcast := eq .Params.cr_kind "podcast" -}}
 <main class="fa-room">
+  <section class="section section-void fa-band">
+    <div class="fa-wide">
+      {{ partial "cr/masthead.html" (dict "page" . "compact" true) }}
+    </div>
+  </section>
+
   <article class="h-entry">
   <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <header class="section-content fa-essay-header">
@@ -37,8 +43,16 @@
   </section>
   </article>
 
+  {{/* ===== AFTER — neighbors, back to the index ===== */}}
+  {{- $posts := partial "cr/posts.html" . -}}
+  {{- $older := "" }}{{ $newer := "" }}{{ $seen := false -}}
+  {{- range $posts }}{{ if $seen }}{{ if not $older }}{{ $older = . }}{{ end }}{{ else if eq .RelPermalink $.RelPermalink }}{{ $seen = true }}{{ else }}{{ $newer = . }}{{ end }}{{ end -}}
   <section class="section {{ partial "helpers/band-tone.html" $ }}">
     <nav class="section-content fa-after" aria-label="More posts">
+      <div class="fa-after__neighbors">
+        {{ with $older }}<a href="{{ .RelPermalink }}" class="fa-after__link"><span class="fa-post__meta">Older</span><span>{{ .Title }}</span></a>{{ end }}
+        {{ with $newer }}<a href="{{ .RelPermalink }}" class="fa-after__link fa-after__link--newer"><span class="fa-post__meta">Newer</span><span>{{ .Title }}</span></a>{{ end }}
+      </div>
       <p><a href="/cr/">All posts &rarr;</a></p>
     </nav>
   </section>

@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {{/* FA pages carry the publication's name — that's what readers search for */}}
   {{ $inFA := eq .Section "fa" }}
-  {{ $siteName := cond $inFA "Feral Architecture" site.Title }}
+  {{/* Contemplating Resonance (/cr/) — same rule: the section carries its own publication name */}}
+  {{ $inCR := eq .Section "cr" }}
+  {{ $siteName := cond $inFA "Feral Architecture" (cond $inCR "Contemplating Resonance" site.Title) }}
   {{/* A note has no title: its page title and description come from its own text.
        Cast through printf "%s" so truncate's safe-HTML result is escaped on output. */}}
   {{ $isNote := and (eq .Section "notes") .IsPage }}
   {{ $noteText := "" }}
   {{ if $isNote }}{{ $noteText = .Plain | htmlUnescape | plainify }}{{ end }}
-  <title>{{ if .IsHome }}{{ site.Title }}{{ else if $isNote }}{{ printf "%s" ($noteText | truncate 60) }} | {{ site.Title }}{{ else if and $inFA .IsSection }}Feral Architecture — essays by Matt Stine{{ else }}{{ .Title }} | {{ $siteName }}{{ end }}</title>
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else if $isNote }}{{ printf "%s" ($noteText | truncate 60) }} | {{ site.Title }}{{ else if and $inFA .IsSection }}Feral Architecture — essays by Matt Stine{{ else if and $inCR .IsSection }}Contemplating Resonance — Matt Stine{{ else }}{{ .Title }} | {{ $siteName }}{{ end }}</title>
   {{/* Per-page social metadata. FA essays share as articles with their own title,
        dek and cover; every other page keeps the site-wide Falken's Mage card. */}}
   {{ $desc := "Enterprise architect. Archetypal tarotist. Builder of systems that think. Matt Stine at the intersection of code, consciousness, and craft." }}
@@ -25,6 +27,14 @@
     {{ with .Params.subtitle }}{{ $desc = . }}{{ end }}
     {{ with index site.Data.fa_descriptions .Params.slug }}{{ $desc = . }}{{ end }}
     {{ with .Resources.GetMatch "cover.jpg" }}{{ $ogImgSrc = . }}{{ end }}
+  {{ else if and $inCR .IsPage }}
+    {{ $ogType = "article" }}
+    {{ $ogTitle = .Title }}
+    {{ with .Params.subtitle }}{{ $desc = . }}{{ end }}
+    {{ with .Resources.GetMatch "cover.jpg" }}{{ $ogImgSrc = . }}{{ end }}
+  {{ else if and $inCR .IsSection }}
+    {{ $ogTitle = "Contemplating Resonance — Matt Stine" }}
+    {{ with .Params.lede }}{{ $desc = . }}{{ end }}
   {{ else if $isNote }}
     {{ $ogType = "article" }}
     {{ $ogTitle = "A note from Falken's Mage" }}
@@ -55,7 +65,7 @@
   <meta property="og:title" content="{{ $ogTitle }}">
   <meta property="og:description" content="{{ $desc }}">
   <meta property="og:url" content="{{ .Permalink }}">
-  {{ if or $isEssay $isNote }}
+  {{ if or $isEssay $isNote (and $inCR .IsPage) }}
   <meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
   <meta property="article:author" content="{{ site.Params.author }}">
   {{ end }}
@@ -86,6 +96,11 @@
   {{ with site.GetPage "/fa" }}{{ with .OutputFormats.Get "rss" }}
   <link rel="alternate" type="application/rss+xml" title="Feral Architecture" href="{{ .Permalink }}">
   {{ end }}{{ end }}
+
+  {{/* CR feed discovery — rendered ONLY inside /cr/ so no page outside it mentions the section until cutover */}}
+  {{ if $inCR }}{{ with site.GetPage "/cr" }}{{ with .OutputFormats.Get "rss" }}
+  <link rel="alternate" type="application/rss+xml" title="Contemplating Resonance" href="{{ .Permalink }}">
+  {{ end }}{{ end }}{{ end }}
 
   {{/* Notes feed discovery, only once a note is published. rel=feed points at the h-feed:
        Bridgy finds a note's u-syndication links, and so its original, through it. */}}
