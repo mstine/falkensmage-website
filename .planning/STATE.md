@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-15T17:45:31.761Z"
-last_activity: 2026-11-06
+last_updated: "2026-11-15T17:54:21.603Z"
+last_activity: 2026-11-15
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: 033291cc2c50bfc301b6b4b0a680aa0a6cbd4871
+state_head: 8226feda157c142aef4674c13db315f778cdab19
 progress:
   total_phases: 1
   completed_phases: 1
@@ -179,6 +179,7 @@ Carried forward to v1.1 scoping:
 | 261106-hbn | Bluesky link cards for syndicated notes | 2026-11-06 | f9362c3 | [261106-hbn-bluesky-link-cards-for-syndicated-notes](./quick/261106-hbn-bluesky-link-cards-for-syndicated-notes/) |
 | 261106-izg | Social-style response cards with self-hosted avatars | 2026-11-06 | 501bdf2 | [261106-izg-social-style-response-cards-with-self-ho](./quick/261106-izg-social-style-response-cards-with-self-ho/) |
 | 261115-fjc | Scaffold Contemplating Resonance section at /cr/ from Substack (51 posts, unlinked, branch cr/own-the-stack) | 2026-11-15 | 033291c | [261115-fjc-scaffold-contemplating-resonance-section](./quick/261115-fjc-scaffold-contemplating-resonance-section/) |
+| 15 | Fix /cr/ index layout: single column, Start here card, title fits | 2026-11-15 | 8226fed | — |
 
 ## Session Continuity
 
