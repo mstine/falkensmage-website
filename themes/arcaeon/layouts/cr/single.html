@@ -1,0 +1,46 @@
+{{ define "main" }}
+{{- $isPodcast := eq .Params.cr_kind "podcast" -}}
+<main class="fa-room">
+  <article class="h-entry">
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <header class="section-content fa-essay-header">
+      <h1 class="fa-essay-title p-name">{{ .Title }}</h1>
+      {{ with .Params.subtitle }}<p class="offer-lede p-summary">{{ . }}</p>{{ end }}
+      <p class="fa-essay-byline">
+        <span class="p-author h-card"><span class="p-name">{{ .Params.byline | default site.Params.author }}</span></span> &middot;
+        <time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "January 2, 2006" }}</time>
+        {{- if $isPodcast }} &middot; Episode{{ with .Params.duration_label }} &middot; {{ . }}{{ end }}{{ end }}
+        <data class="u-url" value="{{ .Permalink }}"></data>
+      </p>
+      {{ with .Resources.GetMatch "cover.jpg" }}
+        {{ $c := .Resize "1200x webp q80" }}
+        <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
+             alt="{{ $.Params.cover_alt | default (printf "Cover image for %s" $.Title) }}" class="fa-essay-cover u-photo" fetchpriority="high">
+      {{ end }}
+      {{ if $isPodcast }}
+        {{ with .Params.media_url }}
+          <p class="fa-after__email"><a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Watch the episode &rarr;</a></p>
+        {{ else }}
+          <div class="cr-player cr-player--pending" data-cr-player="pending" role="note">
+            <p class="cr-player__label">Episode</p>
+            <p>Video for this episode is moving to its new home and will play here. The show notes are below.</p>
+          </div>
+        {{ end }}
+      {{ end }}
+    </header>
+  </section>
+
+  <section class="section {{ partial "helpers/band-tone.html" $ }} sigil-gradient">
+    <div class="section-content offer-body page-body fa-prose cr-prose e-content">
+      {{ .Content }}
+    </div>
+  </section>
+  </article>
+
+  <section class="section {{ partial "helpers/band-tone.html" $ }}">
+    <nav class="section-content fa-after" aria-label="More posts">
+      <p><a href="/cr/">All posts &rarr;</a></p>
+    </nav>
+  </section>
+</main>
+{{ end }}
