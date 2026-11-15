@@ -24,6 +24,12 @@ Slugs are kept byte-for-byte, so the later redirect is a pure /p/<slug> to /cr/<
 swap. Two August-2024 posts are gated (founding / paid) and are excluded by name; any
 other non-public post in the listing aborts the run rather than being published.
 
+Podcast bundles also take their guid, enclosure length, explicit flag and transcript from the saved
+Substack feed facts in ~/.psyche/tools/substack/cr-feed-assets (local files, so --offline still makes no
+network calls). The guids are pinned in data/cr-podcast.json. The feed's show art is NOT generated here:
+static/cr/podcast-cover.jpg is placed by hand (the old Substack art is a retired design) and no
+per-episode art is emitted, so every item inherits the channel image.
+
 Network etiquette: every live request to a Substack host sleeps 3 seconds first. Post
 JSON and image bytes are cached under ~/.cache/sync-cr (outside the repo), so --offline
 reruns make no network calls at all and reproduce the output byte for byte. The cookie
@@ -31,6 +37,7 @@ file is read only when --cookie-file is passed and is never printed, cached or c
 
 Usage: python3 scripts/sync-cr.py [--listing FILE] [--cache DIR] [--only SLUG ...]
                                   [--fetch-only] [--offline] [--refresh] [--cookie-file FILE]
+                                  [--podcast-assets DIR] [--nas-audio DIR]
 Exit 1 if any kept post fails to produce a bundle.
 """
 import argparse
@@ -320,7 +327,8 @@ ALLOWED_TAGS = {"p", "h2", "h3", "h4", "h5", "h6", "a", "strong", "b", "em", "i"
                 "thead", "tbody", "tr", "th", "td", "div"}
 BARE_CTA = {"subscribe", "subscribe now", "share", "leave a comment", "share this post", "give a gift subscription"}
 CR_HOSTS = {"falkenslabyrinth.com", "www.falkenslabyrinth.com", "falkenslabyrinth.substack.com",
-            "contemplatingresonance.com", "www.contemplatingresonance.com"}
+            "contemplatingresonance.com", "www.contemplatingresonance.com",
+            "contemplatingresonance.substack.com"}
 FA_HOSTS = {"feralarchitecture.com", "www.feralarchitecture.com", "feralarchitecture.substack.com"}
 # Classes that mean "decorative wrapper, nothing lost by unwrapping"; everything else prints a WARN.
 BENIGN_CLASSES = {"image2-inset", "image-link", "image2", "is-viewable-img", "sizing-normal", "footnote-content",
@@ -622,6 +630,9 @@ def sanitize_body(html, slug, ctx, cover_orig=None):
         elif new == "":
             del a["href"]
         else:
+            # A link whose visible text is the old own-publication URL shows the new address instead.
+            if new.startswith("/cr/") and a.get_text().strip() == (a.get("href") or "").strip() and a.string is not None:
+                a.string.replace_with(f"https://falkensmage.com{new}")
             a["href"] = new
 
     # Normalize top level: bare inline runs become paragraphs.
@@ -813,6 +824,13 @@ def build_bundle(listing_post, net, refresh, kept, fa_slugs, report, podcast_ite
                 shutil.rmtree(bundle, ignore_errors=True)
                 raise RuntimeError(f"enclosure length {entry['length']} in items.json != {size} bytes on the NAS for {mp3}")
             report["nas_checked"] += 1
+        if entry["_transcript_path"]:
+            vtt = entry["_transcript_path"].read_bytes()
+            if not vtt.lstrip(b"\xef\xbb\xbf").startswith(b"WEBVTT"):
+                shutil.rmtree(bundle, ignore_errors=True)
+                raise RuntimeError("transcript does not start with the WEBVTT header")
+            (bundle / "transcript.vtt").write_bytes(vtt)
+            front["transcript"] = "transcript.vtt"
         front["podcast_guid"] = entry["guid"]
         front["audio_url"] = AUDIO_BASE + mp3
         front["audio_bytes"] = entry["length"]

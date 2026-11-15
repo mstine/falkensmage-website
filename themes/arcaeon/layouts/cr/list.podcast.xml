@@ -11,11 +11,27 @@
     {{ with .OutputFormats.Get "podcast" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
     <description>{{ .Params.lede }}</description>
     <language>{{ site.Language.Lang }}</language>
+    <copyright>Digital Intuition LLC</copyright>
     <itunes:author>{{ site.Params.author }}</itunes:author>
+    <itunes:owner>
+      <itunes:name>Matt Stine</itunes:name>
+      <itunes:email>falkensmage@falkenslabyrinth.com</itunes:email>
+    </itunes:owner>
+    {{- /* One show image, inherited by every item (no per-episode art: the Substack-era art was the retired
+           Falken's Labyrinth design). static/cr/podcast-cover.jpg must stay a square JPEG, 1400-3000 px. */}}
+    <itunes:image href="{{ $base }}/cr/podcast-cover.jpg" />
+    <image>
+      <url>{{ $base }}/cr/podcast-cover.jpg</url>
+      <title>Contemplating Resonance</title>
+      <link>{{ .Permalink }}</link>
+    </image>
+    <itunes:category text="Society &amp; Culture"><itunes:category text="Philosophy" /></itunes:category>
+    <itunes:category text="Religion &amp; Spirituality"><itunes:category text="Spirituality" /></itunes:category>
     <itunes:explicit>true</itunes:explicit>
     <itunes:type>episodic</itunes:type>
     {{ with $pages }}{{ with index . 0 }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}{{ end }}
     {{- range $pages }}
+    {{- $page := . }}
     {{- if not (and .Params.podcast_guid .Params.audio_url) }}{{ errorf "podcast page %s has no podcast_guid/audio_url; run scripts/sync-cr.py (a guid-less item would duplicate in every podcast app)" .File.Path }}{{ end }}
     <item>
       <title>{{ .Title }}</title>
@@ -25,6 +41,11 @@
       <enclosure url="{{ .Params.audio_url }}" length="{{ .Params.audio_bytes }}" type="audio/mpeg" />
       <itunes:duration>{{ .Params.duration }}</itunes:duration>
       <itunes:explicit>{{ if .Params.explicit }}true{{ else }}false{{ end }}</itunes:explicit>
+      {{- $body := .Content | replaceRE `(src|href)="/([^/])` (printf `${1}="%s/${2}` $base) | replaceRE `\]\]>` "]]]]><![CDATA[>" }}
+      <description>{{ printf "<![CDATA[%s]]>" $body | safeHTML }}</description>
+      <content:encoded>{{ printf "<![CDATA[%s]]>" $body | safeHTML }}</content:encoded>
+      {{- with .Params.transcript }}{{ with $page.Resources.GetMatch . }}
+      <podcast:transcript url="{{ .Permalink }}" type="text/vtt" />{{ end }}{{ end }}
     </item>
     {{- end }}
   </channel>

@@ -411,6 +411,98 @@ idx = os.path.join(public, "cr", "index.xml")
 if not os.path.isfile(idx) or re.search(r"xmlns:(itunes|podcast)|<(itunes|podcast):", open(idx, encoding="utf-8").read(), re.I):
     bad("k7", "/cr/index.xml is missing or carries itunes/podcast markup")
 
+# k8: channel metadata
+def ct(tag):
+    return channel.findtext(tag, namespaces=NS)
+
+
+lede = re.search(r'^lede: (".*")$', open(os.path.join(content, "_index.md"), encoding="utf-8").read(), re.M)
+lede = json.loads(lede.group(1)) if lede else None
+for tag, exp in [("title", "Contemplating Resonance"), ("link", "https://falkensmage.com/cr/"), ("language", "en"),
+                  ("copyright", "Digital Intuition LLC"), ("itunes:author", "Matt Stine"),
+                  ("itunes:explicit", "true"), ("itunes:type", "episodic"), ("description", lede)]:
+    if ct(tag) != exp:
+        bad("k8", f"channel {tag} is {str(ct(tag))[:60]!r}, want {str(exp)[:60]!r}")
+self_link = [a for a in channel.findall("atom:link", NS) if a.get("rel") == "self"]
+if not (len(self_link) == 1 and self_link[0].get("href") == "https://falkensmage.com/cr/podcast.xml"
+        and self_link[0].get("type") == "application/rss+xml"):
+    bad("k8", "atom:link rel=self is not https://falkensmage.com/cr/podcast.xml")
+if ct("itunes:owner/itunes:name") != "Matt Stine" or ct("itunes:owner/itunes:email") != "falkensmage@falkenslabyrinth.com":
+    bad("k8", "itunes:owner is not Matt Stine / falkensmage@falkenslabyrinth.com")
+cats = channel.findall("itunes:category", NS)
+if not cats or cats[0].get("text") != "Society & Culture" or [c.get("text") for c in cats[0].findall("itunes:category", NS)] != ["Philosophy"]:
+    bad("k8", "first itunes:category is not Society & Culture > Philosophy")
+
+# k9: show art, a square JPEG of 1400-3000 px, self-hosted, inherited by every item
+def jpeg_dims(b):
+    i = 2
+    while i + 9 < len(b):
+        if b[i] != 0xFF:
+            i += 1
+            continue
+        mk = b[i + 1]
+        if mk in (0xC0, 0xC1, 0xC2):
+            return int.from_bytes(b[i + 7:i + 9], "big"), int.from_bytes(b[i + 5:i + 7], "big")
+        i += 2 + int.from_bytes(b[i + 2:i + 4], "big")
+    return None
+
+
+img = channel.find("itunes:image", NS)
+href = img.get("href") if img is not None else None
+if href != "https://falkensmage.com/cr/podcast-cover.jpg":
+    bad("k9", f"channel itunes:image href is {href!r}")
+else:
+    art = os.path.join(public, "cr", "podcast-cover.jpg")
+    if not os.path.isfile(art):
+        bad("k9", "cr/podcast-cover.jpg is not in the build")
+    else:
+        b = open(art, "rb").read()
+        dims = jpeg_dims(b) if b[:3] == b"\xff\xd8\xff" else None
+        if dims is None:
+            bad("k9", "podcast-cover.jpg is not a JPEG")
+        elif dims[0] != dims[1] or not 1400 <= dims[0] <= 3000:
+            bad("k9", f"podcast-cover.jpg is {dims[0]}x{dims[1]}, want a square 1400-3000 px")
+
+# k10: transcripts; no per-episode art (every item inherits the channel image)
+n_tr = 0
+for it in items:
+    slug = slug_of(it)
+    if it.find("itunes:image", NS) is not None:
+        bad("k10", f"{slug}: per-episode itunes:image present (items must inherit the channel image)")
+    for tr in it.findall("podcast:transcript", NS):
+        n_tr += 1
+        u = tr.get("url") or ""
+        pre = f"https://falkensmage.com/cr/{slug}/"
+        f = os.path.join(public, u[len("https://falkensmage.com/"):]) if u.startswith(pre) else None
+        if tr.get("type") != "text/vtt" or not f or not os.path.isfile(f):
+            bad("k10", f"{slug}: transcript {u!r} (type {tr.get('type')!r}) does not resolve in the build")
+        elif not open(f, "rb").read().lstrip(b"\xef\xbb\xbf").startswith(b"WEBVTT"):
+            bad("k10", f"{slug}: transcript does not start with WEBVTT")
+want_tr = sum(1 for e in pin.values() if e["transcript"])
+if n_tr != want_tr:
+    bad("k10", f"{n_tr} podcast:transcript elements, pin says {want_tr}")
+
+# k11: show notes present and absolute
+for it in items:
+    slug = slug_of(it)
+    for tag in ("description", "content:encoded"):
+        t = it.findtext(tag, namespaces=NS) or ""
+        if not t.strip():
+            bad("k11", f"{slug}: empty {tag}")
+        elif re.search(r"(src|href)=[\x22\x27]?/[^/\x22\x27 >]", t):
+            bad("k11", f"{slug}: {tag} holds a root-relative src/href")
+
+# k12: nothing that depends on Substack
+raw = open(want, encoding="utf-8").read()
+for pat in [r"substackcdn", r"substack-post-media", r"bucketeer-", r"substack-video", r"api\.substack\.com",
+            r"open\.substack\.com", r"//(www\.)?substack\.com", r"(falkenslabyrinth|contemplatingresonance)\.substack\.com",
+            r"https?://(www\.)?falkenslabyrinth\.com", r"/Users/", r"mnemosyne"]:
+    if re.search(pat, raw, re.I):
+        bad("k12", f"podcast.xml matches /{pat}/")
+guests = len(set(re.findall(r"https?://[a-z0-9-]+\.substack\.com", raw, re.I)))
+out.append(f"INFO: podcast.xml links {guests} guest <name>.substack.com newsletters from show notes (outbound, allowed)")
+
+out.append("DONE")
 print("\n".join(out))
 PY
 )
@@ -419,6 +511,7 @@ PY
     lines=$(printf '%s\n' "$kout" | grep "^$1: " || true)
     if [ -z "$lines" ]; then pass "$2"; else fail "$3"; printf '%s\n' "$lines" | sed 's/^/        /'; fi
   }
+  printf '%s\n' "$kout" | grep -qx 'DONE' || { fail "podcast feed checks crashed before finishing (a missing or malformed feed also lands here)"; printf '%s\n' "$kout" | sed 's/^/        /'; }
   kcheck k1 "podcast feed: /cr/podcast.xml is well-formed RSS 2.0, one channel, the only podcast.xml in the build" "podcast feed structure"
   kcheck k2 "podcast feed: 18 items = 18 podcast bundles = 18 pinned episodes" "podcast feed item count"
   kcheck k3 "podcast feed: every guid equals its pinned Substack guid, isPermaLink false, none repeated" "podcast guid continuity"
@@ -426,6 +519,11 @@ PY
   kcheck k5 "podcast feed: every enclosure is the R2 mp3 for its slug, audio/mpeg, pinned length" "podcast enclosures"
   kcheck k6 "podcast feed: pubDate = enclosure date, duration positive, explicit true/false" "podcast item dates/duration/explicit"
   kcheck k7 "/cr/index.xml carries no itunes/podcast markup" "/cr/index.xml changed shape"
+  kcheck k8 "podcast feed: channel metadata (title, link, self, author, owner, explicit, type, category, lede)" "podcast channel metadata"
+  kcheck k9 "podcast feed: show art is a self-hosted square JPEG, 1400-3000 px" "podcast show art"
+  kcheck k10 "podcast feed: transcripts resolve as WEBVTT; no per-episode art (items inherit the channel image)" "podcast transcripts / episode art"
+  kcheck k11 "podcast feed: every item has show notes in description and content:encoded, absolute URLs" "podcast show notes"
+  kcheck k12 "podcast feed: no Substack infrastructure, own-publication URL, or local path" "podcast feed depends on Substack"
   printf '%s\n' "$kout" | grep '^INFO: ' | sed 's/^INFO: //' | while IFS= read -r l; do info "$l"; done
 fi
 
