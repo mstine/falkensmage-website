@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-06T20:17:52.977Z"
-last_activity: 2026-11-06
+last_updated: "2026-11-15T20:05:20.246Z"
+last_activity: 2026-11-15
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: 501bdf236dd558f87330e6cbdd3e8f4b876a1cd5
+state_head: 533cac122f2ca05fd801fc7f1e006a5b64fcbbeb
 progress:
   total_phases: 1
   completed_phases: 1
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-07-02)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-11-06 - Completed quick task 261106-izg: Social-style response cards with self-hosted avatars
+Last activity: 2026-11-15 - Completed quick task 261115-j4q: Self-hosted Contemplating Resonance podcast feed
 
 ## Performance Metrics
 
@@ -178,6 +178,11 @@ Carried forward to v1.1 scoping:
 | 261106-gqa | Retry the GitHub Pages deploy step in hugo.yml (up to six tries over about 52 minutes) | 2026-11-06 | fa5d238 | [261106-gqa-retry-the-github-pages-deploy-step-in-hu](./quick/261106-gqa-retry-the-github-pages-deploy-step-in-hu/) |
 | 261106-hbn | Bluesky link cards for syndicated notes | 2026-11-06 | f9362c3 | [261106-hbn-bluesky-link-cards-for-syndicated-notes](./quick/261106-hbn-bluesky-link-cards-for-syndicated-notes/) |
 | 261106-izg | Social-style response cards with self-hosted avatars | 2026-11-06 | 501bdf2 | [261106-izg-social-style-response-cards-with-self-ho](./quick/261106-izg-social-style-response-cards-with-self-ho/) |
+| 261115-fjc | Scaffold Contemplating Resonance section at /cr/ from Substack (51 posts, unlinked, branch cr/own-the-stack) | 2026-11-15 | 033291c | [261115-fjc-scaffold-contemplating-resonance-section](./quick/261115-fjc-scaffold-contemplating-resonance-section/) |
+| 15 | Fix /cr/ index layout: single column, Start here card, title fits | 2026-11-15 | 8226fed | — |
+| 16 | CR episode pages: YouTube thumbnail links (18 episodes) | 2026-11-15 | 1a25451 | — |
+| 261115-j4q | Self-hosted Contemplating Resonance podcast feed at /cr/podcast.xml (18 pinned Substack guids, R2 enclosures, branch cr/own-the-stack) | 2026-11-15 | fec134f | [261115-j4q-self-hosted-contemplating-resonance-podc](./quick/261115-j4q-self-hosted-contemplating-resonance-podc/) |
+| 18 | CR cutover: nav link, validate-cr in the deploy gate, merge to main | 2026-11-15 | 533cac1 | — |
 
 ## Session Continuity
 

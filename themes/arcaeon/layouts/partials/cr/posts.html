@@ -1,0 +1,6 @@
+{{- /* The section's posts, newest first. Context: any page. Returns a page collection. */ -}}
+{{- $posts := slice -}}
+{{- with site.GetPage "/cr" -}}
+  {{- $posts = .RegularPages.ByDate.Reverse -}}
+{{- end -}}
+{{- return $posts -}}

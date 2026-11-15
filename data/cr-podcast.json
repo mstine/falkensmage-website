@@ -1,0 +1,113 @@
+{
+  "_comment": "The 18 podcast episodes' Substack guids, enclosure byte lengths and flags, written by scripts/sync-cr.py from the saved Substack feed facts. Each guid must never change or Apple Podcasts and Spotify will list the episode twice; tests/validate-cr.sh reads this because CI cannot read ~/.psyche.",
+  "episodes": {
+    "episode-01-trailer": {
+      "guid": "substack:post:139437208",
+      "length": 1073884,
+      "explicit": false,
+      "transcript": false
+    },
+    "episode-1-wtf-is-contemplating-resonance": {
+      "guid": "substack:post:140436399",
+      "length": 38209139,
+      "explicit": false,
+      "transcript": false
+    },
+    "episode-2-from-evangelical-author": {
+      "guid": "substack:post:140780952",
+      "length": 72618883,
+      "explicit": false,
+      "transcript": false
+    },
+    "episode-4-from-baptist-megachurch": {
+      "guid": "substack:post:142179609",
+      "length": 59906236,
+      "explicit": false,
+      "transcript": true
+    },
+    "episode-4-from-charismatic-christian": {
+      "guid": "substack:post:140781494",
+      "length": 67900124,
+      "explicit": false,
+      "transcript": true
+    },
+    "episode-5-deconstruction-anglican": {
+      "guid": "substack:post:143302998",
+      "length": 65816597,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e1-breaking-free-with-kandi-zeller": {
+      "guid": "substack:post:153127756",
+      "length": 63771105,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e2-escaping-perfection-with-lyn": {
+      "guid": "substack:post:153888559",
+      "length": 50006455,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e3-unmasking-control-with-hana": {
+      "guid": "substack:post:153778889",
+      "length": 66021397,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e35-live-from-st-margarets-hermitage": {
+      "guid": "substack:post:155376820",
+      "length": 31128075,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e4-intuition-healing-and-deconstruction": {
+      "guid": "substack:post:156428474",
+      "length": 43971960,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e5-techno-fascism-christian-nationalism": {
+      "guid": "substack:post:156785427",
+      "length": 73406736,
+      "explicit": false,
+      "transcript": true
+    },
+    "s2e6-narcissism-evangelicalism-and": {
+      "guid": "substack:post:154363597",
+      "length": 68718070,
+      "explicit": false,
+      "transcript": true
+    },
+    "s3e1-exploring-paganistan-egregores": {
+      "guid": "substack:post:159519453",
+      "length": 77336388,
+      "explicit": false,
+      "transcript": true
+    },
+    "s3e2-embracing-the-chaos-with-mandi": {
+      "guid": "substack:post:159576743",
+      "length": 56518259,
+      "explicit": false,
+      "transcript": true
+    },
+    "s3e3-in-between-worlds-with-cat-dean": {
+      "guid": "substack:post:159694895",
+      "length": 69974455,
+      "explicit": false,
+      "transcript": true
+    },
+    "s3e4-stripping-down-the-sacred-with": {
+      "guid": "substack:post:160360736",
+      "length": 61651216,
+      "explicit": false,
+      "transcript": true
+    },
+    "season-two-trailer": {
+      "guid": "substack:post:149426163",
+      "length": 4470638,
+      "explicit": false,
+      "transcript": true
+    }
+  }
+}

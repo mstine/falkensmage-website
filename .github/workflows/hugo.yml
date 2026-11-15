@@ -124,6 +124,11 @@ jobs:
       - name: Validate Feral Architecture section
         run: bash tests/validate-fa.sh
 
+      # Gate: all 51 Contemplating Resonance pages, the podcast feed (Substack guids pinned so
+      # Apple/Spotify don't duplicate episodes) and the nav link must be right before deploy.
+      - name: Validate Contemplating Resonance section
+        run: bash tests/validate-cr.sh
+
       # Gate: the note pages, the built-vs-due check and the u-syndication links must be right
       # before anything deploys. The syndication script and the sender depend on that markup.
       - name: Validate notes
