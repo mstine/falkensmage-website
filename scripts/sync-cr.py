@@ -57,6 +57,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "content" / "cr"
 FA_OUT = ROOT / "content" / "fa"
 LEGACY = ROOT / "data" / "cr-legacy.json"
+PODCAST_PIN = ROOT / "data" / "cr-podcast.json"
+AUDIO_BASE = "https://media.falkensmage.com/cr/"
 
 # The two gated August-2024 posts. Excluded by name; anything else gated aborts the run.
 DROPPED = ["your-august-2024-contemplative-alchemist", "your-august-2024-paid-member-discount"]
@@ -163,6 +165,56 @@ def load_listing(path):
     kept = [p for p in posts if p["slug"] not in DROPPED]
     kept.sort(key=lambda p: p["post_date"], reverse=True)
     return kept, dropped
+
+
+def load_podcast_assets(assets_dir):
+    """Read and validate cr-feed-assets/items.json (the saved Substack feed facts). Local files only."""
+    assets = Path(assets_dir).expanduser()
+    path = assets / "items.json"
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        sys.exit(f"sync-cr: cannot read {path}: {type(e).__name__}")
+    if not isinstance(items, dict) or not items:
+        sys.exit(f"sync-cr: {path} is not a non-empty JSON object")
+
+    def rel_file(slug, what, rel):
+        if not isinstance(rel, str) or not rel or rel.startswith("/") or ".." in Path(rel).parts:
+            sys.exit(f"sync-cr: items.json {slug}: {what} path {rel!r} must be relative with no '..'")
+        full = (assets / rel).resolve()
+        if assets.resolve() not in full.parents or not full.is_file():
+            sys.exit(f"sync-cr: items.json {slug}: {what} file {rel!r} is missing or outside {assets}")
+        return full
+
+    for slug, e in items.items():
+        if not SLUG_RE.match(slug):
+            sys.exit(f"sync-cr: items.json slug {slug!r} fails ^[a-z0-9-]+$")
+        if not isinstance(e, dict):
+            sys.exit(f"sync-cr: items.json {slug}: entry is not an object")
+        if not isinstance(e.get("guid"), str) or not re.match(r"^substack:post:\d+$", e["guid"]):
+            sys.exit(f"sync-cr: items.json {slug}: guid {e.get('guid')!r} is not substack:post:<digits>")
+        ln = e.get("length")
+        if not isinstance(ln, int) or isinstance(ln, bool) or ln <= 0:
+            sys.exit(f"sync-cr: items.json {slug}: length {ln!r} is not a positive int")
+        if e.get("explicit") not in ("Yes", "No"):
+            sys.exit(f"sync-cr: items.json {slug}: explicit {e.get('explicit')!r} is not Yes/No")
+        e["_transcript_path"] = rel_file(slug, "transcript", e["transcript"]) if e.get("transcript") else None
+    return items
+
+
+def write_podcast_pin(items):
+    data = {
+        "_comment": "The 18 podcast episodes' Substack guids, enclosure byte lengths and flags, written by "
+                    "scripts/sync-cr.py from the saved Substack feed facts. Each guid must never change or "
+                    "Apple Podcasts and Spotify will list the episode twice; tests/validate-cr.sh reads this "
+                    "because CI cannot read ~/.psyche.",
+        "episodes": {
+            slug: {"guid": e["guid"], "length": e["length"], "explicit": e["explicit"] == "Yes",
+                   "transcript": bool(e.get("transcript"))}
+            for slug, e in sorted(items.items())
+        },
+    }
+    PODCAST_PIN.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def write_legacy(kept, dropped):
@@ -694,7 +746,7 @@ def duration_label(seconds):
     return f"{max(1, total)}m"
 
 
-def build_bundle(listing_post, net, refresh, kept, fa_slugs, report):
+def build_bundle(listing_post, net, refresh, kept, fa_slugs, report, podcast_items, nas_dir):
     slug = listing_post["slug"]
     post = net.post(slug, refresh)
     bundle = OUT / slug
@@ -749,6 +801,23 @@ def build_bundle(listing_post, net, refresh, kept, fa_slugs, report):
                 ctx.warns.append(f"{slug}: YouTube thumbnail failed ({e}); text link only")
         else:
             ctx.warns.append(f"{slug}: podcast with no YouTube id in data/cr-youtube.json")
+        entry = podcast_items.get(slug)
+        if entry is None:
+            shutil.rmtree(bundle, ignore_errors=True)
+            raise RuntimeError("no entry in cr-feed-assets/items.json")
+        mp3 = front["media_file"][:-len(".mp4")] + ".mp3"
+        nas_file = nas_dir / mp3
+        if nas_file.is_file():
+            size = nas_file.stat().st_size
+            if size != entry["length"]:
+                shutil.rmtree(bundle, ignore_errors=True)
+                raise RuntimeError(f"enclosure length {entry['length']} in items.json != {size} bytes on the NAS for {mp3}")
+            report["nas_checked"] += 1
+        front["podcast_guid"] = entry["guid"]
+        front["audio_url"] = AUDIO_BASE + mp3
+        front["audio_bytes"] = entry["length"]
+        front["explicit"] = entry["explicit"] == "Yes"
+        report["podcast_slugs"].add(slug)
     head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
     (bundle / "index.html").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")
     report["covers"] += 1 if cover_written else 0
@@ -769,6 +838,8 @@ def main():
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--cookie-file")
+    ap.add_argument("--podcast-assets", default=os.path.expanduser("~/.psyche/tools/substack/cr-feed-assets"))
+    ap.add_argument("--nas-audio", default=os.path.expanduser("~/mnemosyne-nas/creative-media/Podcast-Video/contemplating-resonance"))
     args = ap.parse_args()
 
     kept, dropped = load_listing(args.listing)
@@ -792,7 +863,10 @@ def main():
             print(f"sync-cr: FAIL {f}")
         sys.exit(1 if failures else 0)
 
+    podcast_items = load_podcast_assets(args.podcast_assets)
+    nas_dir = Path(args.nas_audio).expanduser()
     write_legacy(kept, dropped)
+    write_podcast_pin(podcast_items)
     fa_slugs = {d.name for d in FA_OUT.iterdir() if d.is_dir()} if FA_OUT.is_dir() else set()
     OUT.mkdir(parents=True, exist_ok=True)
     if not args.only:
@@ -802,17 +876,23 @@ def main():
 
     from collections import defaultdict
     report = {"covers": 0, "images": 0, "podcasts": 0, "warns": [], "classes": Counter(),
-              "class_posts": defaultdict(set)}
+              "class_posts": defaultdict(set), "nas_checked": 0, "podcast_slugs": set()}
     failures, built = [], 0
     for p in targets:
         try:
-            build_bundle(p, net, args.refresh, set(kept_slugs), fa_slugs, report)
+            build_bundle(p, net, args.refresh, set(kept_slugs), fa_slugs, report, podcast_items, nas_dir)
             built += 1
         except (RuntimeError, OSError) as e:
             failures.append(f"{p['slug']}: {e}")
 
     print(f"sync-cr: {built}/{len(targets)} posts → content/cr/ ({report['podcasts']} podcasts, "
           f"{report['covers']} covers, {report['images']} inline images localized; {net.live} live requests)")
+    if not args.only:
+        for orphan in sorted(set(podcast_items) - report["podcast_slugs"]):
+            failures.append(f"{orphan}: items.json entry has no podcast bundle")
+    nas = (f"enclosure lengths checked against the NAS: {report['nas_checked']}/{len(podcast_items)}"
+           + (" (NAS not mounted or no files found)" if report["nas_checked"] == 0 else ""))
+    print(f"sync-cr: podcast feed: {len(report['podcast_slugs'])} episodes pinned in data/cr-podcast.json; {nas}")
     print(f"sync-cr: dropped (gated), excluded: {', '.join(dropped)}")
     for line in report["warns"]:
         print(f"sync-cr: WARN {line}")

@@ -1,0 +1,31 @@
+{{- /* Apple Podcasts / Spotify feed for /cr/ at /cr/podcast.xml. One item per podcast bundle.
+       Each guid is the episode's original Substack guid, verbatim (front matter podcast_guid, written by
+       scripts/sync-cr.py): changing one makes every podcast app list that episode twice. */ -}}
+{{- $pages := where (partial "cr/posts.html" .) "Params.cr_kind" "podcast" -}}
+{{- $base := strings.TrimSuffix "/" site.BaseURL -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  <channel>
+    <title>Contemplating Resonance</title>
+    <link>{{ .Permalink }}</link>
+    {{ with .OutputFormats.Get "podcast" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+    <description>{{ .Params.lede }}</description>
+    <language>{{ site.Language.Lang }}</language>
+    <itunes:author>{{ site.Params.author }}</itunes:author>
+    <itunes:explicit>true</itunes:explicit>
+    <itunes:type>episodic</itunes:type>
+    {{ with $pages }}{{ with index . 0 }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}{{ end }}
+    {{- range $pages }}
+    {{- if not (and .Params.podcast_guid .Params.audio_url) }}{{ errorf "podcast page %s has no podcast_guid/audio_url; run scripts/sync-cr.py (a guid-less item would duplicate in every podcast app)" .File.Path }}{{ end }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <guid isPermaLink="false">{{ .Params.podcast_guid }}</guid>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      <enclosure url="{{ .Params.audio_url }}" length="{{ .Params.audio_bytes }}" type="audio/mpeg" />
+      <itunes:duration>{{ .Params.duration }}</itunes:duration>
+      <itunes:explicit>{{ if .Params.explicit }}true{{ else }}false{{ end }}</itunes:explicit>
+    </item>
+    {{- end }}
+  </channel>
+</rss>

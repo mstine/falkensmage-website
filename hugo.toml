@@ -5,6 +5,13 @@ theme = "arcaeon"
 # No tags/categories anywhere — keep their empty index pages out of the sitemap.
 disableKinds = ["taxonomy", "term"]
 
+# Apple/Spotify podcast feed at /cr/podcast.xml. Only content/cr/_index.md opts into it.
+[outputFormats.podcast]
+  mediaType = "application/rss+xml"
+  baseName = "podcast"
+  isPlainText = false
+  notAlternative = true
+
 [params]
   author = "Matt Stine"
   description = "Falken's Mage - Matt Stine"

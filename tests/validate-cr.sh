@@ -13,6 +13,10 @@
 # CI cannot read ~/.psyche) must have a page. The rest guard the sanitizer: the bodies are
 # remote HTML published unescaped, so every body is re-parsed here, not trusted.
 #
+# It also gates the Apple/Spotify podcast feed (/cr/podcast.xml, block k): every episode keeps
+# the guid it had on Substack, read from data/cr-podcast.json (CI cannot read ~/.psyche), so
+# repointing the listings never duplicates an episode.
+#
 # VALIDATE_CR_PARTIAL=1 checks only the slugs that have a content/cr/<slug>/ bundle and skips
 # the "all 51" and feed checks. VALIDATE_CR_PUBLIC=<dir> checks an existing build instead.
 
@@ -24,6 +28,8 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PARTIAL="${VALIDATE_CR_PARTIAL:-}"
 LEGACY="$PROJECT_ROOT/data/cr-legacy.json"
 CONTENT="$PROJECT_ROOT/content/cr"
+PODCAST_PIN="$PROJECT_ROOT/data/cr-podcast.json"
+PODCAST_ITEMS="${VALIDATE_CR_PODCAST_ITEMS:-$HOME/.psyche/tools/substack/cr-feed-assets/items.json}"
 
 pass() { echo "  PASS  $1"; PASS=$((PASS + 1)); }
 fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
@@ -275,6 +281,153 @@ for f in sitemap.xml index.xml; do
     info "$f lists $(grep -o '/cr/' "$PUBLIC/$f" | wc -l | tr -d ' ') /cr/ occurrences (live only on merge)"
   fi
 done
+
+# k. the podcast feed (/cr/podcast.xml). Full mode only. One Python pass prints a line per problem,
+# "k<n>: ..." (or "INFO: ..."); each check below passes when it has no problem lines.
+if [ -z "$PARTIAL" ]; then
+  kout=$(python3 -I - "$PUBLIC" "$CONTENT" "$PODCAST_PIN" "$PODCAST_ITEMS" <<'PY'
+import glob, json, os, re, sys
+import xml.etree.ElementTree as ET
+from datetime import timezone
+from email.utils import parsedate_to_datetime
+
+public, content, pin_path, items_path = sys.argv[1:5]
+out = []
+
+
+def bad(check, msg):
+    out.append(f"{check}: {msg}")
+
+
+NS = {"itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd", "podcast": "https://podcastindex.org/namespace/1.0",
+      "content": "http://purl.org/rss/1.0/modules/content/", "atom": "http://www.w3.org/2005/Atom"}
+pin = json.load(open(pin_path, encoding="utf-8"))["episodes"]
+
+# k1: exists, parses, RSS 2.0 with one channel, the only podcast.xml in the build
+feeds = []
+for d, _, files in os.walk(public):
+    feeds += [os.path.join(d, f) for f in files if f == "podcast.xml"]
+want = os.path.join(public, "cr", "podcast.xml")
+root = channel = None
+if feeds != [want]:
+    bad("k1", f"podcast.xml files in the build: {[os.path.relpath(f, public) for f in feeds]}, want only cr/podcast.xml")
+if os.path.isfile(want):
+    try:
+        root = ET.parse(want).getroot()
+        if root.tag != "rss" or root.get("version") != "2.0":
+            bad("k1", "root is not <rss version=\"2.0\">")
+        chans = root.findall("channel")
+        if len(chans) != 1:
+            bad("k1", f"{len(chans)} channels, want 1")
+        else:
+            channel = chans[0]
+    except ET.ParseError as e:
+        bad("k1", f"does not parse: {e}")
+if channel is None:
+    print("\n".join(out)); sys.exit()
+
+items = channel.findall("item")
+
+
+def slug_of(it):
+    m = re.match(r"^https://falkensmage\.com/cr/([a-z0-9-]+)/$", (it.findtext("link") or ""))
+    return m.group(1) if m else None
+
+
+# k2: item count = podcast bundles = pin = 18
+bundles = []
+for path in glob.glob(os.path.join(content, "*", "index.html")):
+    fm = re.match(r"\A---\n(.*?)\n---\n", open(path, encoding="utf-8").read(), re.S)
+    if fm and re.search(r'^cr_kind: "podcast"$', fm.group(1), re.M):
+        bundles.append(os.path.basename(os.path.dirname(path)))
+if not (len(items) == len(bundles) == len(pin) == 18):
+    bad("k2", f"items={len(items)} podcast bundles={len(bundles)} pinned={len(pin)}, want all 18")
+
+# k3: continuity of guids
+seen, slugs = set(), []
+for it in items:
+    slug = slug_of(it)
+    slugs.append(slug)
+    g = it.find("guid")
+    if slug not in pin:
+        bad("k3", f"item link {it.findtext('link')!r} is not a pinned episode")
+        continue
+    if g is None or g.text != pin[slug]["guid"]:
+        bad("k3", f"{slug}: guid {None if g is None else g.text!r} != pinned {pin[slug]['guid']!r}")
+    if g is None or g.get("isPermaLink") != "false":
+        bad("k3", f"{slug}: guid isPermaLink is not \"false\"")
+    if g is not None and g.text in seen:
+        bad("k3", f"{slug}: duplicate guid {g.text}")
+    seen.add(g.text if g is not None else None)
+if set(slugs) != set(pin):
+    bad("k3", f"slug set differs from pin: {sorted(set(slugs) ^ set(pin))}")
+
+# k4: pin vs the saved Substack facts, when readable
+if os.path.isfile(items_path):
+    src = json.load(open(items_path, encoding="utf-8"))
+    if set(src) != set(pin):
+        bad("k4", f"slug sets differ: {sorted(set(src) ^ set(pin))}")
+    for slug, e in pin.items():
+        s = src.get(slug)
+        if s is None:
+            continue
+        got = (s.get("guid"), s.get("length"), s.get("explicit") == "Yes", bool(s.get("transcript")))
+        have = (e["guid"], e["length"], e["explicit"], e["transcript"])
+        if got != have:
+            bad("k4", f"{slug}: items.json {got} != pin {have}")
+else:
+    out.append(f"INFO: k4 cross-check against {items_path} skipped (not readable here, e.g. CI)")
+
+# k5 enclosures, k6 dates/duration/explicit
+for it in items:
+    slug = slug_of(it)
+    enc = it.find("enclosure")
+    pe = pin.get(slug)
+    m = None
+    if enc is None:
+        bad("k5", f"{slug}: no enclosure")
+    else:
+        m = re.match(r"^https://media\.falkensmage\.com/cr/(\d{4}-\d{2}-\d{2})-" + re.escape(slug or "?") + r"\.mp3$", enc.get("url") or "")
+        if not m:
+            bad("k5", f"{slug}: enclosure url {enc.get('url')!r}")
+        if enc.get("type") != "audio/mpeg":
+            bad("k5", f"{slug}: enclosure type {enc.get('type')!r}")
+        if pe and str(enc.get("length")) != str(pe["length"]):
+            bad("k5", f"{slug}: enclosure length {enc.get('length')} != pinned {pe['length']}")
+    try:
+        d = parsedate_to_datetime(it.findtext("pubDate") or "").astimezone(timezone.utc).date().isoformat()
+        if m and d != m.group(1):
+            bad("k6", f"{slug}: pubDate date {d} != enclosure date {m.group(1)}")
+    except (TypeError, ValueError):
+        bad("k6", f"{slug}: pubDate {it.findtext('pubDate')!r} does not parse")
+    dur = it.findtext("itunes:duration", namespaces=NS) or ""
+    if not (dur.isdigit() and int(dur) > 0):
+        bad("k6", f"{slug}: itunes:duration {dur!r}")
+    if (it.findtext("itunes:explicit", namespaces=NS) or "") not in ("true", "false"):
+        bad("k6", f"{slug}: itunes:explicit is not true/false")
+
+# k7: the existing /cr/index.xml has no podcast markup
+idx = os.path.join(public, "cr", "index.xml")
+if not os.path.isfile(idx) or re.search(r"xmlns:(itunes|podcast)|<(itunes|podcast):", open(idx, encoding="utf-8").read(), re.I):
+    bad("k7", "/cr/index.xml is missing or carries itunes/podcast markup")
+
+print("\n".join(out))
+PY
+)
+  kcheck() { # kcheck <id> <pass text> <fail text>
+    local lines
+    lines=$(printf '%s\n' "$kout" | grep "^$1: " || true)
+    if [ -z "$lines" ]; then pass "$2"; else fail "$3"; printf '%s\n' "$lines" | sed 's/^/        /'; fi
+  }
+  kcheck k1 "podcast feed: /cr/podcast.xml is well-formed RSS 2.0, one channel, the only podcast.xml in the build" "podcast feed structure"
+  kcheck k2 "podcast feed: 18 items = 18 podcast bundles = 18 pinned episodes" "podcast feed item count"
+  kcheck k3 "podcast feed: every guid equals its pinned Substack guid, isPermaLink false, none repeated" "podcast guid continuity"
+  kcheck k4 "podcast pin matches the saved Substack feed facts (guid, length, explicit, transcript)" "podcast pin differs from items.json"
+  kcheck k5 "podcast feed: every enclosure is the R2 mp3 for its slug, audio/mpeg, pinned length" "podcast enclosures"
+  kcheck k6 "podcast feed: pubDate = enclosure date, duration positive, explicit true/false" "podcast item dates/duration/explicit"
+  kcheck k7 "/cr/index.xml carries no itunes/podcast markup" "/cr/index.xml changed shape"
+  printf '%s\n' "$kout" | grep '^INFO: ' | sed 's/^INFO: //' | while IFS= read -r l; do info "$l"; done
+fi
 
 echo ""
 echo "$PASS passed, $FAIL failed"
