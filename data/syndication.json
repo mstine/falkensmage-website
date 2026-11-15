@@ -134,6 +134,11 @@
    }
   },
   "/notes/welp-it-appears-that-my-lovely/": {
+   "bluesky": {
+    "posted": "2026-11-15T16:28:25Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3n2ef77xixfgu",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3n2ef77xixfgu"
+   },
    "mastodon": {
     "id": "117621398073417197",
     "posted": "2026-11-15T16:28:22Z",
