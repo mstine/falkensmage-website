@@ -271,7 +271,13 @@ if "/cr/" in home:
     print("index.html mentions /cr/")
 PY
 )
-[ -z "$inbound" ] && pass "pre-cutover: nothing outside /cr/ links into it" || { fail "pre-cutover: /cr/ is linked from outside:"; echo "$inbound" | sed 's/^/        /'; }
+# Cut over 2026-11-15: the site nav links /cr/ on every page. Gate on that link being present
+# on the home page; any other inbound links are fine now.
+if grep -q 'href="/cr/"' "$PUBLIC/index.html" 2>/dev/null || grep -q 'href=/cr/' "$PUBLIC/index.html" 2>/dev/null; then
+  pass "cutover: the site nav links to /cr/"
+else
+  fail "cutover: the home page has no nav link to /cr/"
+fi
 
 # j. INFO only: the sitemap and the home feed list /cr/ URLs once built. Both only go live on
 # merge, which is cutover day per the FA precedent (OWN-THE-STACK-MIGRATION.md), so nothing extra
