@@ -17,6 +17,7 @@
 # the guid it had on Substack, read from data/cr-podcast.json (CI cannot read ~/.psyche), so
 # repointing the listings never duplicates an episode.
 #
+# VALIDATE_CR_NO_NET=1 skips the INFO-only R2 probe (k13) that HEADs each enclosure URL.
 # VALIDATE_CR_PARTIAL=1 checks only the slugs that have a content/cr/<slug>/ bundle and skips
 # the "all 51" and feed checks. VALIDATE_CR_PUBLIC=<dir> checks an existing build instead.
 
@@ -525,6 +526,45 @@ PY
   kcheck k11 "podcast feed: every item has show notes in description and content:encoded, absolute URLs" "podcast show notes"
   kcheck k12 "podcast feed: no Substack infrastructure, own-publication URL, or local path" "podcast feed depends on Substack"
   printf '%s\n' "$kout" | grep '^INFO: ' | sed 's/^INFO: //' | while IFS= read -r l; do info "$l"; done
+  # k13. INFO only, never FAIL: HEAD each enclosure on R2 (the upload is out of band; the feed is
+  # correct either way). One request per URL, no retries.
+  if [ -n "${VALIDATE_CR_NO_NET:-}" ]; then
+    info "k13 R2 probe skipped (VALIDATE_CR_NO_NET set)"
+  elif ! command -v curl >/dev/null 2>&1; then
+    info "k13 R2 probe skipped (curl not found)"
+  else
+    probe_ok=0; probe_len=0; probe_total=0; probe_lines=""; probe_net_down=0
+    while IFS="$(printf '\t')" read -r url want_len; do
+      [ -n "$url" ] || continue
+      probe_total=$((probe_total + 1))
+      res=$(curl -sIL -o /dev/null --max-time 10 -w '%{http_code} %{size_download} %header{content-length}' "$url" 2>/dev/null) || res="000 0 "
+      code=${res%% *}
+      clen=$(printf '%s' "$res" | awk '{print $3}')
+      [ "$code" = "000" ] && probe_net_down=$((probe_net_down + 1))
+      [ "$code" = "200" ] && probe_ok=$((probe_ok + 1))
+      [ "$code" = "200" ] && [ "$clen" = "$want_len" ] && probe_len=$((probe_len + 1))
+      if [ "$code" != "200" ] || [ "$clen" != "$want_len" ]; then
+        probe_lines="$probe_lines
+$url: status $code, content-length ${clen:-none}, want $want_len"
+      fi
+    done <<EOF_URLS
+$(python3 -I - "$PUBLIC/cr/podcast.xml" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+for it in ET.parse(sys.argv[1]).getroot().find("channel").findall("item"):
+    e = it.find("enclosure")
+    print(f"{e.get('url')}\t{e.get('length')}")
+PY
+)
+EOF_URLS
+    if [ "$probe_total" -gt 0 ] && [ "$probe_net_down" -eq "$probe_total" ]; then
+      info "k13 R2 probe skipped (network unreachable)"
+    else
+      info "k13 R2 probe: $probe_ok/$probe_total enclosures answered 200, $probe_len/$probe_total with the pinned Content-Length"
+      printf '%s\n' "$probe_lines" | grep . | while IFS= read -r l; do info "k13 $l"; done
+    fi
+  fi
+
 fi
 
 echo ""
