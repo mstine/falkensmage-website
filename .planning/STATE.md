@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-07-02)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-11-15 - Completed quick task 261115-fjc: Scaffold Contemplating Resonance section at /cr/ from Substack
+Last activity: 2026-11-15 - Completed quick task 261115-j4q: Self-hosted Contemplating Resonance podcast feed
 
 ## Performance Metrics
 
@@ -181,6 +181,7 @@ Carried forward to v1.1 scoping:
 | 261115-fjc | Scaffold Contemplating Resonance section at /cr/ from Substack (51 posts, unlinked, branch cr/own-the-stack) | 2026-11-15 | 033291c | [261115-fjc-scaffold-contemplating-resonance-section](./quick/261115-fjc-scaffold-contemplating-resonance-section/) |
 | 15 | Fix /cr/ index layout: single column, Start here card, title fits | 2026-11-15 | 8226fed | — |
 | 16 | CR episode pages: YouTube thumbnail links (18 episodes) | 2026-11-15 | 1a25451 | — |
+| 261115-j4q | Self-hosted Contemplating Resonance podcast feed at /cr/podcast.xml (18 pinned Substack guids, R2 enclosures, branch cr/own-the-stack) | 2026-11-15 | fec134f | [261115-j4q-self-hosted-contemplating-resonance-podc](./quick/261115-j4q-self-hosted-contemplating-resonance-podc/) |
 
 ## Session Continuity
 
