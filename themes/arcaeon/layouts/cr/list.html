@@ -5,11 +5,14 @@
     <div class="fa-wide">
       {{ partial "cr/masthead.html" (dict "page" . "compact" false) }}
 
-      <div class="fa-hero">
-        <div class="fa-hero__featured">
-          {{ range first 1 $posts }}{{ partial "fa/card.html" (dict "page" . "size" "featured") }}{{ end }}
-        </div>
+      {{/* One centered column: the show's own opener as the way in, then the archive.
+           (FA's 3-column hero needs three feeds; CR has one.) */}}
+      {{ with site.GetPage "/cr/episode-1-wtf-is-contemplating-resonance" }}
+      <div class="cr-start">
+        <h2 class="fa-rail-heading">Start here</h2>
+        {{ partial "fa/card.html" (dict "page" . "size" "featured") }}
       </div>
+      {{ end }}
 
       <div class="fa-archive">
         <h2 class="fa-rail-heading">All {{ len $posts }} posts</h2>
