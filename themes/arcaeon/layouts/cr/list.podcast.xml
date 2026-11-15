@@ -6,7 +6,7 @@
 {{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0">
   <channel>
-    <title>Contemplating Resonance</title>
+    <title>{{ .Params.podcast_title | default "Contemplating Resonance" }}</title>
     <link>{{ .Permalink }}</link>
     {{ with .OutputFormats.Get "podcast" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
     <description>{{ .Params.lede }}</description>
@@ -22,7 +22,7 @@
     <itunes:image href="{{ $base }}/cr/podcast-cover.jpg" />
     <image>
       <url>{{ $base }}/cr/podcast-cover.jpg</url>
-      <title>Contemplating Resonance</title>
+      <title>{{ .Params.podcast_title | default "Contemplating Resonance" }}</title>
       <link>{{ .Permalink }}</link>
     </image>
     <itunes:category text="Society &amp; Culture"><itunes:category text="Philosophy" /></itunes:category>

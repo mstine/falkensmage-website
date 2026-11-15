@@ -425,7 +425,10 @@ def ct(tag):
 
 lede = re.search(r'^lede: (".*")$', open(os.path.join(content, "_index.md"), encoding="utf-8").read(), re.M)
 lede = json.loads(lede.group(1)) if lede else None
-for tag, exp in [("title", "Contemplating Resonance"), ("link", "https://falkensmage.com/cr/"), ("language", "en"),
+# podcast_title overrides the channel title (used to migrate a listing under its old name).
+ptitle = re.search(r'^podcast_title: (".*")$', open(os.path.join(content, "_index.md"), encoding="utf-8").read(), re.M)
+ptitle = json.loads(ptitle.group(1)) if ptitle else "Contemplating Resonance"
+for tag, exp in [("title", ptitle), ("link", "https://falkensmage.com/cr/"), ("language", "en"),
                   ("copyright", "Digital Intuition LLC"), ("itunes:author", "Matt Stine"),
                   ("itunes:explicit", "true"), ("itunes:type", "episodic"), ("description", lede)]:
     if ct(tag) != exp:
