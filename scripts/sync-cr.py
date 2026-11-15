@@ -65,6 +65,8 @@ API = "https://falkenslabyrinth.com/api/v1/posts/{slug}"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 THROTTLE = 3  # seconds before every live request
+# Episode slug -> YouTube video id on @falkensmage, the video's permanent home.
+YOUTUBE = {k: v for k, v in json.loads((ROOT / "data" / "cr-youtube.json").read_text()).items() if not k.startswith("_")}
 MAX_EDGE = 1600
 
 # Substack-hosted image: the fetch CDN, the post-media bucket, legacy bucketeer buckets,
@@ -735,6 +737,18 @@ def build_bundle(listing_post, net, refresh, kept, fa_slugs, report):
             front["duration_label"] = duration_label(dur)
         front["media_url"] = ""
         front["media_file"] = f"{date[:10]}-{slug}.mp4"
+        vid = YOUTUBE.get(slug)
+        if vid:
+            front["media_url"] = f"https://www.youtube.com/watch?v={vid}"
+            front["youtube_id"] = vid
+            try:
+                thumb, _ = process(net, [f"https://i.ytimg.com/vi/{vid}/maxresdefault.jpg",
+                                         f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"], "cover")
+                shutil.copyfile(thumb, bundle / "youtube.jpg")
+            except Exception as e:
+                ctx.warns.append(f"{slug}: YouTube thumbnail failed ({e}); text link only")
+        else:
+            ctx.warns.append(f"{slug}: podcast with no YouTube id in data/cr-youtube.json")
     head = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in front.items())
     (bundle / "index.html").write_text(f"---\n{head}\n---\n\n{body}", encoding="utf-8")
     report["covers"] += 1 if cover_written else 0

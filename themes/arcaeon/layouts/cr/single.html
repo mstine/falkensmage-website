@@ -18,14 +18,25 @@
         {{- if $isPodcast }} &middot; Episode{{ with .Params.duration_label }} &middot; {{ . }}{{ end }}{{ end }}
         <data class="u-url" value="{{ .Permalink }}"></data>
       </p>
+      {{- $thumb := .Resources.GetMatch "youtube.jpg" -}}
+      {{ if and $isPodcast .Params.media_url $thumb }}
+        {{/* Self-hosted thumbnail linking out to YouTube: no third-party request until the reader clicks. */}}
+        {{ $t := $thumb.Resize "1200x webp q80" }}
+        <a href="{{ .Params.media_url }}" class="cr-watch" data-cr-player="youtube" rel="noopener">
+          <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" class="cr-watch__img" fetchpriority="high">
+          <span class="cr-watch__play" aria-hidden="true"></span>
+          <span class="cr-watch__label">Watch on YouTube{{ with .Params.duration_label }} &middot; {{ . }}{{ end }}</span>
+        </a>
+      {{ else }}
       {{ with .Resources.GetMatch "cover.jpg" }}
         {{ $c := .Resize "1200x webp q80" }}
         <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
              alt="{{ $.Params.cover_alt | default (printf "Cover image for %s" $.Title) }}" class="fa-essay-cover u-photo" fetchpriority="high">
       {{ end }}
+      {{ end }}
       {{ if $isPodcast }}
         {{ with .Params.media_url }}
-          <p class="fa-after__email"><a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Watch the episode &rarr;</a></p>
+          {{ if not $thumb }}<p class="fa-after__email"><a class="launch-banner__cta glow-radiant-core" href="{{ . }}">Watch on YouTube &rarr;</a></p>{{ end }}
         {{ else }}
           <div class="cr-player cr-player--pending" data-cr-player="pending" role="note">
             <p class="cr-player__label">Episode</p>
