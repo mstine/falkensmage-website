@@ -257,8 +257,8 @@ def process(net, urls, variant):
 # Body sanitizer
 # ---------------------------------------------------------------------------
 
-REMOVE_CLASS_PREFIX = ("subscription-widget-wrap", "captioned-button-wrap", "button-wrapper", "paywall-jump",
-                       "install-substack-app", "image-link-expand")
+REMOVE_CLASS_PREFIX = ("subscription-widget", "captioned-button-wrap", "button-wrapper", "paywall-jump",
+                       "install-substack-app", "image-link-expand", "hide-text")
 REMOVE_TAGS = {"svg", "script", "style", "form", "input", "button", "noscript", "object", "embed",
                "video", "audio", "source", "link", "meta", "canvas", "textarea", "select"}
 ALLOWED_TAGS = {"p", "h2", "h3", "h4", "h5", "h6", "a", "strong", "b", "em", "i", "u", "s", "sup", "sub", "br",
@@ -271,7 +271,7 @@ FA_HOSTS = {"feralarchitecture.com", "www.feralarchitecture.com", "feralarchitec
 # Classes that mean "decorative wrapper, nothing lost by unwrapping"; everything else prints a WARN.
 BENIGN_CLASSES = {"image2-inset", "image-link", "image2", "is-viewable-img", "sizing-normal", "footnote-content",
                   "table-wrap", "paragraph", "preformatted", "header-anchor-parent", "header-anchor-post",
-                  "pencraft", "pc-display-flex", "pc-reset", "footnote-number", "digest-post-embed",
+                  "pencraft", "pc-display-flex", "pc-reset", "footnote-number", "digest-post-embed", "text", "preformatted-block",
                   "button", "primary", "email-input"}
 
 
@@ -331,8 +331,11 @@ def prep_images(soup, ctx):
             img["data-orig"] = original_url(primary)
             img["data-fb"] = src
         elif src.startswith(("http://", "https://")):
-            img["data-keep"] = src
-            ctx.warn(f"non-Substack image host left in place: {urllib.parse.urlsplit(src).netloc}")
+            # Not Substack-hosted (Unsplash stock photos, mostly). Self-hosted all the same: the
+            # page must not depend on anyone else's server. If the fetch fails the hotlink stays.
+            img["data-orig"] = src
+            img["data-fb"] = src
+            img["data-ext"] = urllib.parse.urlsplit(src).netloc
         else:
             ctx.warn(f"dropped image with unusable src {src[:60]!r}")
             img.decompose()
@@ -350,6 +353,53 @@ def spotify_text(da, src):
 
 
 def convert_embeds(soup, ctx):
+    for tag in soup.find_all("div", class_="youtube-wrap"):
+        da = data_attrs(tag)
+        vid = da.get("videoId")
+        if not vid:
+            ifr = tag.find("iframe")
+            m = re.search(r"youtube(?:-nocookie)?\.com/embed/([A-Za-z0-9_-]+)", (ifr.get("src") if ifr else "") or "")
+            vid = m.group(1) if m else ""
+        if vid:
+            tag.replace_with(link_p(soup, f"https://www.youtube.com/watch?v={vid}", "Watch on YouTube"))
+        else:
+            ctx.warn("youtube-wrap with no video id removed")
+            tag.decompose()
+    # A @-mention is its author's name as plain text.
+    for tag in soup.find_all(class_="mention-wrap"):
+        name = (data_attrs(tag).get("name") or "").strip()
+        tag.replace_with(NavigableString(name)) if name else tag.decompose()
+    # Publication recommendation cards become one link.
+    for tag in soup.find_all("div", class_="embedded-publication-wrap"):
+        da = data_attrs(tag)
+        base = (da.get("base_url") or "").strip()
+        name = (da.get("name") or "").strip()
+        by = (da.get("author_name") or "").strip()
+        if base.startswith(("http://", "https://")) and name:
+            tag.replace_with(link_p(soup, base, f"{name} — {by}" if by else name))
+        else:
+            ctx.warn("embedded-publication card with no URL removed")
+            tag.decompose()
+    # Image galleries become one figure per image, the gallery caption on the last.
+    for tag in soup.find_all("div", class_="image-gallery-embed"):
+        g = data_attrs(tag).get("gallery") or {}
+        figs = []
+        for im in g.get("images") or []:
+            if im.get("src"):
+                fig = soup.new_tag("figure")
+                fig.append(soup.new_tag("img", src=im["src"], alt=g.get("alt") or ""))
+                figs.append(fig)
+        if not figs:
+            ctx.warn("image-gallery-embed with no images removed")
+            tag.decompose()
+            continue
+        if g.get("caption"):
+            fc = soup.new_tag("figcaption")
+            fc.string = g["caption"]
+            figs[-1].append(fc)
+        for fig in figs:
+            tag.insert_before(fig)
+        tag.decompose()
     for tag in soup.find_all("iframe"):
         if getattr(tag, "decomposed", False):
             continue
@@ -507,8 +557,8 @@ def rewrite_link(a, ctx):
 def sanitize_body(html, slug, ctx, cover_orig=None):
     """Raw Substack body_html → inert, self-hosted HTML (one top-level block per line)."""
     soup = BeautifulSoup(html, "html.parser")
-    prep_images(soup, ctx)
     convert_embeds(soup, ctx)
+    prep_images(soup, ctx)
     convert_structure(soup, ctx)
 
     for a in list(soup.find_all("a")):
@@ -571,19 +621,22 @@ def sanitize_body(html, slug, ctx, cover_orig=None):
         soup.append(node)
 
     # Localize images in document order.
-    n = 0
     for img in soup.find_all("img"):
-        keep = img.get("data-keep")
-        if keep:
-            img.attrs = {"src": keep, "alt": img.get("alt", ""), "loading": "lazy"}
-            continue
         orig = img["data-orig"]
         if orig in ctx.names:
             name, w, h = ctx.names[orig]
         else:
-            out, ext = process(ctx.net, [orig, img.get("data-fb")], "inline")
-            n += 1
+            try:
+                out, ext = process(ctx.net, [orig, img.get("data-fb")], "inline")
+            except RuntimeError as e:
+                if not img.get("data-ext"):
+                    raise
+                ctx.warn(f"non-Substack image host {img['data-ext']} left in place ({e})")
+                img.attrs = {"src": img["data-fb"], "alt": img.get("alt", ""), "loading": "lazy"}
+                continue
             ctx.images += 1
+            if img.get("data-ext"):
+                ctx.warn(f"non-Substack image host {img['data-ext']} localized")
             name = f"img-{ctx.images:02d}.{ext}"
             shutil.copyfile(out, ctx.bundle / name)
             w, h = sips_dims(out)

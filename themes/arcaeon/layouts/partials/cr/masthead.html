@@ -1,0 +1,10 @@
+{{- /* CR masthead. Context: dict "page" $page "compact" bool.
+       Text only — no image wordmark exists for CR; the display face does the work (see main.css). */ -}}
+{{- $p := .page -}}
+{{- $compact := .compact | default false -}}
+<div class="cr-masthead{{ if $compact }} cr-masthead--compact{{ end }}">
+  <a href="/cr/" class="cr-masthead__brand" aria-label="Contemplating Resonance — home">
+    {{ if $compact }}<span class="cr-masthead__title">Contemplating Resonance</span>{{ else }}<h1 class="cr-masthead__title">Contemplating Resonance</h1>{{ end }}
+  </a>
+  {{ if not $compact }}{{ with $p.Params.lede }}<p class="cr-masthead__lede">{{ . }}</p>{{ end }}{{ end }}
+</div>

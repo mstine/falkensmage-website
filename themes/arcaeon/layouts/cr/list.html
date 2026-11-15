@@ -1,0 +1,41 @@
+{{ define "main" }}
+{{- $posts := partial "cr/posts.html" . -}}
+<main class="fa-room">
+  <section class="section section-void fa-band">
+    <div class="fa-wide">
+      {{ partial "cr/masthead.html" (dict "page" . "compact" false) }}
+
+      <div class="fa-hero">
+        <div class="fa-hero__featured">
+          {{ range first 1 $posts }}{{ partial "fa/card.html" (dict "page" . "size" "featured") }}{{ end }}
+        </div>
+      </div>
+
+      <div class="fa-archive">
+        <h2 class="fa-rail-heading">All {{ len $posts }} posts</h2>
+        {{ range $posts.GroupByDate "2006" }}
+          <h2 class="fa-archive__month">{{ .Key }}</h2>
+          <ol class="fa-archive__list">
+            {{ range .Pages }}
+            <li>
+              <a href="{{ .RelPermalink }}" class="fa-popular__item">
+                <span class="fa-popular__text">
+                  <span class="fa-post__title">{{ .Title }}</span>
+                  {{ with .Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
+                  <span class="fa-post__meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time>{{ if eq .Params.cr_kind "podcast" }} &middot; Episode{{ with .Params.duration_label }} &middot; {{ . }}{{ end }}{{ end }}</span>
+                </span>
+                {{ with .Resources.GetMatch "cover.jpg" }}
+                  {{ $t := .Fill "160x160 Center webp q72" }}
+                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb">
+                {{ end }}
+              </a>
+            </li>
+            {{ end }}
+          </ol>
+        {{ end }}
+        {{ with .OutputFormats.Get "rss" }}<p class="fa-sidebar__feed"><a href="{{ .RelPermalink }}">RSS feed</a></p>{{ end }}
+      </div>
+    </div>
+  </section>
+</main>
+{{ end }}

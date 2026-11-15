@@ -1,0 +1,29 @@
+{{- /* Full-content RSS for /cr/ — items carry the whole post (cover first). Root-relative
+       src/href values in bodies are made absolute: FA's absURL pipe does not reach in-body paths. */ -}}
+{{- $pages := first 30 (partial "cr/posts.html" .) -}}
+{{- $base := strings.TrimSuffix "/" site.BaseURL -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Contemplating Resonance</title>
+    <link>{{ .Permalink }}</link>
+    <description>{{ .Params.lede }}</description>
+    <language>{{ site.Language.Lang }}</language>
+    <managingEditor>{{ site.Params.author }}</managingEditor>
+    {{ with $pages }}{{ with index . 0 }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}{{ end }}
+    {{ with .OutputFormats.Get "rss" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+    {{- range $pages }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <guid isPermaLink="true">{{ .Permalink }}</guid>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      <description>{{ .Params.subtitle }}</description>
+      {{- $cover := "" }}
+      {{- with .Resources.GetMatch "cover.jpg" }}{{ $cover = printf "<p><img src=\"%s\" alt=\"\"></p>" (.Resize "1200x jpg q80").Permalink }}{{ end }}
+      {{- $body := .Content | replaceRE `(src|href)="/([^/])` (printf `${1}="%s/${2}` $base) }}
+      <content:encoded>{{ printf "<![CDATA[%s%s]]>" $cover $body | safeHTML }}</content:encoded>
+    </item>
+    {{- end }}
+  </channel>
+</rss>
