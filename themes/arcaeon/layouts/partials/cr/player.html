@@ -1,0 +1,11 @@
+{{- /* YouTube player for a CR episode. Context: the page. Renders nothing without youtube_id.
+     youtube-nocookie keeps YouTube's cookies off until the reader presses play. */ -}}
+{{- with .Params.youtube_id -}}
+<div class="cr-embed" data-cr-player="youtube">
+  <iframe src="https://www.youtube-nocookie.com/embed/{{ . }}?rel=0"
+          title="{{ $.Title }} — video"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
+</div>
+{{- end -}}

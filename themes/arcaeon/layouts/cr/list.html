@@ -10,7 +10,12 @@
       {{ with site.GetPage "/cr/episode-1-wtf-is-contemplating-resonance" }}
       <div class="cr-start">
         <h2 class="fa-rail-heading">Start here</h2>
-        {{ partial "fa/card.html" (dict "page" . "size" "featured") }}
+        {{ partial "cr/player.html" . }}
+        <a href="{{ .RelPermalink }}" class="fa-post fa-post--featured cr-start__text">
+          <span class="fa-post__title">{{ .Title }}</span>
+          {{ with .Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
+          <span class="fa-post__meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>{{ with .Params.duration_label }} &middot; {{ . }}{{ end }} &middot; Show notes &rarr;</span>
+        </a>
       </div>
       {{ end }}
 
