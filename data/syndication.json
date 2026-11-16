@@ -146,6 +146,11 @@
    }
   },
   "/notes/what-s-your-birth-card-and/": {
+   "bluesky": {
+    "posted": "2026-11-16T18:04:01Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3n2h3f636ipnt",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3n2h3f636ipnt"
+   },
    "mastodon": {
     "id": "117627436219091564",
     "posted": "2026-11-16T18:03:57Z",
