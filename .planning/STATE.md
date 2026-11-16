@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-16T16:08:33.000Z"
+last_updated: "2026-11-16T16:14:55.000Z"
 last_activity: 2026-11-15
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: 40834c3b2ac714ca87812124750a2926374419a2
+state_head: 34b8b0325be0e3a5d01b7a03c99ac663a6a5ab09
 progress:
   total_phases: 1
   completed_phases: 1
@@ -189,6 +189,7 @@ Carried forward to v1.1 scoping:
 | 22 | Rename CR podcast feed to Contemplating Resonance (1c5dbe1) | 2026-11-16 | 1c5dbe1 | — |
 | 23 | Embed YouTube players on /cr/ episode pages and the Start Here hero (b770d36) | 2026-11-16 | b770d36 | — |
 | 24 | Stop duplicating the cover on 27 CR newsletter posts (cover_in_body) (40834c3) | 2026-11-16 | 40834c3 | — |
+| 25 | Split /cr/ into episodes (by season, YouTube thumbs) and newsletter posts (34b8b03) | 2026-11-16 | 34b8b03 | — |
 
 ## Session Continuity
 
