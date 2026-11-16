@@ -793,6 +793,10 @@ def build_bundle(listing_post, net, refresh, kept, fa_slugs, report, podcast_ite
     }
     if cover_written:
         front["cover"] = "cover.jpg"
+        # Substack never showed the cover atop the post; when the post also places it in the body,
+        # that placement wins and the page skips the header copy (cover.jpg still feeds cards and og:image).
+        if cover_orig and cover_orig in ctx.names:
+            front["cover_in_body"] = True
     if kind == "podcast":
         dur = post.get("podcast_duration") or listing_post.get("podcast_duration")
         if dur:

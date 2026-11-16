@@ -21,7 +21,7 @@
       {{- $embed := and $isPodcast .Params.youtube_id -}}
       {{ if $embed }}
         {{ partial "cr/player.html" . }}
-      {{ else }}
+      {{ else if not .Params.cover_in_body }}
       {{ with .Resources.GetMatch "cover.jpg" }}
         {{ $c := .Resize "1200x webp q80" }}
         <img src="{{ $c.RelPermalink }}" width="{{ $c.Width }}" height="{{ $c.Height }}"
