@@ -757,6 +757,14 @@ def duration_label(seconds):
     return f"{max(1, total)}m"
 
 
+def season_of(title):
+    """Season number for a CR episode, from its title: S2E…/S3E… name it, the Season Two trailer is 2, the rest are 1."""
+    m = re.match(r"S(\d+)E", title)
+    if m:
+        return int(m.group(1))
+    return 2 if title.lower().startswith("season two") else 1
+
+
 def build_bundle(listing_post, net, refresh, kept, fa_slugs, report, podcast_items, nas_dir):
     slug = listing_post["slug"]
     post = net.post(slug, refresh)
@@ -835,6 +843,7 @@ def build_bundle(listing_post, net, refresh, kept, fa_slugs, report, podcast_ite
                 raise RuntimeError("transcript does not start with the WEBVTT header")
             (bundle / "transcript.vtt").write_bytes(vtt)
             front["transcript"] = "transcript.vtt"
+        front["season"] = season_of(front["title"])
         front["podcast_guid"] = entry["guid"]
         front["audio_url"] = AUDIO_BASE + mp3
         front["audio_bytes"] = entry["length"]

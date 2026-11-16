@@ -2773,6 +2773,15 @@ a:hover {
   margin-top: 0;
 }
 
+.cr-episode {
+  grid-template-columns: 1fr 8rem;
+}
+
+.cr-episode__thumb {
+  width: 8rem;
+  height: 4.5rem;
+}
+
 .cr-start__text {
   margin-top: 1rem;
 }
