@@ -2773,13 +2773,20 @@ a:hover {
   margin-top: 0;
 }
 
-.cr-episode {
+/* Both CR lists share one 16:9 thumbnail column so the right edge holds across sections. */
+.cr-item {
   grid-template-columns: 1fr 8rem;
 }
 
-.cr-episode__thumb {
+.cr-item__thumb {
   width: 8rem;
   height: 4.5rem;
+}
+
+.cr-archive + .cr-archive {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(122, 44, 255, 0.45);
 }
 
 .cr-start__text {

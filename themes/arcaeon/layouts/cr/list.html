@@ -23,7 +23,7 @@
       {{- $letters := where $posts "Params.cr_kind" "ne" "podcast" -}}
 
       {{/* Episodes in listening order, by season: the show is finished, so it reads front to back. */}}
-      <div class="fa-archive" id="episodes">
+      <div class="fa-archive cr-archive" id="episodes">
         <h2 class="fa-rail-heading">{{ len $episodes }} episodes</h2>
         {{/* Not GroupByParam: it silently yields nothing for the integer season sync-cr writes. */}}
         {{- $seasons := slice }}{{ range $episodes }}{{ $seasons = $seasons | append .Params.season }}{{ end -}}
@@ -32,7 +32,7 @@
           <ol class="fa-archive__list">
             {{ range (where $episodes "Params.season" .).ByDate }}
             <li>
-              <a href="{{ .RelPermalink }}" class="fa-popular__item cr-episode">
+              <a href="{{ .RelPermalink }}" class="fa-popular__item cr-item">
                 <span class="fa-popular__text">
                   <span class="fa-post__title">{{ .Title }}</span>
                   {{ with .Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
@@ -40,7 +40,7 @@
                 </span>
                 {{ with or (.Resources.GetMatch "youtube.jpg") (.Resources.GetMatch "cover.jpg") }}
                   {{ $t := .Fill "320x180 Center webp q72" }}
-                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb cr-episode__thumb">
+                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb cr-item__thumb">
                 {{ end }}
               </a>
             </li>
@@ -49,22 +49,22 @@
         {{ end }}
       </div>
 
-      <div class="fa-archive" id="newsletter">
+      <div class="fa-archive cr-archive" id="newsletter">
         <h2 class="fa-rail-heading">{{ len $letters }} newsletter posts</h2>
         {{ range $letters.GroupByDate "2006" }}
           <h2 class="fa-archive__month">{{ .Key }}</h2>
           <ol class="fa-archive__list">
             {{ range .Pages }}
             <li>
-              <a href="{{ .RelPermalink }}" class="fa-popular__item">
+              <a href="{{ .RelPermalink }}" class="fa-popular__item cr-item">
                 <span class="fa-popular__text">
                   <span class="fa-post__title">{{ .Title }}</span>
                   {{ with .Params.subtitle }}<span class="fa-post__dek">{{ . }}</span>{{ end }}
                   <span class="fa-post__meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time></span>
                 </span>
                 {{ with .Resources.GetMatch "cover.jpg" }}
-                  {{ $t := .Fill "160x160 Center webp q72" }}
-                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb">
+                  {{ $t := .Fill "320x180 Center webp q72" }}
+                  <img src="{{ $t.RelPermalink }}" width="{{ $t.Width }}" height="{{ $t.Height }}" alt="" loading="lazy" class="fa-popular__thumb cr-item__thumb">
                 {{ end }}
               </a>
             </li>
