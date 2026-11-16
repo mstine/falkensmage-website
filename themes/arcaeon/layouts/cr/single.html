@@ -49,16 +49,18 @@
   </article>
 
   {{/* ===== AFTER — neighbors, back to the index ===== */}}
+  {{/* Neighbors stay within the page's kind: episodes step through episodes, posts through posts. */}}
   {{- $posts := partial "cr/posts.html" . -}}
+  {{- $posts = cond $isPodcast (where $posts "Params.cr_kind" "podcast") (where $posts "Params.cr_kind" "ne" "podcast") -}}
   {{- $older := "" }}{{ $newer := "" }}{{ $seen := false -}}
   {{- range $posts }}{{ if $seen }}{{ if not $older }}{{ $older = . }}{{ end }}{{ else if eq .RelPermalink $.RelPermalink }}{{ $seen = true }}{{ else }}{{ $newer = . }}{{ end }}{{ end -}}
   <section class="section {{ partial "helpers/band-tone.html" $ }}">
-    <nav class="section-content fa-after" aria-label="More posts">
+    <nav class="section-content fa-after" aria-label="{{ cond $isPodcast "More episodes" "More posts" }}">
       <div class="fa-after__neighbors">
-        {{ with $older }}<a href="{{ .RelPermalink }}" class="fa-after__link"><span class="fa-post__meta">Older</span><span>{{ .Title }}</span></a>{{ end }}
-        {{ with $newer }}<a href="{{ .RelPermalink }}" class="fa-after__link fa-after__link--newer"><span class="fa-post__meta">Newer</span><span>{{ .Title }}</span></a>{{ end }}
+        {{ with $older }}<a href="{{ .RelPermalink }}" class="fa-after__link"><span class="fa-post__meta">{{ cond $isPodcast "Previous episode" "Older" }}</span><span>{{ .Title }}</span></a>{{ end }}
+        {{ with $newer }}<a href="{{ .RelPermalink }}" class="fa-after__link fa-after__link--newer"><span class="fa-post__meta">{{ cond $isPodcast "Next episode" "Newer" }}</span><span>{{ .Title }}</span></a>{{ end }}
       </div>
-      <p><a href="/cr/">All posts &rarr;</a></p>
+      <p>{{ if $isPodcast }}<a href="/cr/#episodes">All episodes &rarr;</a>{{ else }}<a href="/cr/#newsletter">All posts &rarr;</a>{{ end }}</p>
     </nav>
   </section>
 </main>
