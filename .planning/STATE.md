@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-15T20:21:56.677Z"
+last_updated: "2026-11-16T14:27:04.674Z"
 last_activity: 2026-11-15
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: c82f3c05a0f28347912875c3f91e757360eff590
+state_head: 9a9373e9f9945b4e3925d8a37573e030488dca1f
 progress:
   total_phases: 1
   completed_phases: 1
@@ -184,6 +184,7 @@ Carried forward to v1.1 scoping:
 | 261115-j4q | Self-hosted Contemplating Resonance podcast feed at /cr/podcast.xml (18 pinned Substack guids, R2 enclosures, branch cr/own-the-stack) | 2026-11-15 | fec134f | [261115-j4q-self-hosted-contemplating-resonance-podc](./quick/261115-j4q-self-hosted-contemplating-resonance-podc/) |
 | 18 | CR cutover: nav link, validate-cr in the deploy gate, merge to main | 2026-11-15 | 533cac1 | — |
 | 19 | Temporary podcast_title override so Spotify accepts the CR feed move | 2026-11-15 | c82f3c0 | — |
+| 20 | Point /cr/ episode pages at the real YouTube re-uploads (9a9373e) | 2026-11-16 | 9a9373e | — |
 
 ## Session Continuity
 
