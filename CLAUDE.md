@@ -12,7 +12,7 @@ Single-page, mobile-first personal site for Matt Stine's public identity: **Falk
 - **Stack**: Hugo static site generator with custom `arcaeon` theme — Matt has prior Hugo experience, no ramp-up cost
 - **Hosting**: GitHub Pages via GitHub Actions build/deploy pipeline
 - **Domain**: falkensmage.com — owned, needs DNS pointed to GitHub Pages, HTTPS automatic
-- **Performance**: Sub-1s page load on 3G — no external fonts unless self-hosted, no analytics, no external dependencies
+- **Performance**: Sub-1s page load on 3G — no external fonts unless self-hosted
 - **Mobile-first**: 375px viewport designed first, scales up
 - **Accessibility**: WCAG AA minimum
 - **No external font CDNs**: Self-host or system stack only
@@ -76,7 +76,6 @@ Single-page, mobile-first personal site for Matt Stine's public identity: **Falk
 | PostCSS | Node dependency in CI, slower builds, not needed — Hugo 0.160 `css.Build` covers everything required | Hugo `css.Build` native |
 | Hugo standard (non-extended) edition | `css.Build` and Dart Sass processing require Extended. Building with standard fails silently or errors on CSS imports | Hugo Extended 0.160.1 |
 | `peaceiris/actions-hugo` | Third-party action adds an unnecessary dependency. Official Hugo workflow pattern using direct binary download is simpler and controlled | Direct binary install in workflow (see above) |
-| Analytics (Plausible, GA, Fathom) | Explicitly out of scope per PROJECT.md. Every external script is a performance hit and a privacy signal | Nothing — omit entirely |
 ## Version Compatibility
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|

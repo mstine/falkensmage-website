@@ -83,7 +83,6 @@ Reasoning held through v1.0; re-audit at next milestone start.
 - Content platform — Feral Architecture on Substack handles that
 - On-site scheduling/payment — still out of scope; money runs through Cal.com + Stripe (hosted, link-out). Offer *pages* are now in scope as of v1.1 (ICP refined, offers grounded)
 - Portfolio / resume site — this is identity, not credentials
-- Analytics — not included unless explicitly revisited
 - Podcast link — omitted until Rewired feed is live (no dead links)
 - OAuth / login — this is a static public page, no user accounts
 - ~~Multi-page navigation — single page by design~~ — REVERSED in v1.1: `/work/*` offer pages add routes; the homepage remains the single front door
@@ -124,7 +123,7 @@ Reasoning held through v1.0; re-audit at next milestone start.
 - **Stack:** Hugo Extended 0.160.1 with custom `arcaeon` theme
 - **Hosting:** GitHub Pages via GitHub Actions build/deploy pipeline
 - **Domain:** falkensmage.com — live, DNS pointed to GitHub Pages, HTTPS enforced
-- **Performance:** Sub-1s page load on 3G — no external fonts unless self-hosted, no analytics, no external dependencies
+- **Performance:** Sub-1s page load on 3G — no external fonts unless self-hosted
 - **Mobile-first:** 375px viewport designed first, scales up
 - **Accessibility:** WCAG AA minimum
 - **No external font CDNs:** Self-hosted WOFF2 only (committed as trust root)
