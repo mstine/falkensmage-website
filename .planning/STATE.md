@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Completed 06-03-PLAN.md — Phase 6 (offer-pages) complete
-last_updated: "2026-11-16T14:59:50.029Z"
+last_updated: "2026-11-16T15:35:20.158Z"
 last_activity: 2026-11-15
 last_activity_desc: Completed quick task 261030-kwk (IndieWeb run 2)
-state_head: a730ae2da4724b48ee1088799b2806141ce80621
+state_head: 1c5dbe115fe840dafab5a8c8196955da79220d8f
 progress:
   total_phases: 1
   completed_phases: 1
@@ -186,6 +186,7 @@ Carried forward to v1.1 scoping:
 | 19 | Temporary podcast_title override so Spotify accepts the CR feed move | 2026-11-15 | c82f3c0 | — |
 | 20 | Point /cr/ episode pages at the real YouTube re-uploads (9a9373e) | 2026-11-16 | 9a9373e | — |
 | 21 | Refresh /cr/ episode thumbnails to the branded YouTube ones (a730ae2) | 2026-11-16 | a730ae2 | — |
+| 22 | Rename CR podcast feed to Contemplating Resonance (1c5dbe1) | 2026-11-16 | 1c5dbe1 | — |
 
 ## Session Continuity
 
