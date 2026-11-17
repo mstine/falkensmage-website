@@ -74,6 +74,11 @@
    }
   },
   "/notes/i-m-really-starting-to-wonder/": {
+   "bluesky": {
+    "posted": "2026-11-17T19:34:40Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3n2jrg3nedmzi",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3n2jrg3nedmzi"
+   },
    "mastodon": {
     "id": "117633455116668084",
     "posted": "2026-11-17T19:34:38Z",
