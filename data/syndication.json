@@ -38,6 +38,11 @@
    }
   },
   "/notes/being-lazy-internet-please-give-me/": {
+   "bluesky": {
+    "posted": "2026-11-20T19:13:24Z",
+    "uri": "at://did:plc:hrfsenvxai7pczill6ryqnky/app.bsky.feed.post/3n2rbw6kvl627",
+    "url": "https://bsky.app/profile/falkensmage.com/post/3n2rbw6kvl627"
+   },
    "mastodon": {
     "id": "117650358437589266",
     "posted": "2026-11-20T19:13:22Z",
